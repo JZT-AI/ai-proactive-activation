@@ -8660,7 +8660,7 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
     const route='[主动激活任务]'+id;
     const item={id,name,tabName:route};
     const resource=makePushTaskResource(item,{status:'待执行',relatedAudienceName:draft.audience,pushTime:draft.pushTime,estimatedReach:audienceResources.find(a=>a.name===draft.audience)?.audienceCount||0,configSnapshot:['主动激活策略：'+activationCategories.find(c=>c.id===draft.strategyId).name,'策略 ID：'+draft.strategyId,'通道：'+activationChannel('active',draft.city)]});
-    beginActivationRun({content:'任务创建成功，已排期。',actionButton:{label:'查看主动激活任务详情',tabName:route}},undefined,undefined,()=>{setPushTaskResources(prev=>[...prev,resource]);syncBubbleItems('task',[...pushTaskResources,resource]);});
+    beginActivationRun({content:'任务创建成功。',actionButton:{label:'查看主动激活任务详情',tabName:route}},undefined,undefined,()=>{setPushTaskResources(prev=>[...prev,resource]);syncBubbleItems('task',[...pushTaskResources,resource]);});
   };
   const handleSendMessage = (text: string, images?: string[]) => {
     if ((!text.trim() && (!images || images.length === 0)) || inputLocked) return;
