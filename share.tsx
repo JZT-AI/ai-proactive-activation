@@ -62,6 +62,13 @@ const activationTasks: Record<string, any> = {};
 const activationChannel = (type, city) => type === 'workflow' ? '工作流私聊 - 光年' : ['南京','合肥','无锡','西安','苏州','芜湖'].includes(city) ? `企微私聊-光年本地（${city === '南京' ? '南京新房' : city}）` : '';
 const activationImage = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="500" height="300"><rect width="500" height="300" fill="#eef2ed"/><text x="20" y="30" font-size="16" fill="#627a69">户型示意 · 演示图片</text><g fill="#fffdf6" stroke="#839989" stroke-width="5"><rect x="25" y="55" width="450" height="220"/><path d="M170 55V275M340 55V275M25 170H170M340 170H475"/></g><g fill="#708577" font-size="17"><text x="70" y="120">卧室</text><text x="215" y="165">客餐厅</text><text x="385" y="120">卧室</text><text x="68" y="230">书房</text><text x="385" y="230">厨房</text></g></svg>');
 const activationRadarImage = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="600" height="280"><defs><linearGradient id="g" x1="0" x2="1"><stop stop-color="#ff9d00"/><stop offset="1" stop-color="#ff4e00"/></linearGradient></defs><rect width="600" height="280" fill="url(#g)"/><circle cx="520" cy="70" r="62" fill="#fff2d2" opacity=".45"/><path d="M475 235l42-74 31 30 28-54" stroke="#fff" stroke-width="12" fill="none" stroke-linecap="round"/><text x="42" y="90" font-family="Arial" font-size="36" font-weight="700" fill="white">根据您的需求精选</text><text x="42" y="140" font-family="Arial" font-size="42" font-weight="700" fill="white">近期降价房源</text><rect x="42" y="180" width="230" height="48" rx="24" fill="#fff"/><text x="65" y="212" font-family="Arial" font-size="20" font-weight="700" fill="#f25800">低于同小区同户型均价</text></svg>');
+const activationUserProfile = (name = '') => {
+  const nickname = name.replace('群内客户-', '') || '样本用户';
+  const idMap: Record<string, string> = { '橙子': '788100000001', '家和万事兴': '788100000002' };
+  const colors = nickname === '家和万事兴' ? ['#c99a61', '#704b2a'] : ['#7fb3b8', '#355c69'];
+  const avatar = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96"><defs><linearGradient id="a" x1="0" x2="1" y1="0" y2="1"><stop stop-color="${colors[0]}"/><stop offset="1" stop-color="${colors[1]}"/></linearGradient></defs><rect width="96" height="96" rx="48" fill="url(#a)"/><circle cx="48" cy="37" r="17" fill="#fde8d5"/><path d="M18 87c4-19 16-29 30-29s26 10 30 29" fill="#f4f6f8"/><text x="48" y="91" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#45525b">${nickname.slice(0, 1)}</text></svg>`);
+  return { nickname, id: idMap[nickname] || '788100000003', avatar };
+};
 const activationMessages = (id, revision, person = '橙子') => {
   const texts = {
     'ACT-001': '最近合肥不少楼盘特价房，比之前便宜了三十万左右😊，您有关注的区域或者户型吗？',
@@ -84,13 +91,13 @@ function ActivationChoiceCard({ data, onRefresh, onConfirm, onUser }) {
   const audience=data.audiences.find(a=>a.name===draft.audience);
   const disabled=data.confirmed || data.loading;
   const sample=draft.audience.includes('南京')?'家和万事兴':'橙子';
-  const id=sample==='橙子'?'788100000001':'788100000002';
+  const sampleProfile=activationUserProfile(sample);
   return <div data-testid="activation-choice" className="w-full bg-white border border-zinc-200 rounded-xl p-4 space-y-3 shadow-sm">
     <h3 className="text-sm font-medium">主动激活内容</h3>
     <label className="block text-xs text-zinc-500">引用人群包<select aria-label="主动激活人群包" value={draft.audience} disabled={disabled} onChange={e=>onRefresh({...draft,audience:e.target.value,error:''})} className="w-full border rounded-lg p-2 mt-1 text-zinc-800 disabled:opacity-50"><option value="">请选择当前会话人群包</option>{data.audiences.map(a=><option key={a.id} value={a.name}>{a.name}</option>)}</select></label>
     <label className="block text-xs text-zinc-500">主动激活策略<select aria-label="主动激活策略" value={draft.strategyId} disabled={disabled} onChange={e=>onRefresh({...draft,strategyId:e.target.value,error:''})} className="w-full border rounded-lg p-2 mt-1 text-zinc-800 disabled:opacity-50"><option value="">请选择策略</option>{activationCategories.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
     {draft.error&&<p role="alert" className="text-xs text-red-600">{draft.error}</p>}
-    {data.loading?<><p role="status" className="text-xs text-zinc-500">内容生成中…</p><button disabled className="w-full bg-zinc-900 text-white rounded-lg py-2 text-sm disabled:opacity-40">确认使用</button></>:!audience?<p className="text-xs text-zinc-500">请选择人群包。</p>:!audience.audienceCount?<p role="alert" className="text-xs text-red-600">人群包为空，无法生成示例。</p>:!draft.strategyId?<p className="text-xs text-zinc-500">请选择策略。</p>:<><div className="space-y-3"><h3 className="text-sm font-medium">内容示例</h3><button className="text-xs text-blue-600" onClick={()=>onUser(sample)}>样本：{sample} · {id}</button><ActivationMessageList items={draft.preview}/></div><button disabled={disabled} onClick={onConfirm} className="w-full bg-zinc-900 text-white rounded-lg py-2 text-sm disabled:opacity-40">{data.confirmed?'已确认使用':'确认使用'}</button></>}
+    {data.loading?<><p role="status" className="text-xs text-zinc-500">内容生成中…</p><button disabled className="w-full bg-zinc-900 text-white rounded-lg py-2 text-sm disabled:opacity-40">确认使用</button></>:!audience?<p className="text-xs text-zinc-500">请选择人群包。</p>:!audience.audienceCount?<p role="alert" className="text-xs text-red-600">人群包为空，无法生成示例。</p>:!draft.strategyId?<p className="text-xs text-zinc-500">请选择策略。</p>:<><div className="space-y-3"><h3 className="text-sm font-medium">内容示例</h3><button aria-label={`查看样本用户 ${sampleProfile.nickname} 详情`} className="flex items-center gap-2 text-xs text-blue-600 hover:text-blue-700" onClick={()=>onUser(sample)}><img src={sampleProfile.avatar} alt={`${sampleProfile.nickname}头像`} className="w-7 h-7 rounded-full border border-white shadow-sm"/><span>样本：{sampleProfile.nickname} · {sampleProfile.id}</span></button><ActivationMessageList items={draft.preview}/></div><button disabled={disabled} onClick={onConfirm} className="w-full bg-zinc-900 text-white rounded-lg py-2 text-sm disabled:opacity-40">{data.confirmed?'已确认使用':'确认使用'}</button></>}
   </div>;
 }
 function ActivationTaskDetail({ taskId }) {
@@ -8853,6 +8860,7 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
   const isGroupProfile = slideOverUser?.startsWith('群聊') && !isGroupCustomer;
   const displayTitle = isGroupCustomer ? realData.cName : (isGroupProfile ? realData.gName : slideOverUser);
   const displayGroupName = isGroupProfile ? realData.gName : slideOverUser;
+  const slideOverProfile = activationUserProfile(displayTitle || '');
 
   const handleSlideOverPrev = () => {
     if (hasSlideOverPrev) {
@@ -9519,11 +9527,7 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
             </div>
             <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-0">
               <div className="pb-6 border-b border-zinc-100 dark:border-zinc-800 flex flex-col gap-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-                    {displayTitle}
-                  </h2>
-                </div>
+                {isGroupProfile ? <div className="flex items-center justify-between"><h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{displayTitle}</h2></div> : <div className="flex items-center gap-3"><img src={slideOverProfile.avatar} alt={`${slideOverProfile.nickname}头像`} className="w-12 h-12 rounded-full shrink-0"/><div><div className="text-xs text-zinc-500 mb-1">用户昵称</div><h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">{slideOverProfile.nickname}</h2><div className="text-xs text-zinc-500 mt-1">788ID：{slideOverProfile.id}</div></div></div>}
 
                 {(slideOverUser?.startsWith('群聊') || slideOverUser?.startsWith('群内客户-')) && (
                   <div className="flex p-1 bg-zinc-100 dark:bg-zinc-800/80 rounded-lg">
