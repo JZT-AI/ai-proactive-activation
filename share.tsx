@@ -780,7 +780,6 @@ interface SmartInputProps {
   activeBubbleId?: string | null;
   onBubbleToggle?: (id: string | null) => void;
   locked?: boolean;
-  onStop?: () => void;
   pendingAction?: { type: 'append', text: string, id: number } | null;
 }
 
@@ -790,7 +789,7 @@ interface ContextItem {
   type: 'group';
 }
 
-function SmartInput({ mode, setMode, value, onChange, onSubmit, bubbles, onBubbleClick, activeBubbleId: propActiveBubbleId, onBubbleToggle, locked, onStop, pendingAction, sessionAudiences }: SmartInputProps) {
+function SmartInput({ mode, setMode, value, onChange, onSubmit, bubbles, onBubbleClick, activeBubbleId: propActiveBubbleId, onBubbleToggle, locked, pendingAction, sessionAudiences }: SmartInputProps) {
   const [internalActiveBubbleId, setInternalActiveBubbleId] = useState<string | null>(null);
   const [atCategory, setAtCategory] = useState<string | null>(null);
   // Contexts removed as per request to have inline text
@@ -1151,16 +1150,7 @@ function SmartInput({ mode, setMode, value, onChange, onSubmit, bubbles, onBubbl
           </button>
         </div>
 
-        {locked ? (
-          <button
-            onClick={onStop}
-            className="p-1.5 bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors flex items-center gap-1 px-3 text-xs font-medium"
-            title="停止任务"
-          >
-            <Square size={12} fill="currentColor" />
-            停止任务
-          </button>
-        ) : (
+        {!locked && (
           <button
             onClick={() => {
                 if (!locked) {
@@ -9252,7 +9242,6 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
           activeBubbleId={activeBubbleId}
           onBubbleToggle={setActiveBubbleId}
           locked={inputLocked}
-          onStop={stopDemo}
           pendingAction={pendingAction}
         />
       </div>
