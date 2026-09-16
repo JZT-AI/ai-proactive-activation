@@ -86,7 +86,7 @@ function ActivationMessageList({ items }) {
   const [link, setLink] = useState(false);
   return <div className="space-y-2">{items.map((item,i)=><div key={i} className="border border-zinc-200 rounded-lg overflow-hidden"><div className="px-3 py-1 bg-zinc-50 text-[11px] text-zinc-500">内容 {i+1} · {item.type} · 发送延迟 {item.delay} 秒</div><div className="p-3 text-sm whitespace-pre-wrap break-words">{item.type === '图片' ? <button onClick={()=>setZoom(true)} title="放大图片"><img src={item.body} alt="房源户型演示图片" className="h-32 rounded" /></button> : item.type === '小程序卡片' ? <div className="overflow-hidden rounded-lg border border-zinc-100"><div className="px-3 py-2 text-sm font-medium">{item.title}</div><img src={item.image} alt={item.title} className="w-full rounded-b-lg" /></div> : item.body}</div></div>)}{zoom && <div className="fixed inset-0 z-[200] bg-black/40 flex items-center justify-center p-8" onClick={()=>setZoom(false)}><div className="bg-white p-5 rounded-xl max-w-xl"><button className="float-right" aria-label="关闭图片">×</button><img src={activationImage} alt="放大户型示意" /></div></div>}</div>;
 }
-function ActivationChoiceCard({ data, onRefresh, onConfirm, onUser }) {
+function ActivationChoiceCard({ data, onRefresh, onRetry, onConfirm, onUser }) {
   const draft=data.draft;
   const audience=data.audiences.find(a=>a.name===draft.audience);
   const disabled=data.confirmed || data.loading;
@@ -97,7 +97,7 @@ function ActivationChoiceCard({ data, onRefresh, onConfirm, onUser }) {
     <label className="block text-xs text-zinc-500">引用人群包<select aria-label="主动激活人群包" value={draft.audience} disabled={disabled} onChange={e=>onRefresh({...draft,audience:e.target.value,error:''})} className="w-full border rounded-lg p-2 mt-1 text-zinc-800 disabled:opacity-50"><option value="">请选择当前会话人群包</option>{data.audiences.map(a=><option key={a.id} value={a.name}>{a.name}</option>)}</select></label>
     <label className="block text-xs text-zinc-500">主动激活策略<select aria-label="主动激活策略" value={draft.strategyId} disabled={disabled} onChange={e=>onRefresh({...draft,strategyId:e.target.value,error:''})} className="w-full border rounded-lg p-2 mt-1 text-zinc-800 disabled:opacity-50"><option value="">请选择策略</option>{activationCategories.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
     {draft.error&&<p role="alert" className="text-xs text-red-600">{draft.error}</p>}
-    {data.loading?<><p role="status" className="text-xs text-zinc-500">内容生成中…</p><button disabled className="w-full bg-zinc-900 text-white rounded-lg py-2 text-sm disabled:opacity-40">确认使用</button></>:!audience?<p className="text-xs text-zinc-500">请选择人群包。</p>:!audience.audienceCount?<p role="alert" className="text-xs text-red-600">人群包为空，无法生成示例。</p>:!draft.strategyId?<p className="text-xs text-zinc-500">请选择策略。</p>:<><div className="space-y-3"><h3 className="text-sm font-medium">内容示例</h3><button aria-label={`查看用户 ${sampleProfile.nickname} 详情`} className="flex items-center gap-2 text-xs text-blue-600 hover:text-blue-700" onClick={()=>onUser(sample)}><img src={sampleProfile.avatar} alt={`${sampleProfile.nickname}头像`} className="w-7 h-7 rounded-full border border-white shadow-sm"/><span>{sampleProfile.nickname}</span></button><ActivationMessageList items={draft.preview}/></div><button disabled={disabled} onClick={onConfirm} className="w-full bg-zinc-900 text-white rounded-lg py-2 text-sm disabled:opacity-40">{data.confirmed?'已确认使用':'确认使用'}</button></>}
+    {data.loading?<><p role="status" className="text-xs text-zinc-500">内容生成中…</p><button disabled className="w-full bg-zinc-900 text-white rounded-lg py-2 text-sm disabled:opacity-40">确认使用</button></>:draft.generationError?<><p role="alert" className="text-xs text-red-600">{draft.generationError}</p><button onClick={onRetry} className="w-full bg-zinc-900 text-white rounded-lg py-2 text-sm">重新生成</button><button disabled className="w-full border border-zinc-200 text-zinc-400 rounded-lg py-2 text-sm">确认使用</button></>:!audience?<p className="text-xs text-zinc-500">请选择人群包。</p>:!audience.audienceCount?<p role="alert" className="text-xs text-red-600">人群包为空，无法生成示例。</p>:!draft.strategyId?<p className="text-xs text-zinc-500">请选择策略。</p>:<><div className="space-y-3"><h3 className="text-sm font-medium">内容示例</h3><button aria-label={`查看用户 ${sampleProfile.nickname} 详情`} className="flex items-center gap-2 text-xs text-blue-600 hover:text-blue-700" onClick={()=>onUser(sample)}><img src={sampleProfile.avatar} alt={`${sampleProfile.nickname}头像`} className="w-7 h-7 rounded-full border border-white shadow-sm"/><span>{sampleProfile.nickname}</span></button><ActivationMessageList items={draft.preview}/></div><button disabled={disabled} onClick={onConfirm} className="w-full bg-zinc-900 text-white rounded-lg py-2 text-sm disabled:opacity-40">{data.confirmed?'已确认使用':'确认使用'}</button></>}
   </div>;
 }
 function ActivationTaskDetail({ taskId }) {
@@ -8639,9 +8639,11 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
       return;
     }
     setInputLocked(true);
-    setMessages(prev=>prev.map(m=>m.id===msg.id?{...m,card:{...m.card,loading:true,draft,audiences}}:m));
-    setTimeout(()=>{setMessages(prev=>prev.map(m=>m.id===msg.id?{...m,card:{...m.card,loading:false,draft:activationPreview(draft),audiences}}:m));},450);
+    const nextDraft={...draft,generationError:''};
+    setMessages(prev=>prev.map(m=>m.id===msg.id?{...m,card:{...m.card,loading:true,draft:nextDraft,audiences}}:m));
+    setTimeout(()=>{setMessages(prev=>prev.map(m=>m.id===msg.id?{...m,card:{...m.card,loading:false,draft:activationPreview(nextDraft),audiences}}:m));},450);
   };
+  const activationRetry = (msg: any) => activationRefresh(msg,{...msg.card.draft,generationError:''});
   const activationConfirmed = (msg: any) => {
     if(msg.card.confirmed)return;
     markActivationCard(msg.id);
@@ -9179,7 +9181,7 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
               {msg.taskPlan && <TaskPlan tasks={msg.taskPlan} />}
               {msg.card && msg.card.type === 'audience' && <AudienceCard data={msg.card} onUserClick={(u, l) => { setSlideOverUser(u); setSlideOverList(l || []); }} onConfirm={(name) => setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, card: { ...m.card, name, confirmed: true } as CardData } : m))} />}
             {msg.card && msg.card.type === 'group_package' && <GroupPackageCard data={msg.card} onGroupClick={(u, l) => { setSlideOverUser(u); setSlideOverList(l || []); }} onUserClick={(u, l) => { setSlideOverUser(u); setSlideOverList(l || []); }} onConfirm={(name) => setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, card: { ...m.card, name, confirmed: true } as CardData } : m))} />}
-              {msg.card && msg.card.type === 'proactive_choice' && <ActivationChoiceCard data={{...msg.card,audiences:currentActivationAudiences()}} onRefresh={draft=>activationRefresh(msg,draft)} onConfirm={()=>activationConfirmed(msg)} onUser={name=>{setSlideOverUser(name);setSlideOverList([name]);setSlideOverTab('档案')}}/>}
+              {msg.card && msg.card.type === 'proactive_choice' && <ActivationChoiceCard data={{...msg.card,audiences:currentActivationAudiences()}} onRefresh={draft=>activationRefresh(msg,draft)} onRetry={()=>activationRetry(msg)} onConfirm={()=>activationConfirmed(msg)} onUser={name=>{setSlideOverUser(name);setSlideOverList([name]);setSlideOverTab('档案')}}/>}
               {msg.card && msg.card.type === 'config' && <ConfigCard data={msg.card} onConfirm={config => msg.card.proactive ? activationConfigured(msg,config) : markActivationCard(msg.id)} />}
               {msg.card && msg.card.type === 'content_preview' && <ContentPreviewCard data={msg.card} />}
               {msg.card && msg.card.type === 'task_summary' && <TaskSummaryCard data={msg.card} onConfirm={(taskName) => msg.card.proactive ? activationCreated(msg,taskName) : setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, card: { ...m.card, taskName, confirmed: true } as CardData } : m))} />}
