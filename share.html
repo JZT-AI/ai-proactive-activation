@@ -182,7 +182,7 @@ function ActivationChoiceCard({ data, onRefresh, onRetry, onConfirm, onUser }) {
     <label className="block text-xs text-zinc-500">引用人群包<select aria-label="主动激活人群包" value={draft.audience} disabled={disabled} onChange={e=>onRefresh({...draft,audience:e.target.value,error:''})} className="w-full border rounded-lg p-2 mt-1 text-zinc-800 disabled:opacity-50"><option value="">请选择当前会话人群包</option>{data.audiences.map(a=><option key={a.id} value={a.name}>{a.name}</option>)}</select></label>
     <label className="block text-xs text-zinc-500">主动激活策略<select aria-label="主动激活策略" value={draft.strategyId} disabled={disabled} onChange={e=>onRefresh({...draft,strategyId:e.target.value,error:''})} className="w-full border rounded-lg p-2 mt-1 text-zinc-800 disabled:opacity-50"><option value="">请选择策略</option>{activationCategories.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
     {draft.error&&<p role="alert" className="text-xs text-red-600">{draft.error}</p>}
-    {data.loading?<><p role="status" className="text-xs text-zinc-500">内容生成中…</p><button disabled className="w-full bg-zinc-900 text-white rounded-lg py-2 text-sm disabled:opacity-40">确认使用</button></>:draft.generationError?<><p role="alert" className="text-xs text-red-600">{draft.generationError}</p><button onClick={onRetry} className="w-full bg-zinc-900 text-white rounded-lg py-2 text-sm">重新生成</button><button disabled className="w-full border border-zinc-200 text-zinc-400 rounded-lg py-2 text-sm">确认使用</button></>:!audience?<p className="text-xs text-zinc-500">请选择人群包。</p>:!audience.audienceCount?<p role="alert" className="text-xs text-red-600">人群包为空，无法生成示例。</p>:!draft.strategyId?<p className="text-xs text-zinc-500">请选择策略。</p>:<><div className="space-y-3"><h3 className="text-sm font-medium">内容示例</h3><button aria-label={`查看用户 ${sampleProfile.nickname} 详情`} className="flex items-center gap-2 text-xs text-blue-600 hover:text-blue-700" onClick={()=>onUser(sample)}><img src={sampleProfile.avatar} alt={`${sampleProfile.nickname}头像`} className="w-7 h-7 rounded-full border border-white shadow-sm"/><span>{sampleProfile.nickname}</span></button><ActivationMessageList items={draft.preview}/></div><button disabled={disabled} onClick={onConfirm} className="w-full bg-zinc-900 text-white rounded-lg py-2 text-sm disabled:opacity-40">{data.confirmed?'已确认使用':'确认使用'}</button></>}
+    {data.loading?<><p role="status" className="text-xs text-zinc-500">内容生成中…</p><button disabled className="w-full bg-zinc-900 text-white rounded-lg py-2 text-sm disabled:opacity-40">确认使用</button></>:draft.generationError?<><p role="alert" className="text-xs text-red-600">{draft.generationError}</p><button onClick={onRetry} className="w-full bg-zinc-900 text-white rounded-lg py-2 text-sm">重新生成</button><button disabled className="w-full border border-zinc-200 text-zinc-400 rounded-lg py-2 text-sm">确认使用</button></>:!audience?<p className="text-xs text-zinc-500">请选择人群包。</p>:!audience.audienceCount?<p role="alert" className="text-xs text-red-600">人群包为空，无法生成示例。</p>:!draft.strategyId?<p className="text-xs text-zinc-500">请选择策略。</p>:<><div className="space-y-3"><h3 className="text-sm font-medium">内容示例</h3><div className="space-y-1"><div className="text-xs text-zinc-500">样本用户（点击查看）</div><button aria-label={`查看用户 ${sampleProfile.nickname} 详情`} className="flex items-center gap-2 text-xs text-blue-600 hover:text-blue-700" onClick={()=>onUser(sample)}><img src={sampleProfile.avatar} alt={`${sampleProfile.nickname}头像`} className="w-7 h-7 rounded-full border border-white shadow-sm"/><span>{sampleProfile.nickname}</span></button></div><ActivationMessageList items={draft.preview}/></div><button disabled={disabled} onClick={onConfirm} className="w-full bg-zinc-900 text-white rounded-lg py-2 text-sm disabled:opacity-40">{data.confirmed?'已确认使用':'确认使用'}</button></>}
   </div>;
 }
 function ActivationTaskDetail({ taskId }) {
@@ -205,6 +205,15 @@ function ActivationTaskDetail({ taskId }) {
 function ActivationMemoryPanel() {
   const block=(title: string, rows: [string,string][]) => <section className="space-y-2"><h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">{title}</h3><div className="rounded-lg bg-zinc-50 dark:bg-zinc-800/60 divide-y divide-zinc-100 dark:divide-zinc-700">{rows.map(([label,value])=><div key={label} className="px-3 py-2.5"><div className="text-xs text-zinc-400">{label}</div><div className="text-sm text-zinc-700 dark:text-zinc-200 mt-1">{value}</div></div>)}</div></section>;
   return <div className="space-y-5"><section className="space-y-2"><h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">用户阶段</h3><span className="inline-flex px-2.5 py-1 rounded-full text-xs bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300">观望期</span></section>{block('长期记忆 / 当前购房需求',[['目标小区','鸿达新寓'],['房产需求','买房'],['物业类型','住宅']])}{block('偏好',[['附属空间要求','储藏间']])}</div>;
+}
+function ActivationBehaviorPanel() {
+  const events=[
+    ['2026-08-15 18:54:13','页面浏览 - 楼盘详情页 - 2秒','第一国际，新吴区/坊前'],
+    ['2026-08-15 18:54:11','页面浏览 - 特价房列表 - 10秒','第一国际'],
+    ['2026-08-15 18:54:01','页面浏览 - 楼盘详情页 - 0秒','第一国际，新吴区/坊前'],
+    ['2026-07-11 23:24:45','页面浏览 - 楼盘相册 - 0秒','无锡科技城，梁溪区/山北，61.0万-187.0万/60.0㎡-139.0㎡']
+  ];
+  return <div className="relative pl-5 space-y-5 before:absolute before:left-[7px] before:top-2 before:bottom-2 before:w-px before:bg-zinc-200 dark:before:bg-zinc-700">{events.map(([time,title,detail])=><div key={time} className="relative"><span className="absolute -left-[19px] top-1.5 w-2.5 h-2.5 rounded-full bg-blue-500 ring-4 ring-blue-50 dark:ring-zinc-900"/><div className="text-xs text-zinc-400">{time}</div><div className="text-sm text-zinc-700 dark:text-zinc-200 mt-1">{title}</div><div className="text-xs text-zinc-400 mt-1 leading-5">{detail}</div></div>)}</div>;
 }
 
 // --- src/types.ts ---
@@ -8135,7 +8144,7 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
   const [currentScenario, setCurrentScenario] = useState<1 | 2 | null>(null);
   const [slideOverUser, setSlideOverUser] = useState<string | null>(null);
   const [slideOverList, setSlideOverList] = useState<string[]>([]);
-  const [slideOverTab, setSlideOverTab] = useState<'档案' | '记忆'>('档案');
+  const [slideOverTab, setSlideOverTab] = useState<'档案' | '记忆' | '行为'>('档案');
   const [activeBubbleId, setActiveBubbleId] = useState<string | null>(null);
   const [inputLocked, setInputLocked] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -9633,13 +9642,13 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
                 )}
                 {!(slideOverUser?.startsWith('群聊') || slideOverUser?.startsWith('群内客户-')) && (
                   <div className="flex p-1 bg-zinc-100 dark:bg-zinc-800/80 rounded-lg">
-                    {(['档案','记忆'] as const).map(tab => <button key={tab} onClick={()=>setSlideOverTab(tab)} className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-all ${slideOverTab===tab?'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm':'text-zinc-500 dark:text-zinc-400'}`}>{tab}</button>)}
+                    {(['档案','记忆','行为'] as const).map(tab => <button key={tab} onClick={()=>setSlideOverTab(tab)} className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-all ${slideOverTab===tab?'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm':'text-zinc-500 dark:text-zinc-400'}`}>{tab}</button>)}
                   </div>
                 )}
               </div>
 
               <div className="flex flex-col mt-6">
-                {(!(slideOverTab==='记忆' && !(slideOverUser?.startsWith('群聊') || slideOverUser?.startsWith('群内客户-'))) && ((slideOverUser?.startsWith('群聊') && !slideOverUser.includes('客户')) ? [
+                {(!(['记忆','行为'].includes(slideOverTab) && !(slideOverUser?.startsWith('群聊') || slideOverUser?.startsWith('群内客户-'))) && ((slideOverUser?.startsWith('群聊') && !slideOverUser.includes('客户')) ? [
                   { label: '群名称', value: displayGroupName, tag: '基础', time: '2026-03-04 10:18:35' },
                   { label: '群人数', value: '2人 (含机器人)', tag: '基础', time: '2026-03-04 10:18:35' },
                   { label: '群活跃度', value: '低', tag: '状态', time: '2026-03-04 10:18:35' },
@@ -9671,6 +9680,7 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
                   </div>
                 ))))}
                 {slideOverTab==='记忆' && !(slideOverUser?.startsWith('群聊') || slideOverUser?.startsWith('群内客户-')) && <ActivationMemoryPanel />}
+                {slideOverTab==='行为' && !(slideOverUser?.startsWith('群聊') || slideOverUser?.startsWith('群内客户-')) && <ActivationBehaviorPanel />}
               </div>
             </div>
           </motion.div>
