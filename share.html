@@ -86,7 +86,6 @@
 
 
 
-
 // Consolidated Imports
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -214,6 +213,48 @@ function ActivationBehaviorPanel() {
     ['2026-07-11 23:24:45','页面浏览 - 楼盘相册 - 0秒','无锡科技城，梁溪区/山北，61.0万-187.0万/60.0㎡-139.0㎡']
   ];
   return <div className="relative pl-5 space-y-5 before:absolute before:left-[7px] before:top-2 before:bottom-2 before:w-px before:bg-zinc-200 dark:before:bg-zinc-700">{events.map(([time,title,detail])=><div key={time} className="relative"><span className="absolute -left-[19px] top-1.5 w-2.5 h-2.5 rounded-full bg-blue-500 ring-4 ring-blue-50 dark:ring-zinc-900"/><div className="text-xs text-zinc-400">{time}</div><div className="text-sm text-zinc-700 dark:text-zinc-200 mt-1">{title}</div><div className="text-xs text-zinc-400 mt-1 leading-5">{detail}</div></div>)}</div>;
+}
+
+// 圈选样本演示数据仅用于原型，切换样本时三类信息都跟随当前用户更新。
+const audiencePreviewData: Record<string, any> = {
+  '张三': {
+    id: '788100000101',
+    profile: [['意向价格','100万以内'],['意向购房面积/户型','90-110㎡ / 三房'],['首付预算','30万左右'],['购房目的','学区房'],['关注区域','合肥政务区']],
+    stage: '明确购房需求',
+    memory: [{ title: '长期记忆 / 当前购房需求', rows: [['房产需求','买房'],['目标区域','合肥政务区'],['总价预算','100万以内']] }, { title: '偏好', rows: [['户型偏好','三房'],['位置偏好','近地铁']] }],
+    behavior: [['2026-10-18 18:54','浏览楼盘详情','合肥政务区 · 三房'],['2026-10-16 11:20','浏览小区页面','政务区学区房']]
+  },
+  '李四': {
+    id: '788100000102',
+    profile: [['意向价格','100-150万'],['意向购房面积/户型','80-100㎡ / 两房'],['首付预算','40万左右'],['购房目的','自住'],['关注区域','合肥蜀山区']],
+    stage: '需求了解中',
+    memory: [{ title: '长期记忆 / 当前购房需求', rows: [['房产需求','买房'],['目标区域','合肥蜀山区']] }, { title: '候选记忆', rows: [['总价预算','100-150万'],['面积要求','80-100㎡']] }],
+    behavior: [['2026-10-19 09:35','浏览房源列表','蜀山区 · 住宅']]
+  },
+  '王五': {
+    id: '788100000103',
+    profile: [['意向价格','未完善'],['意向购房面积/户型','未完善'],['首付预算','未完善'],['购房目的','未完善'],['关注区域','合肥']],
+    stage: '', memory: [], behavior: []
+  },
+  '橙子': { id: '788100000001', profile: [['意向价格','100万以内'],['意向购房面积/户型','90㎡ / 三房'],['关注区域','合肥政务区']], stage: '明确购房需求', memory: [{ title: '长期记忆 / 当前购房需求', rows: [['房产需求','买房'],['目标区域','合肥政务区']] }], behavior: [['2026-10-19 10:20','浏览楼盘详情','政务区 · 三房']] },
+  '家和万事兴': { id: '788100000002', profile: [['意向价格','100-150万'],['意向购房面积/户型','100㎡ / 三房'],['关注区域','合肥蜀山区']], stage: '需求了解中', memory: [{ title: '候选记忆', rows: [['房产需求','买房'],['总价预算','100-150万']] }], behavior: [['2026-10-17 14:05','浏览小区页面','蜀山区住宅']] },
+  '贝壳张建': { id: '788100000004', profile: [['意向价格','未完善'],['关注区域','合肥']], stage: '', memory: [], behavior: [['2026-10-18 09:15','浏览房源列表','合肥住宅']] },
+  '桃燃': { id: '788100000005', profile: [['意向价格','100万以内'],['关注区域','合肥包河区']], stage: '观望期', memory: [{ title: '长期记忆 / 当前购房需求', rows: [['房产需求','买房'],['目标区域','合肥包河区']] }], behavior: [] },
+  '用户7892': { id: '788100000006', profile: [['意向价格','未完善'],['关注区域','未完善']], stage: '', memory: [], behavior: [] }
+};
+function AudiencePreviewMemoryPanel({ userName }: { userName: string }) {
+  const user = audiencePreviewData[userName];
+  if (!user) return <ActivationMemoryPanel />;
+  if (!user.memory.length) return <div className="rounded-lg border border-dashed border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 p-5 text-sm text-zinc-500">暂无可展示的用户记忆</div>;
+  return <div className="space-y-5">
+    <section className="space-y-2"><h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">用户阶段</h3><span className="inline-flex px-2.5 py-1 rounded-full text-xs bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300">{user.stage}</span></section>
+    {user.memory.map((group: any) => <section key={group.title} className="space-y-2"><h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">{group.title}</h3><div className="rounded-lg bg-zinc-50 dark:bg-zinc-800/60 divide-y divide-zinc-100 dark:divide-zinc-700">{group.rows.map(([label,value]: [string,string]) => <div key={label} className="px-3 py-2.5"><div className="text-xs text-zinc-400">{label}</div><div className="text-sm text-zinc-700 dark:text-zinc-200 mt-1">{value}</div></div>)}</div></section>)}
+  </div>;
+}
+function AudiencePreviewBehaviorPanel({ userName }: { userName: string }) {
+  const events = audiencePreviewData[userName]?.behavior ?? [];
+  if (!events.length) return <div className="rounded-lg border border-dashed border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 p-5 text-sm text-zinc-500">暂无可展示的用户行为</div>;
+  return <div className="relative pl-5 space-y-5 before:absolute before:left-[7px] before:top-2 before:bottom-2 before:w-px before:bg-zinc-200 dark:before:bg-zinc-700">{events.map(([time,title,detail]: [string,string,string]) => <div key={`${time}-${title}`} className="relative"><span className="absolute -left-[19px] top-1.5 w-2.5 h-2.5 rounded-full bg-blue-500 ring-4 ring-blue-50 dark:ring-zinc-900"/><div className="text-xs text-zinc-400">{time}</div><div className="text-sm text-zinc-700 dark:text-zinc-200 mt-1">{title}</div><div className="text-xs text-zinc-400 mt-1 leading-5">{detail}</div></div>)}</div>;
 }
 
 // --- src/types.ts ---
@@ -503,7 +544,7 @@ function AudienceCard({ data, onUserClick, onConfirm }: { data: Extract<CardData
         </div>
 
         <div className="space-y-2">
-          <div className="text-xs text-zinc-500">抽样客户 (点击查看档案)</div>
+          <div className="text-xs text-zinc-500">抽样用户（点击查看记忆、档案与行为）</div>
           <div className="flex flex-wrap gap-2">
             {data.samples.map((sample, i) => (
               <button
@@ -4109,6 +4150,7 @@ function Workspace() {
   ]);
   const [activeTabId, setActiveTabId] = useState('chat-7881301319959329');
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
+  const [selectedUserTab, setSelectedUserTab] = useState<'记忆' | '档案' | '行为'>('记忆');
   const [activeRightPanelTab, setActiveRightPanelTab] = useState('客户档案');
   // V4.7：交付群右侧增加流转记录，本轮仅展示记录，不提供经纪人更换操作。
   const [activeGroupRightPanelTab, setActiveGroupRightPanelTab] = useState<'群档案' | '流转记录'>('群档案');
@@ -5659,8 +5701,8 @@ function Workspace() {
                   {['橙子', '家和万事兴', '贝壳张建', '桃燃', '用户7892'].map((name, i) => (
                     <tr key={i} className="hover:bg-zinc-50 dark:hover:bg-zinc-900/20">
                       <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">{name}</td>
-                      <td className="px-4 py-3 text-zinc-500 font-mono">138{Math.floor(Math.random()*10000000).toString().padStart(8, '0')}</td>
-                      <td className="px-4 py-3 text-indigo-600 dark:text-indigo-400 cursor-pointer hover:underline" onClick={() => setSelectedUser(name)}>查看档案</td>
+                      <td className="px-4 py-3 text-zinc-500 font-mono">{audiencePreviewData[name]?.id || '—'}</td>
+                      <td className="px-4 py-3"><button type="button" className="text-indigo-600 dark:text-indigo-400 hover:underline" onClick={() => { setSelectedUserTab('记忆'); setSelectedUser(name); }}>用户详情</button></td>
                     </tr>
                   ))}
                 </tbody>
@@ -5684,40 +5726,21 @@ function Workspace() {
                   animate={{ x: 0 }}
                   exit={{ x: '100%' }}
                   transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                  className="absolute right-0 top-0 bottom-0 w-[320px] bg-white dark:bg-zinc-900 border-l border-zinc-200 dark:border-zinc-800 z-20 shadow-xl flex flex-col"
+                  className="absolute right-0 top-0 bottom-0 w-[380px] bg-white dark:bg-zinc-900 border-l border-zinc-200 dark:border-zinc-800 z-20 shadow-xl flex flex-col"
                 >
                   <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center bg-zinc-50/50 dark:bg-zinc-900/50">
-                    <h3 className="font-medium text-zinc-900 dark:text-zinc-100">客户档案</h3>
+                    <h3 className="font-medium text-zinc-900 dark:text-zinc-100">用户详情</h3>
                     <button onClick={() => setSelectedUser(null)} className="p-1 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded text-zinc-500">
                       <X size={16} />
                     </button>
                   </div>
                   <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
-                    <div className="flex items-center gap-3 pb-4 border-b border-zinc-100 dark:border-zinc-800">
-                      <div>
-                        <div className="font-bold text-lg">{selectedUser}</div>
-                      </div>
-                    </div>
+                    <div className="flex items-center gap-3"><div className="w-11 h-11 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center font-semibold text-indigo-600 dark:text-indigo-300">{selectedUser.slice(0,1)}</div><div><div className="font-bold text-lg text-zinc-900 dark:text-zinc-100">{selectedUser}</div><div className="text-xs text-zinc-500">788ID：{audiencePreviewData[selectedUser]?.id || '—'}</div></div></div>
+                    <div className="flex p-1 bg-zinc-100 dark:bg-zinc-800/80 rounded-lg">{(['记忆','档案','行为'] as const).map(tab => <button key={tab} type="button" onClick={() => setSelectedUserTab(tab)} className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-all ${selectedUserTab === tab ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm' : 'text-zinc-500 dark:text-zinc-400'}`}>{tab}</button>)}</div>
 
-                    <div className="flex flex-col">
-                      {[
-                        { label: '意向价格', value: '200万以内', tag: '固定', time: '2026-03-04 10:18:35' },
-                        { label: '意向购房面积/户型', value: '120平左右', tag: '固定', time: '2026-03-04 10:18:35' },
-                        { label: '首付预算', value: '60万左右', tag: '固定', time: '2026-03-04 10:18:35' },
-                        { label: '购房目的', value: '学区房', tag: '固定', time: '2026-03-04 10:18:35' },
-                        { label: '关注区域', value: '政务区、高新区', tag: '固定', time: '2026-03-04 10:18:35' },
-                        { label: '决策周期', value: '3个月内', tag: '预测', time: '2026-03-04 10:18:35' }
-                      ].map((field, i) => (
-                        <div key={i} className="flex flex-col py-3 border-b border-zinc-100 dark:border-zinc-800/50 last:border-0">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-sm text-zinc-500">{field.label}</span>
-                            <span className={`text-[10px] px-1.5 py-0.5 rounded ${field.tag === '固定' ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-purple-50 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400'}`}>{field.tag}</span>
-                          </div>
-                          <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{field.value}</div>
-                          <div className="text-[10px] text-zinc-400 mt-1">{field.time}</div>
-                        </div>
-                      ))}
-                    </div>
+                    {selectedUserTab === '记忆' && <AudiencePreviewMemoryPanel userName={selectedUser} />}
+                    {selectedUserTab === '档案' && <div className="flex flex-col">{(audiencePreviewData[selectedUser]?.profile || []).map(([label,value]: [string,string]) => <div key={label} className="flex flex-col py-3 border-b border-zinc-100 dark:border-zinc-800/50 last:border-0"><div className="text-sm text-zinc-500">{label}</div><div className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mt-1">{value}</div></div>)}</div>}
+                    {selectedUserTab === '行为' && <AudiencePreviewBehaviorPanel userName={selectedUser} />}
                   </div>
                 </motion.div>
               </>
@@ -8144,7 +8167,8 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
   const [currentScenario, setCurrentScenario] = useState<1 | 2 | null>(null);
   const [slideOverUser, setSlideOverUser] = useState<string | null>(null);
   const [slideOverList, setSlideOverList] = useState<string[]>([]);
-  const [slideOverTab, setSlideOverTab] = useState<'档案' | '记忆' | '行为'>('档案');
+  const [slideOverTab, setSlideOverTab] = useState<'档案' | '记忆' | '行为'>('记忆');
+  const [isAudienceSamplePreview, setIsAudienceSamplePreview] = useState(false);
   const [activeBubbleId, setActiveBubbleId] = useState<string | null>(null);
   const [inputLocked, setInputLocked] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -8778,7 +8802,8 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
       else if(/策略/.test(text))error='请明确一个主动激活策略。';
       if(selected.length===1)draft.audience=selected[0].name;
       else if(/人群包|引用/.test(text))error=selected.length>1?'匹配到多个人群包，请在卡片内选择。':'未匹配到当前会话人群包，请在卡片内选择。';
-      activationRefresh(pending,{...draft,error});return;
+      activationRefresh(pending,{...draft,error});
+      return;
     }
     if(text.includes('主动激活') || matched.length){
       const time=text.match(/(?:[01]?\d|2[0-3]):[0-5]\d/);
@@ -9272,9 +9297,9 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
               )}
               {msg.loading && <div className="w-12 h-9 rounded-2xl rounded-tl-sm bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center"><Loader2 size={16} className="animate-spin text-indigo-500" /></div>}
               {msg.taskPlan && <TaskPlan tasks={msg.taskPlan} />}
-              {msg.card && msg.card.type === 'audience' && <AudienceCard data={msg.card} onUserClick={(u, l) => { setSlideOverUser(u); setSlideOverList(l || []); }} onConfirm={(name) => setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, card: { ...m.card, name, confirmed: true } as CardData } : m))} />}
-            {msg.card && msg.card.type === 'group_package' && <GroupPackageCard data={msg.card} onGroupClick={(u, l) => { setSlideOverUser(u); setSlideOverList(l || []); }} onUserClick={(u, l) => { setSlideOverUser(u); setSlideOverList(l || []); }} onConfirm={(name) => setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, card: { ...m.card, name, confirmed: true } as CardData } : m))} />}
-              {msg.card && msg.card.type === 'proactive_choice' && <ActivationChoiceCard data={{...msg.card,audiences:currentActivationAudiences()}} onRefresh={draft=>activationRefresh(msg,draft)} onRetry={()=>activationRetry(msg)} onConfirm={()=>activationConfirmed(msg)} onUser={name=>{setSlideOverUser(name);setSlideOverList([name]);setSlideOverTab('档案')}}/>}
+              {msg.card && msg.card.type === 'audience' && <AudienceCard data={msg.card} onUserClick={(u, l) => { setIsAudienceSamplePreview(true); setSlideOverTab('记忆'); setSlideOverUser(u); setSlideOverList(l || []); }} onConfirm={(name) => setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, card: { ...m.card, name, confirmed: true } as CardData } : m))} />}
+            {msg.card && msg.card.type === 'group_package' && <GroupPackageCard data={msg.card} onGroupClick={(u, l) => { setIsAudienceSamplePreview(false); setSlideOverUser(u); setSlideOverList(l || []); }} onUserClick={(u, l) => { setIsAudienceSamplePreview(false); setSlideOverUser(u); setSlideOverList(l || []); }} onConfirm={(name) => setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, card: { ...m.card, name, confirmed: true } as CardData } : m))} />}
+              {msg.card && msg.card.type === 'proactive_choice' && <ActivationChoiceCard data={{...msg.card,audiences:currentActivationAudiences()}} onRefresh={draft=>activationRefresh(msg,draft)} onRetry={()=>activationRetry(msg)} onConfirm={()=>activationConfirmed(msg)} onUser={name=>{setIsAudienceSamplePreview(false);setSlideOverUser(name);setSlideOverList([name]);setSlideOverTab('记忆')}}/>}
               {msg.card && msg.card.type === 'config' && <ConfigCard data={msg.card} onConfirm={config => msg.card.proactive ? activationConfigured(msg,config) : markActivationCard(msg.id)} />}
               {msg.card && msg.card.type === 'content_preview' && <ContentPreviewCard data={msg.card} />}
               {msg.card && msg.card.type === 'task_summary' && <TaskSummaryCard data={msg.card} onConfirm={(taskName) => msg.card.proactive ? activationCreated(msg,taskName) : setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, card: { ...m.card, taskName, confirmed: true } as CardData } : m))} />}
@@ -9589,6 +9614,7 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
               <button onClick={() => {
                 setSlideOverUser(null);
                 setSlideOverList([]);
+                setIsAudienceSamplePreview(false);
                 // 使用全局 logEvent 避免闭包引用问题
                 window.logEvent('close_profile', { user: slideOverUser });
               }} className="flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
@@ -9622,7 +9648,7 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
             </div>
             <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-0">
               <div className="pb-6 border-b border-zinc-100 dark:border-zinc-800 flex flex-col gap-4">
-                {isGroupProfile ? <div className="flex items-center justify-between"><h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{displayTitle}</h2></div> : <div className="flex items-center gap-3"><img src={slideOverProfile.avatar} alt={`${slideOverProfile.nickname}头像`} className="w-12 h-12 rounded-full shrink-0"/><div><div className="text-xs text-zinc-500 mb-1">用户昵称</div><h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">{slideOverProfile.nickname}</h2><div className="text-xs text-zinc-500 mt-1">788ID：{slideOverProfile.id}</div></div></div>}
+                {isGroupProfile ? <div className="flex items-center justify-between"><h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{displayTitle}</h2></div> : isAudienceSamplePreview ? <div className="flex items-center gap-3"><div className="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center text-lg font-semibold text-indigo-600 dark:text-indigo-300">{displayTitle?.slice(0,1)}</div><div><div className="text-xs text-zinc-500 mb-1">预览用户信息</div><h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">{displayTitle}</h2><div className="text-xs text-zinc-500 mt-1">788ID：{audiencePreviewData[displayTitle || '']?.id || '—'}</div></div></div> : <div className="flex items-center gap-3"><img src={slideOverProfile.avatar} alt={`${slideOverProfile.nickname}头像`} className="w-12 h-12 rounded-full shrink-0"/><div><div className="text-xs text-zinc-500 mb-1">用户昵称</div><h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">{slideOverProfile.nickname}</h2><div className="text-xs text-zinc-500 mt-1">788ID：{slideOverProfile.id}</div></div></div>}
 
                 {(slideOverUser?.startsWith('群聊') || slideOverUser?.startsWith('群内客户-')) && (
                   <div className="flex p-1 bg-zinc-100 dark:bg-zinc-800/80 rounded-lg">
@@ -9642,7 +9668,7 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
                 )}
                 {!(slideOverUser?.startsWith('群聊') || slideOverUser?.startsWith('群内客户-')) && (
                   <div className="flex p-1 bg-zinc-100 dark:bg-zinc-800/80 rounded-lg">
-                    {(['档案','记忆','行为'] as const).map(tab => <button key={tab} onClick={()=>setSlideOverTab(tab)} className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-all ${slideOverTab===tab?'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm':'text-zinc-500 dark:text-zinc-400'}`}>{tab}</button>)}
+                    {(['记忆','档案','行为'] as const).map(tab => <button key={tab} onClick={()=>setSlideOverTab(tab)} className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-all ${slideOverTab===tab?'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm':'text-zinc-500 dark:text-zinc-400'}`}>{tab}</button>)}
                   </div>
                 )}
               </div>
@@ -9662,25 +9688,25 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
                     <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{field.value}</div>
                     <div className="text-[10px] text-zinc-400 mt-1">{field.time}</div>
                   </div>
-                )) : [
+                )) : (isAudienceSamplePreview && audiencePreviewData[displayTitle || ''] ? audiencePreviewData[displayTitle || ''].profile.map(([label,value]: [string,string]) => ({ label, value, tag: '档案', time: '原型演示数据' })) : [
                   { label: '意向价格', value: '200万以内', tag: '固定', time: '2026-03-04 10:18:35' },
                   { label: '意向购房面积/户型', value: '120平左右', tag: '固定', time: '2026-03-04 10:18:35' },
                   { label: '首付预算', value: '60万左右', tag: '固定', time: '2026-03-04 10:18:35' },
                   { label: '购房目的', value: '学区房', tag: '固定', time: '2026-03-04 10:18:35' },
                   { label: '关注区域', value: '政务区、高新区', tag: '固定', time: '2026-03-04 10:18:35' },
                   { label: '决策周期', value: '3个月内', tag: '预测', time: '2026-03-04 10:18:35' }
-                ].map((field, i) => (
+                ]).map((field, i) => (
                   <div key={i} className="flex flex-col py-3 border-b border-zinc-100 dark:border-zinc-800/50 last:border-0">
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-sm text-zinc-500">{field.label}</span>
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded ${field.tag === '固定' ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-purple-50 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400'}`}>{field.tag}</span>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded ${field.tag === '固定' || field.tag === '档案' ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-purple-50 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400'}`}>{field.tag}</span>
                     </div>
                     <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{field.value}</div>
                     <div className="text-[10px] text-zinc-400 mt-1">{field.time}</div>
                   </div>
                 ))))}
-                {slideOverTab==='记忆' && !(slideOverUser?.startsWith('群聊') || slideOverUser?.startsWith('群内客户-')) && <ActivationMemoryPanel />}
-                {slideOverTab==='行为' && !(slideOverUser?.startsWith('群聊') || slideOverUser?.startsWith('群内客户-')) && <ActivationBehaviorPanel />}
+                {slideOverTab==='记忆' && !(slideOverUser?.startsWith('群聊') || slideOverUser?.startsWith('群内客户-')) && (isAudienceSamplePreview ? <AudiencePreviewMemoryPanel userName={displayTitle || ''} /> : <ActivationMemoryPanel />)}
+                {slideOverTab==='行为' && !(slideOverUser?.startsWith('群聊') || slideOverUser?.startsWith('群内客户-')) && (isAudienceSamplePreview ? <AudiencePreviewBehaviorPanel userName={displayTitle || ''} /> : <ActivationBehaviorPanel />)}
               </div>
             </div>
           </motion.div>
@@ -9703,7 +9729,6 @@ if (rootElement) {
   const root = createRoot(rootElement);
   root.render(<App />);
 }
-
 
 </script>
 <script>
