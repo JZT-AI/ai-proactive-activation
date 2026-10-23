@@ -4055,7 +4055,7 @@ function WecomHousingMessages({manual=[]}){
  const messages=[{id:'intro',at:0,time:'今天 09:20',kind:'incoming',text:'您好，我这边有几套房源，麻烦帮我传一下。'}];
  tasks.forEach(t=>{messages.push({id:t.id+'in',task:t.id,at:t.created,time:t.time,kind:'incoming',text:t.text},{id:t.id+'ack',task:t.id,at:t.created+1,time:t.time,kind:'ack',system:true,text:t.admissionError?'本次上传未受理：'+t.admissionError:'收到传房请求，共'+t.items.length+'条房源链接，正在处理，完成后告知您。'});(t.submissions||[]).forEach((r,n)=>{const at=Math.max(t.created+2+n*2,new Date(r.time).getTime());messages.push({id:t.id+'dup'+n,task:t.id,at,time:r.time,kind:'incoming',text:r.text},{id:t.id+'dup-reply'+n,task:t.id,at:at+1,time:r.time,kind:'duplicate',system:true,text:'房源正在处理中，完成后会告知您。'})});if(!t.admissionError&&['completed','partial','cancelled'].includes(t.status))messages.push({id:t.id+'end',task:t.id,at:Math.max(t.created+100,new Date(t.finishedAt||t.time).getTime()),time:t.finishedAt||t.time,kind:'complete',system:true,text:result(t)});});
  manual.forEach((m,n)=>messages.push({id:'manual'+n,at:m.created||new Date(m.time).getTime(),time:m.time,kind:'manual',text:m.text}));messages.sort((a,b)=>a.at-b.at);
- return <div data-wecom-port data-wecom-messages className="space-y-6">{messages.map(m=><div key={m.id} data-wecom-record={m.task} data-message-at={m.at} data-wecom-incoming={m.kind==='incoming'?true:undefined} data-wecom-ack={m.kind==='ack'?true:undefined} data-wecom-complete={m.kind==='complete'?true:undefined}><ChatMessage role={m.kind==='incoming'?'user':'ai'} time={m.time} name={m.kind==='incoming'?'张经理（经纪人）':'西安房源客服'} isSystemReply={!!m.system} content={m.text}/></div>)}</div>;
+ return <div data-wecom-port data-wecom-messages className="space-y-6">{messages.map(m=><div key={m.id} data-wecom-record={m.task} data-message-at={m.at} data-wecom-incoming={m.kind==='incoming'?true:undefined} data-wecom-ack={m.kind==='ack'?true:undefined} data-wecom-complete={m.kind==='complete'?true:undefined}><ChatMessage role={m.kind==='incoming'?'user':'ai'} time={m.time} name={m.kind==='incoming'?'张经理（经纪人）':'西安房源客服'} content={m.text}/></div>)}</div>;
 
 }
 
@@ -7834,7 +7834,7 @@ function Workspace() {
   );
 }
 
-function ChatMessage({ role, time, name, content, images, isHumanOp, isSystemReply }: { role: 'user' | 'ai', time: string, name: string, content: string, images?: string[], isHumanOp?: boolean, isSystemReply?: boolean }) {
+function ChatMessage({ role, time, name, content, images, isHumanOp }: { role: 'user' | 'ai', time: string, name: string, content: string, images?: string[], isHumanOp?: boolean }) {
   const isAI = role === 'ai';
   return (
     <div className={`flex flex-col gap-1 ${isAI ? 'items-end' : 'items-start'}`}>
@@ -7843,7 +7843,6 @@ function ChatMessage({ role, time, name, content, images, isHumanOp, isSystemRep
           <>
             <span>{time}</span>
             <span>{name}</span>
-            {isSystemReply && <span data-system-reply className="rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] text-slate-500">系统自动回复</span>}
             {isHumanOp && <span className="bg-orange-500 text-white px-1 rounded text-[10px]">运营</span>}
           </>
         ) : (
