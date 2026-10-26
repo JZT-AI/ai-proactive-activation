@@ -4064,7 +4064,7 @@ function Workspace() {
   useAnalytics(); // 只用于记录 PV
   const [wecomDraft,setWecomDraft]=useState(''),[wecomManual,setWecomManual]=useState([]),[wecomMapped,setWecomMapped]=useState(true);
   const wecomReply=()=>{if(!wecomDraft.trim())return;setWecomManual(prev=>[...prev,{text:wecomDraft,time:(window as any).HousingDemo.stamp(),created:Date.now()}]);setWecomDraft('');};
-  const demoReceive=(count)=>{const H=(window as any).HousingDemo;let text=count===10?'您好，帮忙上传这些房源：\n'+Array.from({length:10},(_,i)=>'https://m.anjuke.com/xa/sale/A'+(7534253900+i)+'/').join('\n'):'您好，帮忙上传这两套房源：\n'+H.sample.bk+'\n'+H.sample.ajk;if(count===0){const t=H.get().tasks.filter(t=>t.entry==='private'&&t.session==='wecom-xa').at(-1);if(t)text=t.text}H.create(text,'private','',{session:'wecom-xa',recordViewer:wecomMapped?H.owner:'',registered:wecomMapped,brokerCity:'西安',serviceCity:'西安',serviceConfigured:true});};
+  const demoReceive=(count)=>{const H=(window as any).HousingDemo;let text=count===10?'您好，帮忙上传这些房源：\n'+Array.from({length:10},(_,i)=>'https://m.anjuke.com/xa/sale/A'+(7534253900+i)+'/').join('\n'):'您好，帮忙上传这两套房源：\n'+H.sample.bk+'\n'+H.sample.ajkPC;if(count===0){const t=H.get().tasks.filter(t=>t.entry==='private'&&t.session==='wecom-xa').at(-1);if(t)text=t.text}H.create(text,'private','',{session:'wecom-xa',recordViewer:wecomMapped?H.owner:'',registered:wecomMapped,brokerCity:'西安',serviceCity:'西安',serviceConfigured:true});};
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(400);
 
