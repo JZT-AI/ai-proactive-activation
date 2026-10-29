@@ -86,6 +86,7 @@
 
 
 
+
 // Consolidated Imports
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -255,6 +256,48 @@ function AudiencePreviewBehaviorPanel({ userName }: { userName: string }) {
   const events = audiencePreviewData[userName]?.behavior ?? [];
   if (!events.length) return <div className="rounded-lg border border-dashed border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 p-5 text-sm text-zinc-500">暂无可展示的用户行为</div>;
   return <div className="relative pl-5 space-y-5 before:absolute before:left-[7px] before:top-2 before:bottom-2 before:w-px before:bg-zinc-200 dark:before:bg-zinc-700">{events.map(([time,title,detail]: [string,string,string]) => <div key={`${time}-${title}`} className="relative"><span className="absolute -left-[19px] top-1.5 w-2.5 h-2.5 rounded-full bg-blue-500 ring-4 ring-blue-50 dark:ring-zinc-900"/><div className="text-xs text-zinc-400">{time}</div><div className="text-sm text-zinc-700 dark:text-zinc-200 mt-1">{title}</div><div className="text-xs text-zinc-400 mt-1 leading-5">{detail}</div></div>)}</div>;
+}
+
+// 交付群预览与群聊包详情共用的演示关联；客户记忆直接复用人群包样本。
+type SelectionInfoTab = '记忆' | '档案' | '群档案' | '行为';
+interface SelectionGroupSample {
+  key: string;
+  name: string;
+  id: string;
+  customer: string | null;
+  summary: string;
+  advice?: [string, string][];
+}
+const selectionGroupSamples: SelectionGroupSample[] = [
+  { key: '群聊1', name: '滨湖买房交流群', id: '10813877036293200', customer: '橙子', summary: '客户关注合肥政务区三房，群内已推送匹配房源，等待客户反馈。', advice: [['运营跟进建议', '结合用户已关注房源进一步确认需求，协调经纪人跟进客户反馈。'], ['分销中介跟进建议', '补充同区域、同预算房源的对比信息，再与客户确认看房安排。']] },
+  { key: '群聊2', name: '政务区学区房群', id: '10813877036293201', customer: '家和万事兴', summary: '客户希望购置自住房，预算100—150万，正在进一步确认需求。' },
+  { key: '群聊3', name: '合肥刚需上车群', id: '10813877036293202', customer: '用户7892', summary: '客户已入群，尚无可展示的用户记忆和行为记录。' },
+  { key: '群聊4', name: '高新买房群', id: '10813877036293203', customer: '桃燃', summary: '客户处于观望阶段，关注合肥包河区房源。' },
+  { key: '群聊5', name: '包河改善群', id: '10813877036293204', customer: '贝壳张建', summary: '客户浏览过合肥住宅房源，具体购房需求尚待补充。' },
+  { key: '群聊6', name: '待关联客户服务群', id: '10813877036293205', customer: null, summary: '群基础信息可查看，当前未返回可用的关联客户标识。' }
+];
+const selectionGroupByName = (name: string | null | undefined) => {
+  const key = name?.replace(/^群内客户-/, '');
+  return selectionGroupSamples.find(group => group.key === key || group.name === key);
+};
+
+function GroupCustomerInfo({ group, tab, onTabChange }: { group: SelectionGroupSample; tab: SelectionInfoTab; onTabChange: (tab: SelectionInfoTab) => void }) {
+  const user = group.customer ? audiencePreviewData[group.customer] : null;
+  return <div className="space-y-5 min-w-0" data-testid="group-customer-details">
+    <div className="pb-4 border-b border-zinc-100 dark:border-zinc-800">
+      <div className="flex items-start gap-2"><MessageSquare size={17} className="mt-1 shrink-0 text-indigo-500" /><div className="min-w-0"><h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 break-words">{group.name}</h2><div className="text-xs text-zinc-500 mt-1 break-all">群ID：{group.id}</div></div></div>
+      <div className="mt-4 flex items-center gap-3">
+        <div className="w-11 h-11 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center font-semibold text-indigo-600 dark:text-indigo-300 shrink-0">{group.customer?.slice(0, 1) || <User size={18} />}</div>
+        <div className="min-w-0"><div className="text-xs text-zinc-500">关联客户</div><div className="font-semibold text-zinc-900 dark:text-zinc-100 break-words">{group.customer || '尚未关联可查看的客户'}</div><div className="text-xs text-zinc-500 mt-1">788ID：{user?.id || '—'}</div></div>
+      </div>
+    </div>
+    <div className="flex p-1 bg-zinc-100 dark:bg-zinc-800/80 rounded-lg" role="tablist" aria-label="群聊与客户信息">
+      {(['群档案', '记忆', '档案', '行为'] as const).map(item => <button key={item} type="button" role="tab" aria-selected={tab === item} onClick={() => onTabChange(item)} className={`flex-1 py-1.5 text-sm whitespace-nowrap font-medium rounded-md transition-all ${tab === item ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700'}`}>{item}</button>)}
+    </div>
+    {tab === '群档案' ? <div className="space-y-5">
+      {([['群聊总结', group.summary], ...(group.advice || [])] as [string, string][]).map(([label, value]) => <section key={label} className="space-y-2"><h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">{label}</h3><div className="rounded-lg bg-zinc-50 dark:bg-zinc-800/60 p-3"><p className="text-sm leading-6 text-zinc-700 dark:text-zinc-200">{value}</p></div></section>)}
+    </div> : !user ? <div className="rounded-lg border border-dashed border-zinc-200 dark:border-zinc-700 p-5 text-sm leading-6 text-zinc-500">无法确定该群关联客户，暂不可查看{tab === '档案' ? '用户档案' : `客户${tab}`}。</div> : tab === '档案' ? <div className="rounded-lg bg-zinc-50 dark:bg-zinc-800/60 divide-y divide-zinc-100 dark:divide-zinc-700">{user.profile.map(([label, value]: [string, string]) => <div key={label} className="px-3 py-2.5"><div className="text-xs text-zinc-500">{label}</div><div className="text-sm text-zinc-800 dark:text-zinc-200 mt-1">{value}</div></div>)}</div> : tab === '记忆' ? <AudiencePreviewMemoryPanel userName={group.customer!} /> : <AudiencePreviewBehaviorPanel userName={group.customer!} />}
+  </div>;
 }
 
 // --- src/types.ts ---
@@ -634,7 +677,7 @@ function GroupPackageCard({ data, onGroupClick, onUserClick, onConfirm }: { data
         </div>
 
         <div className="space-y-2">
-          <div className="text-xs text-zinc-500">抽样群聊 (点击查看档案)</div>
+          <div className="text-xs text-zinc-500">抽样群聊（点击查看群及客户详情）</div>
           <div className="flex flex-wrap gap-2">
             {data.samples.map((sample, i) => (
               <div
@@ -648,11 +691,11 @@ function GroupPackageCard({ data, onGroupClick, onUserClick, onConfirm }: { data
                   {sample}
                 </button>
                 <button
-                  onClick={() => onUserClick(`群内客户-${sample}`, data.samples)}
-                  title="查看群内唯一客户档案"
+                  onClick={() => onUserClick(sample, data.samples)}
+                  title={`查看${sample}关联客户的记忆、档案与行为`}
                   className="px-3 py-1.5 text-xs text-emerald-600 dark:text-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors"
                 >
-                  客户
+                  客户详情
                 </button>
               </div>
             ))}
@@ -4150,7 +4193,7 @@ function Workspace() {
   ]);
   const [activeTabId, setActiveTabId] = useState('chat-7881301319959329');
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
-  const [selectedUserTab, setSelectedUserTab] = useState<'记忆' | '档案' | '行为'>('记忆');
+  const [selectedUserTab, setSelectedUserTab] = useState<SelectionInfoTab>('记忆');
   const [activeRightPanelTab, setActiveRightPanelTab] = useState('客户档案');
   // V4.7：交付群右侧增加流转记录，本轮仅展示记录，不提供经纪人更换操作。
   const [activeGroupRightPanelTab, setActiveGroupRightPanelTab] = useState<'群档案' | '流转记录'>('群档案');
@@ -5781,11 +5824,11 @@ function Workspace() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
-                  {['滨湖买房交流群', '政务区学区房群', '合肥刚需上车群', '高新买房群', '包河改善群'].map((name, i) => (
+                  {selectionGroupSamples.map((group, i) => (
                     <tr key={i} className="hover:bg-zinc-50 dark:hover:bg-zinc-900/20">
-                      <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">{name}</td>
-                      <td className="px-4 py-3 text-zinc-500 font-mono">108138770362932{i < 10 ? '0' + i : i}</td>
-                      <td className="px-4 py-3 text-indigo-600 dark:text-indigo-400 cursor-pointer hover:underline" onClick={() => setSelectedUser(name)}>查看群档案</td>
+                      <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">{group.name}</td>
+                      <td className="px-4 py-3 text-zinc-500 font-mono">{group.id}</td>
+                      <td className="px-4 py-3"><button type="button" className="text-indigo-600 dark:text-indigo-400 hover:underline" onClick={() => { setSelectedUserTab('群档案'); setSelectedUser(group.name); }}>群聊详情</button></td>
                     </tr>
                   ))}
                 </tbody>
@@ -5793,94 +5836,22 @@ function Workspace() {
             </div>
           </div>
 
-          {/* Profile Drawer */}
           <AnimatePresence>
-            {selectedUser && (
+            {selectedUser && selectionGroupByName(selectedUser) && (
               <>
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 0.5 }}
-                  exit={{ opacity: 0 }}
-                  onClick={() => setSelectedUser(null)}
-                  className="absolute inset-0 bg-black z-10"
-                />
-                <motion.div
-                  initial={{ x: '100%' }}
-                  animate={{ x: 0 }}
-                  exit={{ x: '100%' }}
-                  transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                  className="absolute right-0 top-0 bottom-0 w-[320px] bg-white dark:bg-zinc-900 border-l border-zinc-200 dark:border-zinc-800 z-20 shadow-xl flex flex-col"
-                >
-                  <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center bg-zinc-50/50 dark:bg-zinc-900/50">
-                    <h3 className="font-medium text-zinc-900 dark:text-zinc-100">群档案</h3>
-                    <button onClick={() => setSelectedUser(null)} className="p-1 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded text-zinc-500">
-                      <X size={16} />
-                    </button>
-                  </div>
-                  <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-0">
-                    <div className="flex items-center gap-3 pb-6 border-b border-zinc-100 dark:border-zinc-800">
-                      <div className="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 text-lg font-bold">
-                        {selectedUser[0]}
-                      </div>
-                      <div>
-                        <div className="font-bold text-lg">{selectedUser}</div>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-6 mt-6">
-                      {/* 群聊总结 */}
-                      <div className="bg-slate-50 dark:bg-zinc-800/50 p-4 rounded-xl">
-                        <div className="flex items-center gap-2 mb-3">
-                          <span className="font-bold text-zinc-900 dark:text-zinc-100">群聊总结</span>
-                        </div>
-                        <div className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                          客服建群后，分析师与经纪人孙际玉、曹锐报协同服务。经纪人重点推介“康居时代家园”两套房源（133㎡/115万、110㎡/110万），并上传了房源实拍视频，多次@用户邀约周末实地带看。用户“橙子”自始至终未在群内发表任何言论，沟通处于单向状态。
-                        </div>
-                      </div>
-
-                      {/* 运营跟进建议 */}
-                      <div className="bg-slate-50 dark:bg-zinc-800/50 p-4 rounded-xl">
-                        <div className="flex items-center gap-2 mb-3">
-                          <MessageSquare size={16} className="text-orange-500" />
-                          <span className="font-bold text-zinc-900 dark:text-zinc-100">运营跟进建议</span>
-                        </div>
-                        <div className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                          变换话题节奏以打破单向沟通僵局。督促经纪人24小时内停止盲目@用户，改为私聊确认原因并在群内发布小区市场成交价对比分析。协助搜寻周边更具性价比的低总价盘源，由分析师从资产保值角度重新梳理需求，降低用户入群压力。
-                        </div>
-                      </div>
-
-                      {/* 分销中介跟进建议 */}
-                      <div className="bg-slate-50 dark:bg-zinc-800/50 p-4 rounded-xl">
-                        <div className="flex items-center gap-2 mb-3">
-                          <User size={16} className="text-blue-500" />
-                          <span className="font-bold text-zinc-900 dark:text-zinc-100">分销中介跟进建议</span>
-                        </div>
-                        <div className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                          停止单向硬性邀约，改为发送“康居时代vs周边同价位小区”的优劣对比分析，提供顾问式服务。利用价格钩子（如房东急售谈价空间、近期成交低价）试探用户的真实预算底线和对房源的反馈。
-                        </div>
-                      </div>
-
-                      {/* 客户意向 */}
-                      <div>
-                        <div className="font-bold text-zinc-900 dark:text-zinc-100 mb-3">客户意向</div>
-                        <div className="flex flex-col gap-2">
-                          <div className="bg-slate-50 dark:bg-zinc-800/50 p-3 rounded-lg">
-                            <div className="text-xs text-zinc-500 mb-1">决策人</div>
-                            <div className="text-sm text-zinc-900 dark:text-zinc-100">未知</div>
-                          </div>
-                          <div className="bg-slate-50 dark:bg-zinc-800/50 p-3 rounded-lg">
-                            <div className="text-xs text-zinc-500 mb-1">学区意向</div>
-                            <div className="text-sm text-zinc-900 dark:text-zinc-100">未提及</div>
-                          </div>
-                          <div className="bg-slate-50 dark:bg-zinc-800/50 p-3 rounded-lg">
-                            <div className="text-xs text-zinc-500 mb-1">当前阶段</div>
-                            <div className="text-sm text-zinc-900 dark:text-zinc-100">带着邀约中</div>
-                          </div>
-                        </div>
-                      </div>
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 0.5 }} exit={{ opacity: 0 }} onClick={() => setSelectedUser(null)} className="absolute inset-0 bg-black z-10" />
+                <motion.aside role="dialog" aria-label="群聊详情" initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200 }} className="absolute right-0 top-0 bottom-0 w-[420px] max-w-full bg-white dark:bg-zinc-900 border-l border-zinc-200 dark:border-zinc-800 z-20 shadow-xl flex flex-col">
+                  <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center gap-2 shrink-0">
+                    <h3 className="font-medium text-zinc-900 dark:text-zinc-100">群聊详情</h3>
+                    <div className="flex items-center gap-2">
+                      <button title="上一个群聊" aria-label="上一个群聊" disabled={selectionGroupSamples.findIndex(item => item.name === selectedUser) <= 0} onClick={() => { const index = selectionGroupSamples.findIndex(item => item.name === selectedUser); if (index > 0) setSelectedUser(selectionGroupSamples[index - 1].name); }} className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30"><ChevronLeft size={16} /></button>
+                      <span className="text-xs text-zinc-500">{selectionGroupSamples.findIndex(item => item.name === selectedUser) + 1} / {selectionGroupSamples.length}</span>
+                      <button title="下一个群聊" aria-label="下一个群聊" disabled={selectionGroupSamples.findIndex(item => item.name === selectedUser) >= selectionGroupSamples.length - 1} onClick={() => { const index = selectionGroupSamples.findIndex(item => item.name === selectedUser); if (index < selectionGroupSamples.length - 1) setSelectedUser(selectionGroupSamples[index + 1].name); }} className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30"><ChevronRight size={16} /></button>
+                      <button onClick={() => setSelectedUser(null)} aria-label="关闭群聊详情" className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500"><X size={16} /></button>
                     </div>
                   </div>
-                </motion.div>
+                  <div className="flex-1 overflow-y-auto p-4"><GroupCustomerInfo group={selectionGroupByName(selectedUser)!} tab={selectedUserTab} onTabChange={setSelectedUserTab} /></div>
+                </motion.aside>
               </>
             )}
           </AnimatePresence>
@@ -8167,7 +8138,7 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
   const [currentScenario, setCurrentScenario] = useState<1 | 2 | null>(null);
   const [slideOverUser, setSlideOverUser] = useState<string | null>(null);
   const [slideOverList, setSlideOverList] = useState<string[]>([]);
-  const [slideOverTab, setSlideOverTab] = useState<'档案' | '记忆' | '行为'>('记忆');
+  const [slideOverTab, setSlideOverTab] = useState<SelectionInfoTab>('记忆');
   const [isAudienceSamplePreview, setIsAudienceSamplePreview] = useState(false);
   const [activeBubbleId, setActiveBubbleId] = useState<string | null>(null);
   const [inputLocked, setInputLocked] = useState(false);
@@ -8961,40 +8932,15 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
     setShowHistory(false);
   };
 
-  const groupRealMap: Record<string, { gName: string, cName: string }> = {
-    '群聊1': { gName: 'A04.14幸福一家选房沟通群', cName: '朱家飞' },
-    '群聊2': { gName: '04.09wish选房沟通群', cName: '阮丽' },
-    '群聊3': { gName: 'A04.14YAN*选房沟通群', cName: 'YAN*' },
-    '群聊4': { gName: '04.13春光明媚选房沟通群', cName: '鑫诚机电' },
-    '群聊5': { gName: 'A04.08圆柴选房沟通群', cName: '亦心' },
-    '群聊6': { gName: '04.14龙卷风选房沟通群', cName: '龙卷风' }
-  };
-
-  const slideOverBase = slideOverUser?.startsWith('群内客户-') ? slideOverUser.replace('群内客户-', '') : slideOverUser;
+  const slideOverBase = slideOverUser?.replace(/^群内客户-/, '');
   const slideOverIndex = slideOverBase ? slideOverList.indexOf(slideOverBase) : -1;
   const hasSlideOverPrev = slideOverIndex > 0;
   const hasSlideOverNext = slideOverIndex !== -1 && slideOverIndex < slideOverList.length - 1;
-
-  const realData = groupRealMap[slideOverBase || ''] || { gName: slideOverBase, cName: '客户' };
-  const isGroupCustomer = slideOverUser?.startsWith('群内客户-');
-  const isGroupProfile = slideOverUser?.startsWith('群聊') && !isGroupCustomer;
-  const displayTitle = isGroupCustomer ? realData.cName : (isGroupProfile ? realData.gName : slideOverUser);
-  const displayGroupName = isGroupProfile ? realData.gName : slideOverUser;
+  const activeSelectionGroup = selectionGroupByName(slideOverBase);
+  const displayTitle = slideOverUser;
   const slideOverProfile = activationUserProfile(displayTitle || '');
-
-  const handleSlideOverPrev = () => {
-    if (hasSlideOverPrev) {
-      const nextBase = slideOverList[slideOverIndex - 1];
-      setSlideOverUser(slideOverUser?.startsWith('群内客户-') ? `群内客户-${nextBase}` : nextBase);
-    }
-  };
-
-  const handleSlideOverNext = () => {
-    if (hasSlideOverNext) {
-      const nextBase = slideOverList[slideOverIndex + 1];
-      setSlideOverUser(slideOverUser?.startsWith('群内客户-') ? `群内客户-${nextBase}` : nextBase);
-    }
-  };
+  const handleSlideOverPrev = () => { if (hasSlideOverPrev) setSlideOverUser(slideOverList[slideOverIndex - 1]); };
+  const handleSlideOverNext = () => { if (hasSlideOverNext) setSlideOverUser(slideOverList[slideOverIndex + 1]); };
 
   const visibleAudienceResources = audienceResources.filter(resource => resource.status === '已生成');
   const visibleGroupResources = groupResources.filter(resource => resource.status === '已生成');
@@ -9248,13 +9194,29 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
               </button>
             )}
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             <button
               onClick={() => isPlaying && currentScenario === 1 ? stopDemo() : startDemo(1)}
               className={`h-8 flex items-center justify-center gap-1 rounded-md text-xs font-medium transition-colors ${isPlaying && currentScenario === 1 ? 'bg-red-50 text-red-700 border border-red-100' : 'bg-white dark:bg-zinc-950 text-indigo-600 border border-indigo-100 dark:border-indigo-900/40 hover:bg-indigo-50 dark:hover:bg-indigo-900/20'}`}
             >
               <Play size={12} />
               圈选人群包
+            </button>
+            <button
+              onClick={() => {
+                stopDemo();
+                setResourceView('chat');
+                setSlideOverUser(null);
+                setMessages([
+                  { id: 'group-preview-request', role: 'user', content: '圈选合肥市预算100—200万、有学区房需求的交付群，每日更新。' },
+                  { id: 'group-preview-demo', role: 'ai', content: '群聊预览：点击样例查看群档案、记忆、档案与行为。以下为交互演示数据。', card: { type: 'group_package', name: '合肥100w学区房群', count: 1001, updateCycle: 'day', samples: selectionGroupSamples.map(group => group.key) } },
+                  { id: 'group-package-demo', role: 'ai', content: '查看已有演示群聊包，可从列表打开同一套详情。', actionButton: { label: '查看演示群聊包', tabName: '[AI] 合肥100w学区房群' } }
+                ]);
+              }}
+              className="h-8 flex items-center justify-center gap-1 rounded-md text-xs font-medium bg-white dark:bg-zinc-950 text-indigo-600 border border-indigo-100 dark:border-indigo-900/40 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
+            >
+              <MessageSquare size={12} />
+              圈选群聊包
             </button>
             <button
               onClick={() => isPlaying && currentScenario === 2 ? stopDemo() : startDemo(2)}
@@ -9298,7 +9260,7 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
               {msg.loading && <div className="w-12 h-9 rounded-2xl rounded-tl-sm bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center"><Loader2 size={16} className="animate-spin text-indigo-500" /></div>}
               {msg.taskPlan && <TaskPlan tasks={msg.taskPlan} />}
               {msg.card && msg.card.type === 'audience' && <AudienceCard data={msg.card} onUserClick={(u, l) => { setIsAudienceSamplePreview(true); setSlideOverTab('记忆'); setSlideOverUser(u); setSlideOverList(l || []); }} onConfirm={(name) => setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, card: { ...m.card, name, confirmed: true } as CardData } : m))} />}
-            {msg.card && msg.card.type === 'group_package' && <GroupPackageCard data={msg.card} onGroupClick={(u, l) => { setIsAudienceSamplePreview(false); setSlideOverUser(u); setSlideOverList(l || []); }} onUserClick={(u, l) => { setIsAudienceSamplePreview(false); setSlideOverUser(u); setSlideOverList(l || []); }} onConfirm={(name) => setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, card: { ...m.card, name, confirmed: true } as CardData } : m))} />}
+            {msg.card && msg.card.type === 'group_package' && <GroupPackageCard data={msg.card} onGroupClick={(u, l) => { setIsAudienceSamplePreview(false); setSlideOverTab('群档案'); setSlideOverUser(u); setSlideOverList(l || []); }} onUserClick={(u, l) => { setIsAudienceSamplePreview(false); setSlideOverTab('记忆'); setSlideOverUser(u); setSlideOverList(l || []); }} onConfirm={(name) => setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, card: { ...m.card, name, confirmed: true } as CardData } : m))} />}
               {msg.card && msg.card.type === 'proactive_choice' && <ActivationChoiceCard data={{...msg.card,audiences:currentActivationAudiences()}} onRefresh={draft=>activationRefresh(msg,draft)} onRetry={()=>activationRetry(msg)} onConfirm={()=>activationConfirmed(msg)} onUser={name=>{setIsAudienceSamplePreview(false);setSlideOverUser(name);setSlideOverList([name]);setSlideOverTab('记忆')}}/>}
               {msg.card && msg.card.type === 'config' && <ConfigCard data={msg.card} onConfirm={config => msg.card.proactive ? activationConfigured(msg,config) : markActivationCard(msg.id)} />}
               {msg.card && msg.card.type === 'content_preview' && <ContentPreviewCard data={msg.card} />}
@@ -9600,116 +9562,34 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
         )}
       </AnimatePresence>
 
-      {/* Slide-over Profile */}
+      {/* 预览客户与群聊包共用记忆、档案、行为展示。 */}
       <AnimatePresence>
         {slideOverUser && (
-          <motion.div
-            initial={{ x: '100%', opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: '100%', opacity: 0 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="absolute inset-0 bg-white dark:bg-zinc-900 z-50 flex flex-col shadow-[-10px_0_30px_rgba(0,0,0,0.1)] dark:shadow-[-10px_0_30px_rgba(0,0,0,0.5)]"
-          >
-            <div className="h-12 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between px-4 shrink-0">
-              <button onClick={() => {
-                setSlideOverUser(null);
-                setSlideOverList([]);
-                setIsAudienceSamplePreview(false);
-                // 使用全局 logEvent 避免闭包引用问题
-                window.logEvent('close_profile', { user: slideOverUser });
-              }} className="flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
-                <ChevronRight size={16} className="rotate-180" />
-                返回
-              </button>
-
-              {slideOverList.length > 1 && slideOverIndex !== -1 && (
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={handleSlideOverPrev}
-                    disabled={!hasSlideOverPrev}
-                    className={`p-1.5 rounded-md transition-colors ${hasSlideOverPrev ? 'hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300' : 'text-zinc-300 dark:text-zinc-700 cursor-not-allowed'}`}
-                    title="上一组"
-                  >
-                    <ChevronLeft size={16} />
-                  </button>
-                  <span className="text-xs text-zinc-500 font-medium w-8 text-center">
-                    {slideOverIndex + 1} / {slideOverList.length}
-                  </span>
-                  <button
-                    onClick={handleSlideOverNext}
-                    disabled={!hasSlideOverNext}
-                    className={`p-1.5 rounded-md transition-colors ${hasSlideOverNext ? 'hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300' : 'text-zinc-300 dark:text-zinc-700 cursor-not-allowed'}`}
-                    title="下一组"
-                  >
-                    <ChevronRight size={16} />
-                  </button>
-                </div>
-              )}
+          <motion.aside role="dialog" aria-label={activeSelectionGroup ? '样例群聊详情' : '用户详情'} initial={{ x: '100%', opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: '100%', opacity: 0 }} transition={{ type: 'spring', damping: 25, stiffness: 200 }} className="absolute inset-0 bg-white dark:bg-zinc-900 z-50 flex flex-col shadow-xl">
+            <div className="h-12 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between gap-2 px-4 shrink-0">
+              <button onClick={() => { setSlideOverUser(null); setSlideOverList([]); setIsAudienceSamplePreview(false); window.logEvent('close_profile', { user: slideOverUser }); }} className="flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"><ChevronLeft size={16} />返回</button>
+              <span className="text-sm font-medium text-zinc-800 dark:text-zinc-100">{activeSelectionGroup ? '群聊详情' : '用户详情'}</span>
+              {slideOverList.length > 1 && slideOverIndex !== -1 ? <div className="flex items-center gap-1"><button onClick={handleSlideOverPrev} disabled={!hasSlideOverPrev} title="上一组" aria-label="上一组" className="p-1.5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30"><ChevronLeft size={16} /></button><span className="text-xs text-zinc-500">{slideOverIndex + 1} / {slideOverList.length}</span><button onClick={handleSlideOverNext} disabled={!hasSlideOverNext} title="下一组" aria-label="下一组" className="p-1.5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30"><ChevronRight size={16} /></button></div> : <span />}
             </div>
-            <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-0">
-              <div className="pb-6 border-b border-zinc-100 dark:border-zinc-800 flex flex-col gap-4">
-                {isGroupProfile ? <div className="flex items-center justify-between"><h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{displayTitle}</h2></div> : isAudienceSamplePreview ? <div className="flex items-center gap-3"><div className="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center text-lg font-semibold text-indigo-600 dark:text-indigo-300">{displayTitle?.slice(0,1)}</div><div><div className="text-xs text-zinc-500 mb-1">预览用户信息</div><h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">{displayTitle}</h2><div className="text-xs text-zinc-500 mt-1">788ID：{audiencePreviewData[displayTitle || '']?.id || '—'}</div></div></div> : <div className="flex items-center gap-3"><img src={slideOverProfile.avatar} alt={`${slideOverProfile.nickname}头像`} className="w-12 h-12 rounded-full shrink-0"/><div><div className="text-xs text-zinc-500 mb-1">用户昵称</div><h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">{slideOverProfile.nickname}</h2><div className="text-xs text-zinc-500 mt-1">788ID：{slideOverProfile.id}</div></div></div>}
-
-                {(slideOverUser?.startsWith('群聊') || slideOverUser?.startsWith('群内客户-')) && (
-                  <div className="flex p-1 bg-zinc-100 dark:bg-zinc-800/80 rounded-lg">
-                    <button
-                      onClick={() => setSlideOverUser(slideOverUser?.startsWith('群内客户-') ? slideOverUser.replace('群内客户-', '') : slideOverUser)}
-                      className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-all ${(!slideOverUser?.startsWith('群内客户-')) ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm' : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200'}`}
-                    >
-                      群聊档案
-                    </button>
-                    <button
-                      onClick={() => setSlideOverUser(slideOverUser?.startsWith('群内客户-') ? slideOverUser : `群内客户-${slideOverUser}`)}
-                      className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-all ${slideOverUser?.startsWith('群内客户-') ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm' : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200'}`}
-                    >
-                      客户档案
-                    </button>
-                  </div>
-                )}
-                {!(slideOverUser?.startsWith('群聊') || slideOverUser?.startsWith('群内客户-')) && (
-                  <div className="flex p-1 bg-zinc-100 dark:bg-zinc-800/80 rounded-lg">
-                    {(['记忆','档案','行为'] as const).map(tab => <button key={tab} onClick={()=>setSlideOverTab(tab)} className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-all ${slideOverTab===tab?'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm':'text-zinc-500 dark:text-zinc-400'}`}>{tab}</button>)}
-                  </div>
-                )}
-              </div>
-
-              <div className="flex flex-col mt-6">
-                {(!(['记忆','行为'].includes(slideOverTab) && !(slideOverUser?.startsWith('群聊') || slideOverUser?.startsWith('群内客户-'))) && ((slideOverUser?.startsWith('群聊') && !slideOverUser.includes('客户')) ? [
-                  { label: '群名称', value: displayGroupName, tag: '基础', time: '2026-03-04 10:18:35' },
-                  { label: '群人数', value: '2人 (含机器人)', tag: '基础', time: '2026-03-04 10:18:35' },
-                  { label: '群活跃度', value: '低', tag: '状态', time: '2026-03-04 10:18:35' },
-                  { label: '群标签', value: '学区房意向、高净值', tag: '画像', time: '2026-03-04 10:18:35' }
-                ].map((field, i) => (
-                  <div key={i} className="flex flex-col py-3 border-b border-zinc-100 dark:border-zinc-800/50 last:border-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm text-zinc-500">{field.label}</span>
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded ${field.tag === '基础' ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-purple-50 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400'}`}>{field.tag}</span>
-                    </div>
-                    <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{field.value}</div>
-                    <div className="text-[10px] text-zinc-400 mt-1">{field.time}</div>
-                  </div>
-                )) : (isAudienceSamplePreview && audiencePreviewData[displayTitle || ''] ? audiencePreviewData[displayTitle || ''].profile.map(([label,value]: [string,string]) => ({ label, value, tag: '档案', time: '原型演示数据' })) : [
+            <div className="flex-1 overflow-y-auto p-5">
+              {activeSelectionGroup ? <GroupCustomerInfo group={activeSelectionGroup} tab={slideOverTab} onTabChange={setSlideOverTab} /> : <div className="space-y-6">
+                <div className="pb-6 border-b border-zinc-100 dark:border-zinc-800 flex flex-col gap-4">
+                  {isAudienceSamplePreview ? <div className="flex items-center gap-3"><div className="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center text-lg font-semibold text-indigo-600 dark:text-indigo-300">{displayTitle?.slice(0,1)}</div><div><div className="text-xs text-zinc-500 mb-1">预览用户信息</div><h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">{displayTitle}</h2><div className="text-xs text-zinc-500 mt-1">788ID：{audiencePreviewData[displayTitle || '']?.id || '—'}</div></div></div> : <div className="flex items-center gap-3"><img src={slideOverProfile.avatar} alt={`${slideOverProfile.nickname}头像`} className="w-12 h-12 rounded-full shrink-0"/><div><div className="text-xs text-zinc-500 mb-1">用户昵称</div><h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">{slideOverProfile.nickname}</h2><div className="text-xs text-zinc-500 mt-1">788ID：{slideOverProfile.id}</div></div></div>}
+                  <div className="flex p-1 bg-zinc-100 dark:bg-zinc-800/80 rounded-lg">{(['记忆', '档案', '行为'] as const).map(tab => <button key={tab} type="button" onClick={() => setSlideOverTab(tab)} className={`flex-1 py-1.5 text-sm font-medium rounded-md ${slideOverTab === tab ? 'bg-white dark:bg-zinc-700 shadow-sm text-zinc-900 dark:text-zinc-100' : 'text-zinc-500'}`}>{tab}</button>)}</div>
+                </div>
+                {slideOverTab === '记忆' && (isAudienceSamplePreview ? <AudiencePreviewMemoryPanel userName={displayTitle || ''} /> : <ActivationMemoryPanel />)}
+                {slideOverTab === '行为' && (isAudienceSamplePreview ? <AudiencePreviewBehaviorPanel userName={displayTitle || ''} /> : <ActivationBehaviorPanel />)}
+                {slideOverTab === '档案' && <div>{(isAudienceSamplePreview && audiencePreviewData[displayTitle || ''] ? audiencePreviewData[displayTitle || ''].profile.map(([label,value]: [string,string]) => ({ label, value, tag: '档案', time: '原型演示数据' })) : [
                   { label: '意向价格', value: '200万以内', tag: '固定', time: '2026-03-04 10:18:35' },
                   { label: '意向购房面积/户型', value: '120平左右', tag: '固定', time: '2026-03-04 10:18:35' },
                   { label: '首付预算', value: '60万左右', tag: '固定', time: '2026-03-04 10:18:35' },
                   { label: '购房目的', value: '学区房', tag: '固定', time: '2026-03-04 10:18:35' },
                   { label: '关注区域', value: '政务区、高新区', tag: '固定', time: '2026-03-04 10:18:35' },
                   { label: '决策周期', value: '3个月内', tag: '预测', time: '2026-03-04 10:18:35' }
-                ]).map((field, i) => (
-                  <div key={i} className="flex flex-col py-3 border-b border-zinc-100 dark:border-zinc-800/50 last:border-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm text-zinc-500">{field.label}</span>
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded ${field.tag === '固定' || field.tag === '档案' ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-purple-50 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400'}`}>{field.tag}</span>
-                    </div>
-                    <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{field.value}</div>
-                    <div className="text-[10px] text-zinc-400 mt-1">{field.time}</div>
-                  </div>
-                ))))}
-                {slideOverTab==='记忆' && !(slideOverUser?.startsWith('群聊') || slideOverUser?.startsWith('群内客户-')) && (isAudienceSamplePreview ? <AudiencePreviewMemoryPanel userName={displayTitle || ''} /> : <ActivationMemoryPanel />)}
-                {slideOverTab==='行为' && !(slideOverUser?.startsWith('群聊') || slideOverUser?.startsWith('群内客户-')) && (isAudienceSamplePreview ? <AudiencePreviewBehaviorPanel userName={displayTitle || ''} /> : <ActivationBehaviorPanel />)}
-              </div>
+                ]).map((field, i) => <div key={i} className="flex flex-col py-3 border-b border-zinc-100 dark:border-zinc-800/50 last:border-0"><div className="flex items-center justify-between mb-1"><span className="text-sm text-zinc-500">{field.label}</span><span className={`text-[10px] px-1.5 py-0.5 rounded ${field.tag === '固定' || field.tag === '档案' ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-purple-50 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400'}`}>{field.tag}</span></div><div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{field.value}</div><div className="text-[10px] text-zinc-400 mt-1">{field.time}</div></div>)}</div>}
+              </div>}
             </div>
-          </motion.div>
+          </motion.aside>
         )}
       </AnimatePresence>
 
