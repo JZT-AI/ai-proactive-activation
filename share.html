@@ -292,7 +292,7 @@ function GroupCustomerInfo({ group, tab, onTabChange }: { group: SelectionGroupS
       </div>
     </div>
     <div className="flex p-1 bg-zinc-100 dark:bg-zinc-800/80 rounded-lg" role="tablist" aria-label="群聊与客户信息">
-      {(['群档案', '记忆', '档案', '行为'] as const).map(item => <button key={item} type="button" role="tab" aria-selected={tab === item} onClick={() => onTabChange(item)} className={`flex-1 py-1.5 text-sm whitespace-nowrap font-medium rounded-md transition-all ${tab === item ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700'}`}>{item}</button>)}
+      {(['群档案', '档案', '记忆', '行为'] as const).map(item => <button key={item} type="button" role="tab" aria-selected={tab === item} onClick={() => onTabChange(item)} className={`flex-1 py-1.5 text-sm whitespace-nowrap font-medium rounded-md transition-all ${tab === item ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700'}`}>{item === '档案' ? '用户档案' : item}</button>)}
     </div>
     {tab === '群档案' ? <div className="space-y-5">
       {([['群聊总结', group.summary], ...(group.advice || [])] as [string, string][]).map(([label, value]) => <section key={label} className="space-y-2"><h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">{label}</h3><div className="rounded-lg bg-zinc-50 dark:bg-zinc-800/60 p-3"><p className="text-sm leading-6 text-zinc-700 dark:text-zinc-200">{value}</p></div></section>)}
@@ -9209,7 +9209,7 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
                 setSlideOverUser(null);
                 setMessages([
                   { id: 'group-preview-request', role: 'user', content: '圈选合肥市预算100—200万、有学区房需求的交付群，每日更新。' },
-                  { id: 'group-preview-demo', role: 'ai', content: '群聊预览：点击样例查看群档案、记忆、档案与行为。以下为交互演示数据。', card: { type: 'group_package', name: '合肥100w学区房群', count: 1001, updateCycle: 'day', samples: selectionGroupSamples.map(group => group.key) } },
+                  { id: 'group-preview-demo', role: 'ai', content: '群聊预览：点击样例查看群档案、用户档案、记忆与行为。以下为交互演示数据。', card: { type: 'group_package', name: '合肥100w学区房群', count: 1001, updateCycle: 'day', samples: selectionGroupSamples.map(group => group.key) } },
                   { id: 'group-package-demo', role: 'ai', content: '查看已有演示群聊包，可从列表打开同一套详情。', actionButton: { label: '查看演示群聊包', tabName: '[AI] 合肥100w学区房群' } }
                 ]);
               }}
