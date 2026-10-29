@@ -3438,7 +3438,7 @@ function buildMomentsLikeTiers(currentLikes, recentLikeCounts, _ignoredNonCurren
 }
 // --- end moments like tier helper ---
 
-// 群聊未读仅由消息角色顺序决定：C 端发言置未读，运营或经纪人回复清除未读，身份未知不改变状态。
+// 群聊未读仅由消息角色顺序决定：C 端发言置未读，运营或安家顾问回复清除未读，身份未知不改变状态。
 function deriveGroupUnreadStatus(messages: GroupUnreadSourceMessage[]) {
   let unread = false;
   messages.forEach(message => {
@@ -3508,8 +3508,8 @@ const privateCityOptions = ['合肥', '南京', '西安'];
 const privateCustomerServiceOptions = ['张三', '李四', '王五', '西安房源客服'];
 
 const sessionList = [
-  { name:'张经理（经纪人）', time:'今天', msg:'请帮忙上传这几套房源链接', tag:'小B', unread:true, customer788Id:'7881301319000001', abnormalTag:null, isBlacklisted:false, tabTitle:'张经理（经纪人）', city:'西安', customerService:'西安房源客服' },
-  { name: '雾里看花', time: '5-06', msg: '稍等，我找了解这套房的经纪人和...', tag: '', unread: false, customer788Id: '7881301319959329', abnormalTag: null, isBlacklisted: false, tabTitle: '雾里看花', city: '合肥', customerService: '张三' },
+  { name:'张经理（安家顾问）', time:'今天', msg:'请帮忙上传这几套房源链接', tag:'小B', unread:true, customer788Id:'7881301319000001', abnormalTag:null, isBlacklisted:false, tabTitle:'张经理（安家顾问）', city:'西安', customerService:'西安房源客服' },
+  { name: '雾里看花', time: '5-06', msg: '稍等，我找了解这套房的安家顾问和...', tag: '', unread: false, customer788Id: '7881301319959329', abnormalTag: null, isBlacklisted: false, tabTitle: '雾里看花', city: '合肥', customerService: '张三' },
   { name: '优庆状1347086...', time: '4-25', msg: '[群邀请消息]', tag: 'AI', unread: false, customer788Id: '7881301319959307', abnormalTag: null, isBlacklisted: false, tabTitle: '优庆状1347086...', city: '南京', customerService: '李四' },
   { name: 'A_南京miu猫猫', time: '4-17', msg: '您最近关注哪个区域板块的楼盘和...', tag: 'AI', unread: false, customer788Id: '7881301319959305', abnormalTag: null, isBlacklisted: false, tabTitle: 'A_南京miu猫猫', city: '南京', customerService: '王五' },
   { name: '二宝', time: '4-17', msg: '[群邀请消息]', tag: '', unread: false, customer788Id: '7881301319959304', abnormalTag: null, isBlacklisted: false, tabTitle: '二宝', city: '合肥', customerService: '张三' },
@@ -3980,7 +3980,7 @@ const MOCK_MOMENTS: SimMoment[] = [
 ];
 
 
-// 客服工作台的正常经纪人会话；只有文本受理和结束回执，不展示流程卡片。
+// 客服工作台的正常安家顾问会话；只有文本受理和结束回执，不展示流程卡片。
 function WecomHousingMessages({manual=[]}){
  const H=(window as any).HousingDemo,[state,setState]=useState(()=>H.get());
  useEffect(()=>H.subscribe(setState),[]);
@@ -3989,7 +3989,7 @@ function WecomHousingMessages({manual=[]}){
  const messages=[{id:'intro',at:0,time:'今天 09:20',kind:'incoming',text:'您好，我这边有几套房源，麻烦帮我传一下。'}];
  tasks.forEach(t=>{messages.push({id:t.id+'in',task:t.id,at:t.created,time:t.time,kind:'incoming',text:t.text},{id:t.id+'ack',task:t.id,at:t.created+1,time:t.time,kind:'ack',system:true,text:t.admissionError?'本次上传未受理：'+t.admissionError:'收到传房请求，共'+t.items.length+'条房源链接，正在处理，完成后告知您。'});(t.submissions||[]).forEach((r,n)=>{const at=Math.max(t.created+2+n*2,new Date(r.time).getTime());messages.push({id:t.id+'dup'+n,task:t.id,at,time:r.time,kind:'incoming',text:r.text},{id:t.id+'dup-reply'+n,task:t.id,at:at+1,time:r.time,kind:'duplicate',system:true,text:'房源正在处理中，完成后会告知您。'})});if(!t.admissionError&&['completed','partial','cancelled'].includes(t.status))messages.push({id:t.id+'end',task:t.id,at:Math.max(t.created+100,new Date(t.finishedAt||t.time).getTime()),time:t.finishedAt||t.time,kind:'complete',system:true,text:result(t)});});
  manual.forEach((m,n)=>messages.push({id:'manual'+n,at:m.created||new Date(m.time).getTime(),time:m.time,kind:'manual',text:m.text}));messages.sort((a,b)=>a.at-b.at);
- return <div data-wecom-port data-wecom-messages className="space-y-6">{messages.map(m=><div key={m.id} data-wecom-record={m.task} data-message-at={m.at} data-wecom-incoming={m.kind==='incoming'?true:undefined} data-wecom-ack={m.kind==='ack'?true:undefined} data-wecom-complete={m.kind==='complete'?true:undefined}><ChatMessage role={m.kind==='incoming'?'user':'ai'} time={m.time} name={m.kind==='incoming'?'张经理（经纪人）':'西安房源客服'} isSystemReply={!!m.system} content={m.text}/></div>)}</div>;
+ return <div data-wecom-port data-wecom-messages className="space-y-6">{messages.map(m=><div key={m.id} data-wecom-record={m.task} data-message-at={m.at} data-wecom-incoming={m.kind==='incoming'?true:undefined} data-wecom-ack={m.kind==='ack'?true:undefined} data-wecom-complete={m.kind==='complete'?true:undefined}><ChatMessage role={m.kind==='incoming'?'user':'ai'} time={m.time} name={m.kind==='incoming'?'张经理（安家顾问）':'西安房源客服'} isSystemReply={!!m.system} content={m.text}/></div>)}</div>;
 
 }
 
@@ -4034,7 +4034,7 @@ function Workspace() {
   };
 
   const [tabs, setTabs] = useState<WorkspaceTab[]>([
-    { id: 'chat-7881301319000001', title: '张经理（经纪人）', type: 'chat' },
+    { id: 'chat-7881301319000001', title: '张经理（安家顾问）', type: 'chat' },
     { id: 'feature-1', title: '[AI] 合肥100w学区房', type: 'feature' },
     { id: 'chat-7881301319959329', title: '雾里看花', type: 'chat' },
     { id: 'chat-7881301319959307', title: '优庆状1347086...', type: 'chat' },
@@ -4049,7 +4049,7 @@ function Workspace() {
   const [activeTabId, setActiveTabId] = useState('chat-7881301319000001');
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [activeRightPanelTab, setActiveRightPanelTab] = useState('客户档案');
-  // V4.7：交付群右侧增加流转记录，本轮仅展示记录，不提供经纪人更换操作。
+  // V4.7：交付群右侧增加流转记录，本轮仅展示记录，不提供安家顾问更换操作。
   const [activeGroupRightPanelTab, setActiveGroupRightPanelTab] = useState<'群档案' | '流转记录'>('群档案');
   const [selectedPrivateMatchProperty, setSelectedPrivateMatchProperty] = useState<PrivateMatchProperty | null>(null);
   const [isPrivateMatchImagePreviewOpen, setIsPrivateMatchImagePreviewOpen] = useState(false);
@@ -5760,7 +5760,7 @@ function Workspace() {
                           <span className="font-bold text-zinc-900 dark:text-zinc-100">群聊总结</span>
                         </div>
                         <div className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                          客服建群后，分析师与经纪人孙际玉、曹锐报协同服务。经纪人重点推介“康居时代家园”两套房源（133㎡/115万、110㎡/110万），并上传了房源实拍视频，多次@用户邀约周末实地带看。用户“橙子”自始至终未在群内发表任何言论，沟通处于单向状态。
+                          客服建群后，分析师与安家顾问孙际玉、曹锐报协同服务。安家顾问重点推介“康居时代家园”两套房源（133㎡/115万、110㎡/110万），并上传了房源实拍视频，多次@用户邀约周末实地带看。用户“橙子”自始至终未在群内发表任何言论，沟通处于单向状态。
                         </div>
                       </div>
 
@@ -5771,7 +5771,7 @@ function Workspace() {
                           <span className="font-bold text-zinc-900 dark:text-zinc-100">运营跟进建议</span>
                         </div>
                         <div className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                          变换话题节奏以打破单向沟通僵局。督促经纪人24小时内停止盲目@用户，改为私聊确认原因并在群内发布小区市场成交价对比分析。协助搜寻周边更具性价比的低总价盘源，由分析师从资产保值角度重新梳理需求，降低用户入群压力。
+                          变换话题节奏以打破单向沟通僵局。督促安家顾问24小时内停止盲目@用户，改为私聊确认原因并在群内发布小区市场成交价对比分析。协助搜寻周边更具性价比的低总价盘源，由分析师从资产保值角度重新梳理需求，降低用户入群压力。
                         </div>
                       </div>
 
@@ -6051,7 +6051,7 @@ function Workspace() {
                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#e7f3ff] text-[#1683ff] border border-[#c9e3ff]">{group.service}</span>
                 </div>
                 <div className="mt-1 text-xs text-[#5f7892] truncate">
-                  {group.city} | 群主：选房分析师霏霏 | {group.source} | 服务客户：再回首 | 经纪人：{group.agent}
+                  {group.city} | 群主：选房分析师霏霏 | {group.source} | 服务客户：再回首 | 安家顾问：{group.agent}
                 </div>
               </div>
             </div>
@@ -6133,8 +6133,8 @@ function Workspace() {
                 </div>
                 <div className="flex-1 overflow-y-auto px-3 pb-4 space-y-3">
                   {[
-                    { title: '群聊总结', icon: null, text: '用户明确寻找一梯一户、室内120平以上的房源，预算200万左右，坚决拒收回迁房。对已推的金隅大成都133平房源反馈户型不佳。目前经纪人已推送中骏世界城与皖投云启华章户型图，并正发起周末看房邀约。' },
-                    { title: '运营跟进建议', icon: <MessageSquare size={15} className="text-orange-500" />, text: '需及时核实用户对新房源户型的满意度，防止沟通断档；督促经纪人于24小时内落实带看时标，并针对客户对户型规划的特点，筛选边套或高赠送等优惠排口径备选。' },
+                    { title: '群聊总结', icon: null, text: '用户明确寻找一梯一户、室内120平以上的房源，预算200万左右，坚决拒收回迁房。对已推的金隅大成都133平房源反馈户型不佳。目前安家顾问已推送中骏世界城与皖投云启华章户型图，并正发起周末看房邀约。' },
+                    { title: '运营跟进建议', icon: <MessageSquare size={15} className="text-orange-500" />, text: '需及时核实用户对新房源户型的满意度，防止沟通断档；督促安家顾问于24小时内落实带看时标，并针对客户对户型规划的特点，筛选边套或高赠送等优惠排口径备选。' },
                     { title: '分销中介跟进建议', icon: <User size={15} className="text-[#1683ff]" />, text: '严选室内120平以上且具备私密入户感的房源，避免高公摊户型；带看时重点演示中骏及皖投的电梯入户优势，利用200万预算下一梯一户的稀缺性引导客户通过横厅尺度对比消除不满。' }
                   ].map(item => (
                     <div key={item.title} className="bg-white rounded-md border border-[#e5eef8] p-4">
@@ -6168,16 +6168,16 @@ function Workspace() {
               <div className="flex-1 overflow-y-auto bg-[#f8fbff] px-4 py-4">
                 <div className="mb-4">
                   <div className="text-sm font-semibold text-[#102a4c]">群线索流转记录</div>
-                  <div className="mt-1 text-xs leading-5 text-[#7d96b2]">记录线索生成、接入、承接、到期及服务经纪人变更过程</div>
+                  <div className="mt-1 text-xs leading-5 text-[#7d96b2]">记录线索生成、接入、承接、到期及服务安家顾问变更过程</div>
                 </div>
                 <div className="relative pl-6 before:absolute before:left-[7px] before:top-2 before:bottom-3 before:w-px before:bg-[#cfe0f2]">
                   {[
                     {
-                      title: '更换服务经纪人',
+                      title: '更换服务安家顾问',
                       time: '2026-05-10 10:05:18',
                       operator: '合肥运营-王芳',
-                      summary: '服务经纪人由郭华峰变更为杨玉银',
-                      details: [['原服务经纪人', '郭华峰'], ['新服务经纪人', group.agent], ['变更原因', '原经纪人承接到期']]
+                      summary: '服务安家顾问由郭华峰变更为杨玉银',
+                      details: [['原服务安家顾问', '郭华峰'], ['新服务安家顾问', group.agent], ['变更原因', '原安家顾问承接到期']]
                     },
                     {
                       title: '线索承接到期',
