@@ -198,6 +198,7 @@ const selectionGroupByName = (name: string | null | undefined) => {
 
 function GroupCustomerInfo({ group, tab, onTabChange }: { group: SelectionGroupSample; tab: SelectionInfoTab; onTabChange: (tab: SelectionInfoTab) => void }) {
   const user = group.customer ? audiencePreviewData[group.customer] : null;
+  const tabLabels: Record<SelectionInfoTab, string> = { '群档案': '群档案', '档案': '用户档案', '记忆': '用户记忆', '行为': '用户行为' };
   return <div className="space-y-5 min-w-0" data-testid="group-customer-details">
     <div className="pb-4 border-b border-zinc-100 dark:border-zinc-800">
       <div className="flex items-start gap-2"><MessageSquare size={17} className="mt-1 shrink-0 text-indigo-500" /><div className="min-w-0"><h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 break-words">{group.name}</h2><div className="text-xs text-zinc-500 mt-1 break-all">群ID：{group.id}</div></div></div>
@@ -207,11 +208,11 @@ function GroupCustomerInfo({ group, tab, onTabChange }: { group: SelectionGroupS
       </div>
     </div>
     <div className="flex p-1 bg-zinc-100 dark:bg-zinc-800/80 rounded-lg" role="tablist" aria-label="群聊与客户信息">
-      {(['群档案', '档案', '记忆', '行为'] as const).map(item => <button key={item} type="button" role="tab" aria-selected={tab === item} onClick={() => onTabChange(item)} className={`flex-1 py-1.5 text-sm whitespace-nowrap font-medium rounded-md transition-all ${tab === item ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700'}`}>{item === '档案' ? '用户档案' : item}</button>)}
+      {(['群档案', '档案', '记忆', '行为'] as const).map(item => <button key={item} type="button" role="tab" aria-selected={tab === item} onClick={() => onTabChange(item)} className={`flex-1 py-1.5 text-sm whitespace-nowrap font-medium rounded-md transition-all ${tab === item ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700'}`}>{tabLabels[item]}</button>)}
     </div>
     {tab === '群档案' ? <div className="space-y-5">
       {([['群聊总结', group.summary], ...(group.advice || [])] as [string, string][]).map(([label, value]) => <section key={label} className="space-y-2"><h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">{label}</h3><div className="rounded-lg bg-zinc-50 dark:bg-zinc-800/60 p-3"><p className="text-sm leading-6 text-zinc-700 dark:text-zinc-200">{value}</p></div></section>)}
-    </div> : !user ? <div className="rounded-lg border border-dashed border-zinc-200 dark:border-zinc-700 p-5 text-sm leading-6 text-zinc-500">无法确定该群关联客户，暂不可查看{tab === '档案' ? '用户档案' : `客户${tab}`}。</div> : tab === '档案' ? <div className="rounded-lg bg-zinc-50 dark:bg-zinc-800/60 divide-y divide-zinc-100 dark:divide-zinc-700">{user.profile.map(([label, value]: [string, string]) => <div key={label} className="px-3 py-2.5"><div className="text-xs text-zinc-500">{label}</div><div className="text-sm text-zinc-800 dark:text-zinc-200 mt-1">{value}</div></div>)}</div> : tab === '记忆' ? <AudiencePreviewMemoryPanel userName={group.customer!} /> : <AudiencePreviewBehaviorPanel userName={group.customer!} />}
+    </div> : !user ? <div className="rounded-lg border border-dashed border-zinc-200 dark:border-zinc-700 p-5 text-sm leading-6 text-zinc-500">无法确定该群关联客户，暂不可查看{tabLabels[tab]}。</div> : tab === '档案' ? <div className="rounded-lg bg-zinc-50 dark:bg-zinc-800/60 divide-y divide-zinc-100 dark:divide-zinc-700">{user.profile.map(([label, value]: [string, string]) => <div key={label} className="px-3 py-2.5"><div className="text-xs text-zinc-500">{label}</div><div className="text-sm text-zinc-800 dark:text-zinc-200 mt-1">{value}</div></div>)}</div> : tab === '记忆' ? <AudiencePreviewMemoryPanel userName={group.customer!} /> : <AudiencePreviewBehaviorPanel userName={group.customer!} />}
   </div>;
 }
 
@@ -607,7 +608,7 @@ function GroupPackageCard({ data, onGroupClick, onUserClick, onConfirm }: { data
                 </button>
                 <button
                   onClick={() => onUserClick(sample, data.samples)}
-                  title={`查看${sample}关联客户的记忆、档案与行为`}
+                  title={`查看${sample}关联客户的用户记忆、用户档案与用户行为`}
                   className="px-3 py-1.5 text-xs text-emerald-600 dark:text-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors"
                 >
                   客户详情
@@ -9124,7 +9125,7 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
                 setSlideOverUser(null);
                 setMessages([
                   { id: 'group-preview-request', role: 'user', content: '圈选合肥市预算100—200万、有学区房需求的交付群，每日更新。' },
-                  { id: 'group-preview-demo', role: 'ai', content: '群聊预览：点击样例查看群档案、用户档案、记忆与行为。以下为交互演示数据。', card: { type: 'group_package', name: '合肥100w学区房群', count: 1001, updateCycle: 'day', samples: selectionGroupSamples.map(group => group.key) } },
+                  { id: 'group-preview-demo', role: 'ai', content: '群聊预览：点击样例查看群档案、用户档案、用户记忆与用户行为。以下为交互演示数据。', card: { type: 'group_package', name: '合肥100w学区房群', count: 1001, updateCycle: 'day', samples: selectionGroupSamples.map(group => group.key) } },
                   { id: 'group-package-demo', role: 'ai', content: '查看已有演示群聊包，可从列表打开同一套详情。', actionButton: { label: '查看演示群聊包', tabName: '[AI] 合肥100w学区房群' } }
                 ]);
               }}
