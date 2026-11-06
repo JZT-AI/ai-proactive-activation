@@ -6,7 +6,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createPortal } from 'react-dom';
-import { Archive, ArrowUp, AtSign, Bot, Check, CheckCircle2, ChevronDown, ChevronRight, ChevronLeft, Circle, Clock, Copy, FileText, Filter, History, Image as ImageIcon, ListFilter, Loader2, Mail, MessageSquare, MoreHorizontal, Pencil, Pin, Play, Plus, RefreshCw, Search, Send, Slash, Smile, Square, User, UserPlus, Users, X, Zap, LineChart, UserCircle, FolderPlus, Eye, Trash2, PanelLeftOpen, AlertCircle, Megaphone, Tag, Settings, LayoutGrid, Command, Image, FolderOpen, Flame, Heart, MessageCircle, Share2, ExternalLink, Compass, Smartphone, Bell, Radio, Volume2, Link as LinkIcon } from 'lucide-react';
+import { Archive, ArrowUp, AtSign, Bot, Check, CheckCircle2, ChevronDown, ChevronRight, ChevronLeft, Circle, Clock, Copy, FileText, Filter, History, Image as ImageIcon, ListFilter, Loader2, Mail, MessageSquare, MoreHorizontal, Pencil, Pin, Play, Plus, RefreshCw, Search, Send, Slash, Smile, Square, User, UserPlus, Users, X, Zap, Workflow, LineChart, UserCircle, FolderPlus, Eye, Trash2, PanelLeftOpen, AlertCircle, Megaphone, Tag, Settings, LayoutGrid, Command, Image, FolderOpen, Flame, Heart, MessageCircle, Share2, ExternalLink, Compass, Smartphone, Bell, Radio, Volume2, Link as LinkIcon } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 
 // --- Analytics Hook (埋点统计工具) ---
@@ -7897,672 +7897,128 @@ function ReachPreview({title,body,link,channel}:any){return <div className="reac
 const autoSpecs:any[] = [
  {
   "sceneKey": "1",
-  "sourceIds": [
-   1
-  ],
   "name": "新线索-首次用户",
-  "messageCategory": "业务类",
-  "priority": "业务优先",
-  "recipient": "获分配线索的小B",
-  "event": "线索进入生效中",
-  "rule": "线索进入生效中；首次分配给该小B；有客币扣减成功或免扣",
-  "mode": "event",
-  "delay": "5",
-  "defaultDelay": "5",
-  "window": "60",
-  "supported": [
-   "App Push"
-  ],
   "channels": [
    "App Push"
   ],
-  "channelConfig": {
-   "App Push": {
-    "sender": "有客 App（演示）",
-    "variants": [
-     {
-      "key": "charged",
-      "label": "有客币扣减",
-      "title": "您有新的线索待跟进",
-      "body": "客户{{客户姓名}},核心需求:{{客户需求}},本次扣除{{有客币数量}}有客币"
-     },
-     {
-      "key": "free",
-      "label": "免扣",
-      "title": "您有新的线索待跟进",
-      "body": "客户{{客户姓名}},核心需求:{{客户需求}},本次不扣有客币"
-     }
-    ],
-    "link": "线索详情页",
-    "voice": true
-   }
-  },
-  "variables": [
-   "客户姓名",
-   "客户需求",
-   "有客币数量"
-  ],
-  "voiceSupported": true
+  "messageCategory": "业务类"
  },
  {
   "sceneKey": "2",
-  "sourceIds": [
-   2
-  ],
   "name": "历史线索激活",
-  "messageCategory": "业务类",
-  "priority": "业务优先",
-  "recipient": "历史关系被激活的小B",
-  "event": "同一客户再次分配给同一小B",
-  "rule": "同一客户再次分配给同一小B；历史用户-小B关系激活",
-  "mode": "event",
-  "delay": "5",
-  "defaultDelay": "5",
-  "window": "60",
-  "supported": [
-   "App Push"
-  ],
   "channels": [
    "App Push"
   ],
-  "channelConfig": {
-   "App Push": {
-    "sender": "有客 App（演示）",
-    "variants": [
-     {
-      "key": "2",
-      "label": "默认内容",
-      "title": "您有历史线索被激活待跟进",
-      "body": "客户{{客户姓名}},核心需求:{{客户需求}},本次不扣有客币"
-     }
-    ],
-    "link": "线索详情页",
-    "voice": true
-   }
-  },
-  "variables": [
-   "客户姓名",
-   "客户需求"
-  ],
-  "voiceSupported": true
+  "messageCategory": "业务类"
  },
  {
   "sceneKey": "3",
-  "sourceIds": [
-   3,
-   4,
-   5
-  ],
   "name": "客户新消息提醒",
-  "messageCategory": "业务类",
-  "priority": "业务优先",
-  "recipient": "待回复客户消息的小B",
-  "event": "客户再次发来消息",
-  "rule": "线索生效；小B已发送过消息；客户再次发言，窗口内未回复。",
-  "mode": "aggregate",
-  "delay": "5",
-  "defaultDelay": "5",
-  "window": "60",
-  "supported": [
-   "App Push"
-  ],
   "channels": [
    "App Push"
   ],
-  "channelConfig": {
-   "App Push": {
-    "sender": "有客 App（演示）",
-    "variants": [
-     {
-      "key": "3",
-      "label": "单客户1条",
-      "title": "{{消息标题}}",
-      "body": "{{客户消息}}"
-     },
-     {
-      "key": "4",
-      "label": "单客户多条",
-      "title": "你有{{消息条数}}条客户新消息未回复",
-      "body": "{{客户姓名}}发来{{消息条数}}条消息,点击查看"
-     },
-     {
-      "key": "5",
-      "label": "多客户",
-      "title": "你有{{消息条数}}条客户新消息未回复",
-      "body": "{{客户姓名列表}}等{{客户数}}位客户共发来{{消息条数}}条消息,点击查看未读客户"
-     }
-    ],
-    "link": "该客户会话页",
-    "voice": true
-   }
-  },
-  "variables": [
-   "客户姓名",
-   "客户姓名列表",
-   "客户数",
-   "客户消息",
-   "消息条数",
-   "消息标题"
-  ],
-  "voiceSupported": true
+  "messageCategory": "业务类"
  },
  {
   "sceneKey": "6",
-  "sourceIds": [
-   6
-  ],
   "name": "房源上传完成",
-  "messageCategory": "业务类",
-  "priority": "业务优先",
-  "recipient": "批量上传房源的小B",
-  "event": "小B批量上传房源",
-  "rule": "小B批量上传房源；房源处理结果返回",
-  "mode": "event",
-  "delay": "5",
-  "defaultDelay": "5",
-  "window": "60",
-  "supported": [
-   "App Push"
-  ],
   "channels": [
    "App Push"
   ],
-  "channelConfig": {
-   "App Push": {
-    "sender": "有客 App（演示）",
-    "variants": [
-     {
-      "key": "6",
-      "label": "默认内容",
-      "title": "房源上传完成",
-      "body": "您上传的房源已处理完成,点击查看详情"
-     }
-    ],
-    "link": "房源列表页",
-    "voice": false
-   }
-  },
-  "variables": [],
-  "voiceSupported": false
+  "messageCategory": "业务类"
  },
  {
   "sceneKey": "7",
-  "sourceIds": [
-   7,
-   22
-  ],
   "name": "新客户待回复提醒",
-  "messageCategory": "业务类",
-  "priority": "业务优先",
-  "recipient": "承接线索且未首次回复的小B",
-  "event": "线索分配成功",
-  "rule": "线索仍生效且未改派；截至检查时经纪人仍未首次回复。",
-  "mode": "delay",
-  "delay": "3",
-  "defaultDelay": "3",
-  "window": "60",
-  "supported": [
-   "App Push",
-   "企微客服"
-  ],
   "channels": [
    "App Push",
    "企微客服"
   ],
-  "channelConfig": {
-   "App Push": {
-    "sender": "有客 App（演示）",
-    "variants": [
-     {
-      "key": "7",
-      "label": "默认内容",
-      "title": "【新客户待回复】客户「{{客户姓名}}」尚未收到您的首次回复,请回复。",
-      "body": "客户需求:{{客户需求}}。"
-     }
-    ],
-    "link": "线索详情页",
-    "voice": true
-   },
-   "企微客服": {
-    "sender": "西安企微客服（演示）",
-    "variants": [
-     {
-      "key": "22",
-      "label": "默认内容",
-      "title": "",
-      "body": "【新客户待回复】客户「{{客户姓名}}」已等待回复超时,请进入有客APP及时回复。\n\n客户需求:{{客户需求}}。"
-     }
-    ],
-    "link": "引导进入APP",
-    "voice": false
-   }
-  },
-  "variables": [
-   "客户姓名",
-   "客户需求"
-  ],
-  "voiceSupported": false
+  "messageCategory": "业务类"
  },
  {
   "sceneKey": "8",
-  "sourceIds": [
-   8
-  ],
   "name": "入驻审核通过",
-  "messageCategory": "系统类",
-  "priority": "普通",
-  "recipient": "提交新身份入驻审核的小B",
-  "event": "新身份入驻审核通过",
-  "rule": "审核结果为通过；通知提交审核的小B。",
-  "mode": "event",
-  "delay": "5",
-  "defaultDelay": "5",
-  "window": "60",
-  "supported": [
-   "App站内消息"
-  ],
   "channels": [
    "App站内消息"
   ],
-  "channelConfig": {
-   "App站内消息": {
-    "sender": "有客 App（演示）",
-    "variants": [
-     {
-      "key": "8",
-      "label": "默认内容",
-      "title": "入驻审核通过",
-      "body": "您的城市身份已启用,开启获客之旅吧。\n审核类型:新身份入驻\n审核时间:{{审核时间}}"
-     }
-    ],
-    "link": "APP内查看",
-    "voice": false
-   }
-  },
-  "variables": [
-   "审核时间"
-  ],
-  "voiceSupported": false
+  "messageCategory": "系统类"
  },
  {
   "sceneKey": "9",
-  "sourceIds": [
-   9
-  ],
   "name": "入驻审核未通过",
-  "messageCategory": "系统类",
-  "priority": "普通",
-  "recipient": "提交新身份入驻审核的小B",
-  "event": "新身份入驻审核失败",
-  "rule": "新身份入驻审核失败",
-  "mode": "event",
-  "delay": "5",
-  "defaultDelay": "5",
-  "window": "60",
-  "supported": [
-   "App站内消息"
-  ],
   "channels": [
    "App站内消息"
   ],
-  "channelConfig": {
-   "App站内消息": {
-    "sender": "有客 App（演示）",
-    "variants": [
-     {
-      "key": "9",
-      "label": "默认内容",
-      "title": "入驻审核未通过",
-      "body": "{{未通过原因}}\n审核类型:新身份入驻\n审核时间:{{审核时间}}"
-     }
-    ],
-    "link": "APP内查看",
-    "voice": false
-   }
-  },
-  "variables": [
-   "审核时间",
-   "未通过原因"
-  ],
-  "voiceSupported": false
+  "messageCategory": "系统类"
  },
  {
   "sceneKey": "10",
-  "sourceIds": [
-   10
-  ],
   "name": "资料修改审核通过",
-  "messageCategory": "系统类",
-  "priority": "普通",
-  "recipient": "提交资料修改审核的小B",
-  "event": "资料修改审核通过",
-  "rule": "审核结果为通过；通知提交审核的小B。",
-  "mode": "event",
-  "delay": "5",
-  "defaultDelay": "5",
-  "window": "60",
-  "supported": [
-   "App站内消息"
-  ],
   "channels": [
    "App站内消息"
   ],
-  "channelConfig": {
-   "App站内消息": {
-    "sender": "有客 App（演示）",
-    "variants": [
-     {
-      "key": "10",
-      "label": "默认内容",
-      "title": "资料审核通过",
-      "body": "新资料已生效,继续开启获客之旅吧\n审核类型:资料修改\n审核时间:{{审核时间}}"
-     }
-    ],
-    "link": "APP内查看",
-    "voice": false
-   }
-  },
-  "variables": [
-   "审核时间"
-  ],
-  "voiceSupported": false
+  "messageCategory": "系统类"
  },
  {
   "sceneKey": "11",
-  "sourceIds": [
-   11
-  ],
   "name": "资料修改审核未通过",
-  "messageCategory": "系统类",
-  "priority": "普通",
-  "recipient": "提交资料修改审核的小B",
-  "event": "资料修改审核失败",
-  "rule": "资料修改审核失败",
-  "mode": "event",
-  "delay": "5",
-  "defaultDelay": "5",
-  "window": "60",
-  "supported": [
-   "App站内消息"
-  ],
   "channels": [
    "App站内消息"
   ],
-  "channelConfig": {
-   "App站内消息": {
-    "sender": "有客 App（演示）",
-    "variants": [
-     {
-      "key": "11",
-      "label": "默认内容",
-      "title": "资料审核未通过",
-      "body": "请修改资料后重新提交\n{{未通过原因}}\n审核类型:资料修改\n审核时间:{{审核时间}}"
-     }
-    ],
-    "link": "APP内查看",
-    "voice": false
-   }
-  },
-  "variables": [
-   "审核时间",
-   "未通过原因"
-  ],
-  "voiceSupported": false
+  "messageCategory": "系统类"
  },
  {
   "sceneKey": "12",
-  "sourceIds": [
-   12
-  ],
   "name": "有客币-入驻赠送",
-  "messageCategory": "商业类",
-  "priority": "普通",
-  "recipient": "获得入驻赠送有客币的小B",
-  "event": "入驻成功赠送有客币",
-  "rule": "入驻成功赠送有客币",
-  "mode": "event",
-  "delay": "5",
-  "defaultDelay": "5",
-  "window": "60",
-  "supported": [
-   "App站内消息"
-  ],
   "channels": [
    "App站内消息"
   ],
-  "channelConfig": {
-   "App站内消息": {
-    "sender": "有客 App（演示）",
-    "variants": [
-     {
-      "key": "12",
-      "label": "默认内容",
-      "title": "入驻赠送",
-      "body": "恭喜获得入驻赠送有客币 {{有客币数量}} 枚\n赠送后余额:{{余额}} 有客币\n发生时间:{{发生时间}}"
-     }
-    ],
-    "link": "APP内查看",
-    "voice": false
-   }
-  },
-  "variables": [
-   "余额",
-   "发生时间",
-   "有客币数量"
-  ],
-  "voiceSupported": false
+  "messageCategory": "商业类"
  },
  {
   "sceneKey": "13",
-  "sourceIds": [
-   13
-  ],
   "name": "有客币-平台赠送",
-  "messageCategory": "商业类",
-  "priority": "普通",
-  "recipient": "获得平台赠送有客币的小B",
-  "event": "平台赠送有客币",
-  "rule": "平台赠送有客币",
-  "mode": "event",
-  "delay": "5",
-  "defaultDelay": "5",
-  "window": "60",
-  "supported": [
-   "App站内消息"
-  ],
   "channels": [
    "App站内消息"
   ],
-  "channelConfig": {
-   "App站内消息": {
-    "sender": "有客 App（演示）",
-    "variants": [
-     {
-      "key": "13",
-      "label": "默认内容",
-      "title": "平台赠送",
-      "body": "平台赠送有客币 {{有客币数量}} 枚\n赠送后余额:{{余额}} 有客币\n发生时间:{{发生时间}}"
-     }
-    ],
-    "link": "APP内查看",
-    "voice": false
-   }
-  },
-  "variables": [
-   "余额",
-   "发生时间",
-   "有客币数量"
-  ],
-  "voiceSupported": false
+  "messageCategory": "商业类"
  },
  {
   "sceneKey": "14",
-  "sourceIds": [
-   14
-  ],
   "name": "有客币-购买线索扣减",
-  "messageCategory": "商业类",
-  "priority": "普通",
-  "recipient": "购买线索扣币的小B",
-  "event": "购买线索成功扣减",
-  "rule": "购买线索成功扣减",
-  "mode": "event",
-  "delay": "5",
-  "defaultDelay": "5",
-  "window": "60",
-  "supported": [
-   "App站内消息"
-  ],
   "channels": [
    "App站内消息"
   ],
-  "channelConfig": {
-   "App站内消息": {
-    "sender": "有客 App（演示）",
-    "variants": [
-     {
-      "key": "14",
-      "label": "默认内容",
-      "title": "购买线索",
-      "body": "客户{{客户姓名}}\n实际扣减:{{有客币数量}} 有客币\n扣减后余额:{{余额}} 有客币\n关联订单号:{{订单号}}\n发生时间:{{发生时间}}"
-     }
-    ],
-    "link": "流水详情",
-    "voice": false
-   }
-  },
-  "variables": [
-   "余额",
-   "发生时间",
-   "客户姓名",
-   "有客币数量",
-   "订单号"
-  ],
-  "voiceSupported": false
+  "messageCategory": "商业类"
  },
  {
   "sceneKey": "23",
-  "sourceIds": [
-   23
-  ],
   "name": "名下经纪人未及时跟进",
-  "messageCategory": "业务类",
-  "priority": "业务优先",
-  "recipient": "承接经纪人对应销售",
-  "event": "线索分配成功",
-  "rule": "线索仍生效且未改派；截至检查时经纪人仍未首次回复。",
-  "mode": "delay",
-  "delay": "5",
-  "defaultDelay": "5",
-  "window": "60",
-  "supported": [
-   "企微客服"
-  ],
   "channels": [
    "企微客服"
   ],
-  "channelConfig": {
-   "企微客服": {
-    "sender": "西安企微客服（演示）",
-    "variants": [
-     {
-      "key": "23",
-      "label": "默认内容",
-      "title": "",
-      "body": "【名下经纪人未及时跟进】{{经纪人姓名}}｜客户「{{客户姓名}}」\n\n分配时间:{{分配时间}}\n客户需求:{{客户需求}}\n\n经纪人尚未首次回复,请尽快督促跟进。"
-     }
-    ],
-    "link": "销售督促",
-    "voice": false
-   }
-  },
-  "variables": [
-   "分配时间",
-   "客户姓名",
-   "客户需求",
-   "经纪人姓名"
-  ],
-  "voiceSupported": false
+  "messageCategory": "业务类"
  },
  {
   "sceneKey": "24",
-  "sourceIds": [
-   24
-  ],
   "name": "超时未跟进提醒",
-  "messageCategory": "业务类",
-  "priority": "业务优先",
-  "recipient": "指定企微群中的运营人员",
-  "event": "线索分配成功",
-  "rule": "线索仍生效且未改派；截至检查时经纪人仍未首次回复。",
-  "mode": "delay",
-  "delay": "5",
-  "defaultDelay": "5",
-  "window": "60",
-  "supported": [
-   "企微群"
-  ],
   "channels": [
    "企微群"
   ],
-  "channelConfig": {
-   "企微群": {
-    "sender": "线索提醒机器人（演示）",
-    "variants": [
-     {
-      "key": "24",
-      "label": "默认内容",
-      "title": "",
-      "body": "【超时未跟进】客户「{{客户姓名}}」等待已超时\n\n分配时间:{{分配时间}}\n客户需求:{{客户需求}}\n承接经纪人:{{经纪人姓名}}\n承接销售:{{销售姓名}}\n\n经纪人尚未首次回复,请运营及时介入。"
-     }
-    ],
-    "link": "运营介入",
-    "voice": false
-   }
-  },
-  "variables": [
-   "分配时间",
-   "客户姓名",
-   "客户需求",
-   "经纪人姓名",
-   "销售姓名"
-  ],
-  "voiceSupported": false
+  "messageCategory": "业务类"
  }
 ];
-// 自动化业务模块目录：当前仅接入消息通知，不展示未接入模块。
-const autoModules=[{id:'message-notification',name:'消息通知'}];
-// 自动化任务：既有通知资产配置；本地演示，无调度和外部发送。
-const autoChannelName:any={'APP Push':'App Push','APP站内消息':'App站内消息','企微客服':'企微客服','企微群':'企微群'};
-const autoSamples:any={'客户姓名':'林小姐','客户需求':'西安·城南，预算200万左右，三室','有客币数量':'50','余额':'150','发生时间':'11-05 10:30','审核时间':'11-05 10:30','未通过原因':'提交的资料信息不完整','订单号':'20261105001234567','经纪人姓名':'谢林言','销售姓名':'张三','分配时间':'11月05日 10:20','消息条数':'3','客户数':'2','客户姓名列表':'林小姐、周先生','客户消息':'您好，请问有房源吗？','消息标题':'您有客户新消息','触发分钟':'3'};
-const autoRender=(s:string,extra:any={})=>s.replace(/\{\{([^}]+)\}\}/g,(_,k)=>({...autoSamples,...extra})[k]??`[${k}缺失]`);
-function automationTime(p:any){return p.mode==='delay'?`分配后 ${p.delay} 分钟未首次回复`:p.mode==='aggregate'?`${p.window} 秒未回复 · 聚合检查`:'事件发生时通知';}
-function autoInit(){if(reachState.automationCatalogVersion===3){
- // 仅补齐现有任务的归属；不覆盖用户配置、开关、版本或执行快照。
- let changed=false;reachState.plans=reachState.plans.map((p:any)=>{if(p.sceneKey&&!p.moduleId){changed=true;return {...p,moduleId:'message-notification'}}return p});
- if(changed)try{localStorage.setItem(reachStorageKey,JSON.stringify(reachState))}catch{}return;
- }
- const plans=autoSpecs.map((s:any)=>({...structuredClone(s),moduleId:'message-notification',id:'AUTO-SCENE-'+s.sceneKey,configured:true,enabled:true,city:'西安',version:1,updated:'2026/11/5 09:00:00',runs:[]}));
- reachState.plans=[...plans,...reachState.plans.filter((p:any)=>!p.sceneKey)];
- reachState.autoExecutions=reachState.autoExecutions||[];
- reachState.automationCatalogVersion=3;try{localStorage.setItem(reachStorageKey,JSON.stringify(reachState));}catch{}
+// 自动化任务仅注册展示信息及业务启停状态；不复制业务规则或创建推送任务。
+function autoInit(){
+ if(reachState.automationCatalogVersion===4)return;
+ const existing=reachState.plans||[];
+ const plans=autoSpecs.map((s:any)=>{const id='AUTO-SCENE-'+s.sceneKey;const old=existing.find((p:any)=>p.id===id&&p.city==='西安');return {id,moduleId:'message-notification',name:s.name,channels:[...s.channels],messageCategory:s.messageCategory,city:'西安',enabled:old?old.enabled:true}});
+ reachState.plans=[...plans,...existing.filter((p:any)=>!plans.some((next:any)=>next.id===p.id&&next.city===p.city))];
+ reachState.automationCatalogVersion=4;
+ try{localStorage.setItem(reachStorageKey,JSON.stringify(reachState))}catch{}
 }
 autoInit();
-const autoPushChannels=['App Push','企微客服','企微群'];
-function autoSyncPushTasks(p:any,create=false){
- const ids=Array.from(new Set(p.supported.filter((c:string)=>autoPushChannels.includes(c)).map((c:string)=>p.channelConfig[c].pushTaskId).filter(Boolean)));
- for(const id of ids){const configs=p.supported.filter((c:string)=>p.channelConfig[c].pushTaskId===id).map((c:string)=>({channel:c,...structuredClone(p.channelConfig[c])}));const old=reachState.tasks.find((t:any)=>t.id===id);if(!old&&!create)continue;
- const first=configs[0];const task={...(old||{}),id,name:p.name+' · '+configs.map((x:any)=>x.channel).join('、'),source:'SOP',planId:p.id,created:old?.created||reachNow(),status:old?.status||'待执行',audience:{name:p.recipient,count:0,people:[]},channels:configs.map((x:any)=>x.channel),title:first.variants[0].title,body:first.variants[0].body,link:first.link,city:p.city,category:p.messageCategory,sendMode:'自动化触发',sendTime:'由关联自动化任务触发',results:old?.results||null,pushBinding:{recipientRule:p.recipient,rule:p.rule,version:p.version,time:automationTime(p),priority:p.priority,configs}};
- if(old)reachState.tasks=reachState.tasks.map((t:any)=>t.id===id?task:t);else reachState.tasks.unshift(task);
- }
-}
-function autoInitPushLinks(){if(reachState.autoPushLinkVersion===1)return;
- for(const p of reachState.plans.filter((p:any)=>p.moduleId==='message-notification')){for(const c of p.supported){if(autoPushChannels.includes(c)&&!p.channelConfig[c].pushTaskId)p.channelConfig[c].pushTaskId='DEMO-PUSH-'+p.sceneKey+'-'+(c==='App Push'?'APP':c==='企微客服'?'CS':'GROUP')}autoSyncPushTasks(p,true)}
- reachState.autoPushLinkVersion=1;try{localStorage.setItem(reachStorageKey,JSON.stringify(reachState))}catch{}
-}
-autoInitPushLinks();
-function AutoPushTaskId({plan,channel}:any){if(!autoPushChannels.includes(channel))return null;const id=plan.channelConfig[channel]?.pushTaskId;return <div className={'au-push-binding '+(!id?'missing':'')} data-testid="automation-push-binding"><span>关联推送任务ID</span>{id?<code>{id}</code>:<strong>未关联</strong>}{!id&&<small>关联缺失，请联系任务维护人。</small>}</div>}
-
 function AutoStatus({value}:any){return <span className={'au-status '+(value==='已开启'||value==='渠道已受理'?'good':value==='发送失败'||value==='有失败'?'bad':value==='已跳过'?'muted':'')}><i/>{value}</span>}
 function AutoDialog({title,children,onClose,wide=false}:any){const ref=useRef<any>(null);useEffect(()=>{const last=document.activeElement as HTMLElement;const node=ref.current;node?.focus();return()=>last?.focus()},[]);return createPortal(<div className="au-mask"><div className={'au-dialog '+(wide?'wide':'')} role="dialog" aria-modal="true" aria-label={title} tabIndex={-1} ref={ref} onKeyDown={e=>{if(e.key==='Escape'){e.stopPropagation();onClose()}if(e.key==='Tab'){const all=ref.current.querySelectorAll('button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),a[href]');const first=all[0],last=all[all.length-1];if(e.shiftKey&&(document.activeElement===first||document.activeElement===ref.current)){e.preventDefault();last?.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus()}}}}>{children}</div></div>,document.body)}
 // 仅供原型走查：生产身份和当前城市由平台登录态/工作城市提供。
@@ -8570,32 +8026,25 @@ const autoDemoContextKey='ai-private-automation-demo-context';
 function autoReadDemoContext(){try{const v=JSON.parse(localStorage.getItem(autoDemoContextKey)||'null');return {role:v?.role==='admin'?'admin':'member',city:['西安','合肥'].includes(v?.city)?v.city:'西安'}}catch{return {role:'member',city:'西安'}}}
 function autoCanSwitch(p:any,ctx:any){return ctx.role==='admin'&&p?.city===ctx.city}
 function AutomationWorkspace(){
- const data=useReach();const [access,setAccess]=useState(autoReadDemoContext);const isAdmin=access.role==='admin';const [moduleId,setModuleId]=useState(autoModules[0].id);const plans=data.plans.filter((p:any)=>p.moduleId===moduleId&&p.city===access.city);
+ const data=useReach();const [access,setAccess]=useState(autoReadDemoContext);const isAdmin=access.role==='admin';
+ const plans=data.plans.filter((p:any)=>p.moduleId==='message-notification'&&p.city===access.city);
  const [query,setQuery]=useState(''),[filter,setFilter]=useState('全部'),[notificationType,setNotificationType]=useState('全部通知类型');
- const [selectedId,setSelectedId]=useState(''),[tab,setTab]=useState('概览'),[previewChannel,setPreviewChannel]=useState('');
  const [notice,setNotice]=useState(''),[stopId,setStopId]=useState('');
- const selected=plans.find((p:any)=>p.id===selectedId);
- const switchContext=(patch:any)=>{const ctx={...access,...patch};localStorage.setItem(autoDemoContextKey,JSON.stringify(ctx));setAccess(ctx);setSelectedId('');setStopId('');setNotice('');setTab('概览');setQuery('');setFilter('全部');setNotificationType('全部通知类型')};
- const permitted=(p:any)=>{const current=autoReadDemoContext();if(current.city!==access.city||!autoCanSwitch(p,current)){setAccess(current);if(current.city!==access.city){setSelectedId('');setFilter('全部');setNotificationType('全部通知类型')}setStopId('');setNotice('仅管理员可调整当前城市的通知状态，身份或城市已变化，请刷新后重试。');return false}return true};
- const visiblePlans=plans.filter((p:any)=>(p.name+p.event).includes(query.trim())&&(filter==='全部'||(filter==='已开启')===p.enabled)&&(notificationType==='全部通知类型'||p.messageCategory===notificationType));
- const open=(p:any)=>{setSelectedId(p.id);setTab('概览');setPreviewChannel(p.channels[0])};
-
- const toggle=(p:any)=>{const target=reachState.plans.find((x:any)=>x.id===p.id&&x.city===access.city);if(!target||!permitted(target))return;if(target.enabled){setStopId(target.id);return}const invalid=target.channels.some((c:string)=>autoPushChannels.includes(c)&&!data.tasks.some((t:any)=>t.id===target.channelConfig[c]?.pushTaskId&&t.city===access.city&&t.channels.includes(c)));if(invalid){setNotice('关联推送任务不可用，暂无法开启，请联系任务维护人。');return}reachState.plans=reachState.plans.map((x:any)=>x.id===target.id&&x.city===access.city?{...x,enabled:true}:x);reachState.logs.unshift({planId:target.id,city:access.city,time:reachNow(),action:'开启任务',name:target.name,operator:'管理员（演示）'});reachCommit();setNotice(access.city+'的任务已开启，仅处理后续事件。')};
- const channelPreview=(p:any,c:string)=>{const cc=p.channelConfig[c];if(!cc)return null;return <div className={'au-preview '+(c==='企微客服'||c==='企微群'?'chat':'')}><div className="au-preview-app"><NotificationChannel channel={c}/><span className="au-preview-sender">{cc.sender}</span></div>{cc.variants.map((v:any,i:number)=><div className="au-preview-message" key={i}>{cc.variants.length>1&&<span className="au-caption">{v.label}</span>}{v.title&&(c==='App Push'||c==='App站内消息')&&<strong>{autoRender(v.title)}</strong>}<p>{autoRender(v.body,{'触发分钟':p.delay||'3'})}</p></div>)}{cc.voice&&<div className="au-caption au-voice-caption"><Volume2 size={13}/>{p.voiceSupported?'iOS 语音播报':'语音播报按既有实现'}</div>}</div>};
+ const switchContext=(patch:any)=>{const ctx={...access,...patch};localStorage.setItem(autoDemoContextKey,JSON.stringify(ctx));setAccess(ctx);setStopId('');setNotice('');setQuery('');setFilter('全部');setNotificationType('全部通知类型')};
+ const permitted=(p:any)=>{const current=autoReadDemoContext();if(current.city!==access.city||!autoCanSwitch(p,current)){setAccess(current);setStopId('');setNotice('仅管理员可调整当前城市的通知状态，身份或城市已变化，请刷新后重试。');return false}return true};
+ const visiblePlans=plans.filter((p:any)=>p.name.includes(query.trim())&&(filter==='全部'||(filter==='已开启')===p.enabled)&&(notificationType==='全部通知类型'||p.messageCategory===notificationType));
+ // 本地只模拟业务系统返回生效成功；生产须以实际业务接口结果更新状态。
+ const applyState=(p:any,enabled:boolean)=>{reachState.plans=reachState.plans.map((x:any)=>x.id===p.id&&x.city===access.city?{...x,enabled}:x);reachCommit();setStopId('');setNotice(access.city+'的任务已'+(enabled?'开启，业务系统将按原规则处理后续事件。':'关闭，业务系统将停止该规则的后续消息触达。'))};
+ const toggle=(p:any)=>{const target=reachState.plans.find((x:any)=>x.id===p.id&&x.city===access.city);if(!target||!permitted(target))return;if(target.enabled){setStopId(target.id);return}applyState(target,true)};
  return <div className="au-page au-lean" data-testid="automation-workspace"><div className="au-shell">
- <nav className="au-breadcrumb"><Bot size={14}/><span>AI私域助手</span><ChevronRight size={12}/><button onClick={()=>{setSelectedId('');setTab('概览')}}>自动化任务</button>{selected&&<><ChevronRight size={12}/><span>{selected.name}</span></>}</nav>
- <header className="au-header"><div><h1>{selected?selected.name:'自动化任务'}{selected&&<AutoStatus value={selected.enabled?'已开启':'已关闭'}/>}</h1><div className="au-access-context"><span>当前城市 <b>{access.city}</b></span><i/><span>{isAdmin?'管理员':'仅管理员可调整状态'}</span></div></div><div className="au-actions">{selected?(isAdmin?<ReachButton onClick={()=>toggle(selected)}>{selected.enabled?'关闭任务':'开启任务'}</ReachButton>:null):<a className="au-source-link" href="https://ax047hrq4li.feishu.cn/sheets/GQVnsn4SThi87wtr425c3Z2xnyf" target="_blank" rel="noreferrer"><FileText size={15}/>通知清单<ExternalLink size={12}/></a>}</div></header>
+ <nav className="au-breadcrumb"><Bot size={14}/><span>AI私域助手</span><ChevronRight size={12}/><span>自动化任务</span></nav>
+ <header className="au-header"><div><h1>自动化任务</h1><div className="au-access-context"><span>当前城市 <b>{access.city}</b></span><i/><span>{isAdmin?'管理员':'仅管理员可调整状态'}</span></div></div></header>
  {notice&&<div className="au-notice" role="status"><CheckCircle2 size={15}/>{notice}<button aria-label="关闭提示" onClick={()=>setNotice('')}><X size={15}/></button></div>}
- {!selected?<><nav className="au-module-navigation" aria-label="业务模块">{autoModules.length===1?<span className="active" aria-current="page">{autoModules[0].name}</span>:autoModules.map(m=><button key={m.id} className={moduleId===m.id?'active':''} aria-current={moduleId===m.id?'page':undefined} onClick={()=>{setModuleId(m.id);setNotificationType('全部通知类型');setQuery('');setFilter('全部')}}>{m.name}</button>)}</nav>
  <section className="au-list-panel"><div className="au-toolbar"><div className="au-tabs">{['全部','已开启','已关闭'].map(f=><button className={f===filter?'active':''} onClick={()=>setFilter(f)} key={f}>{f}<span>{plans.filter((p:any)=>f==='全部'||(f==='已开启')===p.enabled).length}</span></button>)}</div><div className="au-actions"><select aria-label="通知类型" value={notificationType} onChange={e=>setNotificationType(e.target.value)}>{['全部通知类型',...reachNotificationTypes].map(c=><option key={c}>{c}</option>)}</select><label className="au-search"><Search size={16}/><input placeholder="搜索任务" aria-label="搜索自动化任务" value={query} onChange={e=>setQuery(e.target.value)}/></label></div></div>
- <div className="au-table-frame"><table className="au-table au-plan-table"><thead><tr><th>任务名称</th><th>通知时点</th><th>触达渠道</th><th>状态</th></tr></thead><tbody>{visiblePlans.map((p:any)=><tr key={p.id}><td><button className="au-name" onClick={()=>open(p)}>{p.name}</button></td><td><span className="au-time">{automationTime(p)}</span></td><td><div className="au-chips">{p.channels.map((c:string)=><NotificationChannel key={c} channel={c}/>)}</div></td><td><div className="au-row-controls">{isAdmin?<><button role="switch" aria-checked={p.enabled} aria-label={`${p.name}开关`} className={'automation-switch '+(p.enabled?'on':'')} onClick={()=>toggle(p)}><span/></button><span>{p.enabled?'已开启':'已关闭'}</span></>:<AutoStatus value={p.enabled?'已开启':'已关闭'}/>}</div></td></tr>)}</tbody></table>{!visiblePlans.length&&<div className="au-empty">{plans.length?'没有匹配任务，请调整搜索或筛选条件。':'当前城市暂无已接入的自动化任务。'}</div>}</div><footer className="au-list-footer">共 {visiblePlans.length} 项任务</footer></section></>:
- <><div className="au-tabs au-detail-tabs">{['概览','操作记录'].map(t=><button key={t} className={tab===t?'active':''} onClick={()=>setTab(t)}>{t}</button>)}</div>
- {tab==='概览'&&<div className="au-overview"><section className="au-panel"><div className="au-panel-title"><h2>触发规则</h2></div><ul className="au-rule-list">{selected.rule.split(/[；;]/).filter(Boolean).map((rule:string,i:number)=><li key={i}><Check size={14}/><span>{rule}</span></li>)}</ul><div className="au-rule-time"><Clock size={15}/><span>{automationTime(selected)}</span></div>{['23','24'].includes(String(selected.sceneKey))&&<p className="au-rule-recipient">通知{selected.recipient}</p>}</section><section className="au-panel"><div className="au-panel-title"><h2>通知内容</h2></div>{selected.channels.length>1&&<div className="au-channel-tabs" role="tablist" aria-label="通知渠道">{selected.channels.map((c:string)=><button role="tab" aria-selected={previewChannel===c} key={c} className={previewChannel===c?'active':''} onClick={()=>setPreviewChannel(c)}><NotificationChannel channel={c}/></button>)}</div>}<AutoPushTaskId plan={selected} channel={previewChannel||selected.channels[0]}/>{channelPreview(selected,previewChannel||selected.channels[0])}</section></div>}
- {tab==='操作记录'&&<section className="au-panel"><h2>操作记录</h2>{data.logs.filter((l:any)=>l.planId===selected.id&&l.city===selected.city&&['开启任务','关闭任务'].includes(l.action)).length?data.logs.filter((l:any)=>l.planId===selected.id&&l.city===selected.city&&['开启任务','关闭任务'].includes(l.action)).map((l:any,i:number)=><div className="au-log" key={i}><span>{l.time}</span><strong>{l.action}</strong><small>{l.operator||'当前运营（演示）'}</small></div>):<div className="au-empty">暂无启停记录。</div>}</section>}</>}
+ <div className="au-table-frame"><table className="au-table au-plan-table"><thead><tr><th>任务名称</th><th>触达渠道</th><th>通知类型</th><th>状态</th></tr></thead><tbody>{visiblePlans.map((p:any)=><tr key={p.id}><td><span className="au-task-name">{p.name}</span></td><td><div className="au-chips">{p.channels.map((c:string)=><NotificationChannel key={c} channel={c}/>)}</div></td><td>{p.messageCategory}</td><td><div className="au-row-controls">{isAdmin?<><button role="switch" aria-checked={p.enabled} aria-label={`${p.name}开关`} className={'automation-switch '+(p.enabled?'on':'')} onClick={()=>toggle(p)}><span/></button><span>{p.enabled?'已开启':'已关闭'}</span></>:<AutoStatus value={p.enabled?'已开启':'已关闭'}/>}</div></td></tr>)}</tbody></table>{!visiblePlans.length&&<div className="au-empty">{plans.length?'没有匹配任务，请调整搜索或筛选条件。':'当前城市暂无已注册的自动化任务。'}</div>}</div><footer className="au-list-footer">共 {visiblePlans.length} 项任务</footer></section>
  <footer className="au-prototype-footer"><span>原型演示</span>任务、身份、城市及开关均为模拟数据，不影响线上。</footer><details className="au-permission-demo"><summary>原型演示工具</summary><div><label>模拟身份<select aria-label="模拟身份" value={access.role} onChange={e=>switchContext({role:e.target.value})}><option value="member">普通成员</option><option value="admin">管理员</option></select></label><label>模拟当前城市<select aria-label="模拟当前城市" value={access.city} onChange={e=>switchContext({city:e.target.value})}><option>西安</option><option>合肥</option></select></label><small>仅用于走查权限与城市范围；生产身份和城市由平台提供。合肥暂无演示任务。</small></div></details>
  </div>
-
- {stopId&&<AutoDialog title="关闭自动化任务" onClose={()=>setStopId('')}><header className="au-dialog-header"><h2>关闭这个任务？</h2></header><div className="au-confirm-body"><p><strong>{access.city} · {plans.find((p:any)=>p.id===stopId)?.name}</strong></p><p>仅关闭当前城市该通知的后续触发，其他城市不受影响。已到达消息保留，重新开启不补发关闭期间的通知。</p></div><footer className="au-dialog-footer"><ReachButton onClick={()=>setStopId('')}>返回</ReachButton><ReachButton primary onClick={()=>{const p=reachState.plans.find((p:any)=>p.id===stopId&&p.city===access.city);if(!p||!permitted(p))return;reachState.plans=reachState.plans.map((x:any)=>x.id===p.id&&x.city===access.city?{...x,enabled:false}:x);reachState.logs.unshift({planId:p.id,city:access.city,time:reachNow(),action:'关闭任务',name:p.name,operator:'管理员（演示）'});reachCommit();setStopId('');setNotice(access.city+'的任务已关闭，后续不再触发通知。')}}>确认关闭</ReachButton></footer></AutoDialog>}
+ {stopId&&<AutoDialog title="关闭自动化任务" onClose={()=>setStopId('')}><header className="au-dialog-header"><h2>关闭这个任务？</h2></header><div className="au-confirm-body"><p><strong>{access.city} · {plans.find((p:any)=>p.id===stopId)?.name}</strong></p><p>关闭后，对应业务系统将停止当前城市该规则的后续消息触达，其他城市和规则不受影响。已到达消息保留，重新开启不补发关闭期间的通知。</p></div><footer className="au-dialog-footer"><ReachButton onClick={()=>setStopId('')}>返回</ReachButton><ReachButton primary onClick={()=>{const p=reachState.plans.find((p:any)=>p.id===stopId&&p.city===access.city);if(!p||!permitted(p))return;applyState(p,false)}}>确认关闭</ReachButton></footer></AutoDialog>}
  </div>
 }
 
@@ -9858,7 +9307,7 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
           </button>
         </div>
         <div className="flex items-center gap-1.5">
-          <button className="w-8 h-8 rounded-md flex items-center justify-center text-[#8b96a3] hover:bg-[#f4f6f8]" title="自动化任务" aria-label="自动化任务" data-testid="reach-automation-entry" onClick={()=>{stopDemo();onOpenTab('[自动化任务]','自动化任务');onClose();}}><Clock size={17}/></button>
+          <button className="w-8 h-8 rounded-md flex items-center justify-center text-[#8b96a3] hover:bg-[#f4f6f8]" title="自动化任务" aria-label="自动化任务" data-testid="reach-automation-entry" onClick={()=>{stopDemo();onOpenTab('[自动化任务]','自动化任务');onClose();}}><Workflow size={17}/></button>
           <button
             data-testid="assistant-resource-toggle"
             onClick={() => setResourceView(resourceView === 'chat' ? 'audience' : 'chat')}
