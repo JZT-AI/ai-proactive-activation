@@ -1,68 +1,78 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="2132" height="758" viewBox="0 0 2132 758" role="img" aria-label="引用人群包后多渠道触达角色与系统泳道图">
-<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#71849d"/></marker></defs>
-<rect width="2132" height="758" fill="#ffffff"/>
-<text x="24" y="36" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="21" fill="#20324a" font-weight="600">引用人群包后多渠道触达 · 角色与系统泳道</text>
-<text x="24" y="65" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="13" fill="#718198">从左向右阅读；同一横道内为对应角色或系统负责的动作。</text>
-<rect x="20" y="100" width="2092" height="188" fill="#ffffff" stroke="#dce3ed"/>
-<rect x="20" y="100" width="174" height="188" fill="#eef2f7" stroke="#dce3ed"/>
-<text x="35" y="182.0" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="15" fill="#20324a" font-weight="600">运营</text>
-<text x="35" y="204.0" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="12" fill="#718198" font-weight="400">执行模式；明确引用与确认</text>
-<rect x="20" y="288" width="2092" height="188" fill="#f8fafc" stroke="#dce3ed"/>
-<rect x="20" y="288" width="174" height="188" fill="#eef2f7" stroke="#dce3ed"/>
-<text x="35" y="370.0" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="15" fill="#20324a" font-weight="600">AI私域助手</text>
-<text x="35" y="392.0" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="12" fill="#718198" font-weight="400">检查引用、配置与逐渠</text>
-<text x="35" y="414.0" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="12" fill="#718198" font-weight="400">道反馈</text>
-<rect x="20" y="476" width="2092" height="188" fill="#ffffff" stroke="#dce3ed"/>
-<rect x="20" y="476" width="174" height="188" fill="#eef2f7" stroke="#dce3ed"/>
-<text x="35" y="558.0" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="15" fill="#20324a" font-weight="600">推送系统</text>
-<text x="35" y="580.0" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="12" fill="#718198" font-weight="400">单渠道任务创建与调度</text>
-<path d="M382 194 L407 194 L407 382 L432 382" fill="none" stroke="#71849d" stroke-width="1.5" marker-end="url(#arrow)"/>
-<path d="M592 382 L617 382 L617 382 L642 382" fill="none" stroke="#71849d" stroke-width="1.5" marker-end="url(#arrow)"/>
-<rect x="587.0" y="320" width="60" height="22" rx="3" fill="white"/>
-<text x="593.0" y="335" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="12" fill="#60728a">引用有效</text>
-<path d="M802 382 L827 382 L827 194 L852 194" fill="none" stroke="#71849d" stroke-width="1.5" marker-end="url(#arrow)"/>
-<rect x="821.0" y="276.0" width="60" height="22" rx="3" fill="white"/>
-<text x="827.0" y="291.0" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="12" fill="#60728a">点击配置</text>
-<path d="M1012 194 L1037 194 L1037 382 L1062 382" fill="none" stroke="#71849d" stroke-width="1.5" marker-end="url(#arrow)"/>
-<rect x="1031.0" y="276.0" width="60" height="22" rx="3" fill="white"/>
-<text x="1037.0" y="291.0" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="12" fill="#60728a">确认配置</text>
-<path d="M1222 382 L1247 382 L1247 194 L1272 194" fill="none" stroke="#71849d" stroke-width="1.5" marker-end="url(#arrow)"/>
-<path d="M1432 194 L1457 194 L1457 570 L1482 570" fill="none" stroke="#71849d" stroke-width="1.5" marker-end="url(#arrow)"/>
-<rect x="1451.0" y="370.0" width="60" height="22" rx="3" fill="white"/>
-<text x="1457.0" y="385.0" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="12" fill="#60728a">最终确认</text>
-<path d="M1642 570 L1667 570 L1667 382 L1692 382" fill="none" stroke="#71849d" stroke-width="1.5" marker-end="url(#arrow)"/>
-<rect x="1661.0" y="464.0" width="60" height="22" rx="3" fill="white"/>
-<text x="1667.0" y="479.0" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="12" fill="#60728a">创建结果</text>
-<path d="M1852 382 L1877 382 L1877 194 L1902 194" fill="none" stroke="#71849d" stroke-width="1.5" marker-end="url(#arrow)"/>
-<rect x="1871.0" y="276.0" width="72" height="22" rx="3" fill="white"/>
-<text x="1877.0" y="291.0" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="12" fill="#60728a">按结果处理</text>
-<rect x="222" y="158" width="160" height="72" rx="9" fill="#eef4ff" stroke="#a8bde8"/>
-<text x="302.0" y="189.0" text-anchor="middle" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="14" fill="#24364c">@有效人群包</text>
-<text x="302.0" y="209.0" text-anchor="middle" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="14" fill="#24364c">输入渠道与发送要求</text>
-<rect x="432" y="346" width="160" height="72" rx="9" fill="#eef4ff" stroke="#a8bde8"/>
-<text x="512.0" y="377.0" text-anchor="middle" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="14" fill="#24364c">检查执行模式与引用</text>
-<text x="512.0" y="397.0" text-anchor="middle" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="14" fill="#24364c">解析本条发送安排</text>
-<rect x="642" y="346" width="160" height="72" rx="9" fill="#eef4ff" stroke="#a8bde8"/>
-<text x="722.0" y="377.0" text-anchor="middle" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="14" fill="#24364c">返回触达配置卡</text>
-<text x="722.0" y="397.0" text-anchor="middle" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="14" fill="#24364c">等待点击，不自动弹窗</text>
-<rect x="852" y="158" width="160" height="72" rx="9" fill="#eef4ff" stroke="#a8bde8"/>
-<text x="932.0" y="189.0" text-anchor="middle" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="14" fill="#24364c">点击卡片，配置城市</text>
-<text x="932.0" y="209.0" text-anchor="middle" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="14" fill="#24364c">渠道、客服及独立内容</text>
-<rect x="1062" y="346" width="160" height="72" rx="9" fill="#eef4ff" stroke="#a8bde8"/>
-<text x="1142.0" y="377.0" text-anchor="middle" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="14" fill="#24364c">校验配置并展示</text>
-<text x="1142.0" y="397.0" text-anchor="middle" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="14" fill="#24364c">任务信息确认卡</text>
-<rect x="1272" y="158" width="160" height="72" rx="9" fill="#eef4ff" stroke="#a8bde8"/>
-<text x="1352.0" y="179.0" text-anchor="middle" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="14" fill="#24364c">核对内容、修改名称</text>
-<text x="1352.0" y="199.0" text-anchor="middle" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="14" fill="#24364c">发送安排用自然语言改</text>
-<text x="1352.0" y="219.0" text-anchor="middle" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="14" fill="#24364c">最终确认创建</text>
-<rect x="1482" y="534" width="160" height="72" rx="9" fill="#eef4ff" stroke="#a8bde8"/>
-<text x="1562.0" y="565.0" text-anchor="middle" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="14" fill="#24364c">按渠道分别创建任务</text>
-<text x="1562.0" y="585.0" text-anchor="middle" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="14" fill="#24364c">返回各渠道创建结果</text>
-<rect x="1692" y="346" width="160" height="72" rx="9" fill="#eef4ff" stroke="#a8bde8"/>
-<text x="1772.0" y="377.0" text-anchor="middle" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="14" fill="#24364c">展示成功、失败</text>
-<text x="1772.0" y="397.0" text-anchor="middle" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="14" fill="#24364c">或结果待确认</text>
-<rect x="1902" y="158" width="160" height="72" rx="9" fill="#eef4ff" stroke="#a8bde8"/>
-<text x="1982.0" y="189.0" text-anchor="middle" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="14" fill="#24364c">失败仅重试该渠道</text>
-<text x="1982.0" y="209.0" text-anchor="middle" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="14" fill="#24364c">未知结果先核查</text>
-<text x="24" y="694" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="13" fill="#718198">缺少引用、模式不符或配置无效时提示处理，不自动圈选、切换模式或提交。创建成功不等于发送完成，成功任务按安排执行。</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="1130" height="1114" viewBox="0 0 1130 1114" role="img" aria-label="引用人群包后多渠道触达系统角色泳道图" style="font-family:PingFang SC,Microsoft YaHei,Arial,sans-serif">
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M1 1L9 5L1 9" fill="none" stroke="#7d8798" stroke-width="1.1"/></marker></defs>
+<rect width="1130" height="1114" fill="white"/>
+<text x="32" y="35" font-size="21" font-weight="650" fill="#20324a">引用人群包后多渠道触达｜系统角色泳道</text>
+<text x="32" y="59" font-size="12" fill="#8993a4">按列区分角色与系统，从上向下阅读；左侧为业务阶段。</text>
+<text x="64" y="116.0" text-anchor="middle" font-size="12" fill="#8993a4">阶段</text>
+<rect x="114" y="84" width="330" height="936" rx="5" fill="white" stroke="#dce1e9"/>
+<path d="M119 84H439Q444 84 444 89V138H114V89Q114 84 119 84" fill="#596bb0"/>
+<text x="279.0" y="116.0" text-anchor="middle" font-size="15" font-weight="600" fill="white">运营</text>
+<rect x="444" y="84" width="330" height="936" rx="5" fill="white" stroke="#dce1e9"/>
+<path d="M449 84H769Q774 84 774 89V138H444V89Q444 84 449 84" fill="#8870b5"/>
+<text x="609.0" y="116.0" text-anchor="middle" font-size="15" font-weight="600" fill="white">AI私域助手</text>
+<rect x="774" y="84" width="330" height="936" rx="5" fill="white" stroke="#dce1e9"/>
+<path d="M779 84H1099Q1104 84 1104 89V138H774V89Q774 84 779 84" fill="#4c8562"/>
+<text x="939.0" y="116.0" text-anchor="middle" font-size="15" font-weight="600" fill="white">推送系统</text>
+<text x="64" y="205.0" text-anchor="middle" font-size="12" fill="#8993a4">发起</text>
+<text x="64" y="331.0" text-anchor="middle" font-size="12" fill="#8993a4">引用检查</text>
+<text x="64" y="457.0" text-anchor="middle" font-size="12" fill="#8993a4">配置入口</text>
+<text x="64" y="583.0" text-anchor="middle" font-size="12" fill="#8993a4">填写配置</text>
+<text x="64" y="709.0" text-anchor="middle" font-size="12" fill="#8993a4">核对任务</text>
+<text x="64" y="835.0" text-anchor="middle" font-size="12" fill="#8993a4">创建任务</text>
+<text x="64" y="961.0" text-anchor="middle" font-size="12" fill="#8993a4">结果处理</text>
+<path d="M279 234 L279 264 L609 264 L609 294" fill="none" stroke="#7d8798" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M609 360 L609 390 L609 390 L609 420" fill="none" stroke="#7d8798" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="613.0" y="378.0" width="60" height="20" rx="3" fill="white"/>
+<text x="643.0" y="393.0" text-anchor="middle" font-size="12" fill="#596273">引用有效</text>
+<path d="M609 486 L609 516 L279 516 L279 546" fill="none" stroke="#7d8798" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="414.0" y="495.0" width="60" height="20" rx="3" fill="white"/>
+<text x="444.0" y="510.0" text-anchor="middle" font-size="12" fill="#596273">点击配置</text>
+<path d="M279 612 L279 642 L609 642 L609 672" fill="none" stroke="#7d8798" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="414.0" y="621.0" width="60" height="20" rx="3" fill="white"/>
+<text x="444.0" y="636.0" text-anchor="middle" font-size="12" fill="#596273">确认配置</text>
+<path d="M493 705 L395 705" fill="none" stroke="#7d8798" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M279 738 L279 768 L939 768 L939 798" fill="none" stroke="#7d8798" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="579.0" y="747.0" width="60" height="20" rx="3" fill="white"/>
+<text x="609.0" y="762.0" text-anchor="middle" font-size="12" fill="#596273">最终确认</text>
+<path d="M939 864 L939 894 L609 894 L609 924" fill="none" stroke="#7d8798" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="744.0" y="873.0" width="60" height="20" rx="3" fill="white"/>
+<text x="774.0" y="888.0" text-anchor="middle" font-size="12" fill="#596273">创建结果</text>
+<path d="M493 957 L395 957" fill="none" stroke="#7d8798" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="408.0" y="935.0" width="72" height="20" rx="3" fill="white"/>
+<text x="444.0" y="950.0" text-anchor="middle" font-size="12" fill="#596273">按结果处理</text>
+<path d="M493 327 L395 327" fill="none" stroke="#7d8798" stroke-width="1" marker-end="url(#arrow)" stroke-dasharray="3 3"/>
+<rect x="420.0" y="305.0" width="48" height="20" rx="3" fill="white"/>
+<text x="444.0" y="320.0" text-anchor="middle" font-size="12" fill="#596273">不满足</text>
+<rect x="163.0" y="168.0" width="232" height="66" rx="5" fill="white" stroke="#596bb0" stroke-width="1"/>
+<text x="279.0" y="196.0" text-anchor="middle" font-size="14" fill="#374151">@有效人群包</text>
+<text x="279.0" y="216.0" text-anchor="middle" font-size="14" fill="#374151">输入渠道与发送要求</text>
+<rect x="493.0" y="294.0" width="232" height="66" rx="5" fill="white" stroke="#8870b5" stroke-width="1"/>
+<text x="609.0" y="322.0" text-anchor="middle" font-size="14" fill="#374151">检查执行模式与引用</text>
+<text x="609.0" y="342.0" text-anchor="middle" font-size="14" fill="#374151">解析本条发送安排</text>
+<rect x="493.0" y="420.0" width="232" height="66" rx="5" fill="white" stroke="#8870b5" stroke-width="1"/>
+<text x="609.0" y="448.0" text-anchor="middle" font-size="14" fill="#374151">返回触达配置卡</text>
+<text x="609.0" y="468.0" text-anchor="middle" font-size="14" fill="#374151">等待点击，不自动弹窗</text>
+<rect x="163.0" y="546.0" width="232" height="66" rx="5" fill="white" stroke="#596bb0" stroke-width="1"/>
+<text x="279.0" y="574.0" text-anchor="middle" font-size="14" fill="#374151">点击卡片，配置城市</text>
+<text x="279.0" y="594.0" text-anchor="middle" font-size="14" fill="#374151">渠道、客服及独立内容</text>
+<rect x="493.0" y="672.0" width="232" height="66" rx="5" fill="white" stroke="#8870b5" stroke-width="1"/>
+<text x="609.0" y="700.0" text-anchor="middle" font-size="14" fill="#374151">校验配置并展示</text>
+<text x="609.0" y="720.0" text-anchor="middle" font-size="14" fill="#374151">任务信息确认卡</text>
+<rect x="163.0" y="672.0" width="232" height="66" rx="5" fill="white" stroke="#596bb0" stroke-width="1"/>
+<text x="279.0" y="690.0" text-anchor="middle" font-size="14" fill="#374151">核对内容、修改名称</text>
+<text x="279.0" y="710.0" text-anchor="middle" font-size="14" fill="#374151">发送安排用自然语言改</text>
+<text x="279.0" y="730.0" text-anchor="middle" font-size="14" fill="#374151">最终确认创建</text>
+<rect x="823.0" y="798.0" width="232" height="66" rx="5" fill="white" stroke="#4c8562" stroke-width="1"/>
+<text x="939.0" y="826.0" text-anchor="middle" font-size="14" fill="#374151">按渠道分别创建任务</text>
+<text x="939.0" y="846.0" text-anchor="middle" font-size="14" fill="#374151">返回各渠道创建结果</text>
+<rect x="493.0" y="924.0" width="232" height="66" rx="5" fill="white" stroke="#8870b5" stroke-width="1"/>
+<text x="609.0" y="952.0" text-anchor="middle" font-size="14" fill="#374151">展示成功、失败</text>
+<text x="609.0" y="972.0" text-anchor="middle" font-size="14" fill="#374151">或结果待确认</text>
+<rect x="163.0" y="924.0" width="232" height="66" rx="5" fill="white" stroke="#596bb0" stroke-width="1"/>
+<text x="279.0" y="952.0" text-anchor="middle" font-size="14" fill="#374151">失败仅重试该渠道</text>
+<text x="279.0" y="972.0" text-anchor="middle" font-size="14" fill="#374151">未知结果先核查</text>
+<rect x="163.0" y="294.0" width="232" height="66" rx="5" fill="white" stroke="#596bb0" stroke-width="1"/>
+<text x="279.0" y="322.0" text-anchor="middle" font-size="14" fill="#374151">模式不符或引用无效</text>
+<text x="279.0" y="342.0" text-anchor="middle" font-size="14" fill="#374151">提示修正后重新发送</text>
+<text x="32" y="1050" font-size="12" fill="#8993a4">缺少引用、模式不符或配置无效时提示处理，不自动圈选、切换模式或提交。创建成功不等于发送完成，成功任务按安排执行。</text>
 </svg>
