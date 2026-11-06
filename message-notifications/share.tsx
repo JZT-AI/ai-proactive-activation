@@ -856,6 +856,8 @@ function TaskSummaryCard({ data, onConfirm }: { data: Extract<CardData, { type: 
 
 interface SmartInputProps {
   sessionAudiences?: string[];
+  sessionAudienceOptions?: {id:string,name:string,label?:string}[];
+  onSelectAudience?: (id:string)=>void;
   mode: '圈选模式' | '执行模式';
   setMode: (mode: '圈选模式' | '执行模式') => void;
   value: string;
@@ -875,7 +877,7 @@ interface ContextItem {
   type: 'group';
 }
 
-function SmartInput({ mode, setMode, value, onChange, onSubmit, bubbles, onBubbleClick, activeBubbleId: propActiveBubbleId, onBubbleToggle, locked, pendingAction, sessionAudiences }: SmartInputProps) {
+function SmartInput({ mode, setMode, value, onChange, onSubmit, bubbles, onBubbleClick, activeBubbleId: propActiveBubbleId, onBubbleToggle, locked, pendingAction, sessionAudiences, sessionAudienceOptions, onSelectAudience }: SmartInputProps) {
   const [internalActiveBubbleId, setInternalActiveBubbleId] = useState<string | null>(null);
   const [atCategory, setAtCategory] = useState<string | null>(null);
   // Contexts removed as per request to have inline text
@@ -997,7 +999,8 @@ function SmartInput({ mode, setMode, value, onChange, onSubmit, bubbles, onBubbl
     inputRef.current?.focus();
   };
 
-  const insertItem = (itemName: string) => {
+  const insertItem = (itemName: string, audienceId?:string) => {
+    if(audienceId)onSelectAudience?.(audienceId);
     if (isAtActive) {
       const newVal = value.slice(0, lastAtIndex) + '@' + itemName + ' ';
       onChange(newVal);
@@ -1010,7 +1013,7 @@ function SmartInput({ mode, setMode, value, onChange, onSubmit, bubbles, onBubbl
   };
 
   const getAllMockResults = (query: string) => {
-    let allItems = [
+    let allItems:any[] = [
       { category: '人群包', name: '南京100万客户' },
       { category: '人群包', name: '合肥政务区高意向人群' },
       { category: '人群包', name: '近30天活跃用户' },
@@ -1030,7 +1033,7 @@ function SmartInput({ mode, setMode, value, onChange, onSubmit, bubbles, onBubbl
         { category: 'CDP人群包', name: '近90天未登录流失人群' }
       ];
     }
-    if(sessionAudiences)allItems=[...allItems.filter(i=>i.category!=='人群包'),...sessionAudiences.map(name=>({category:'人群包',name}))];
+    if(sessionAudiences)allItems=[...allItems.filter(i=>i.category!=='人群包'),...(sessionAudienceOptions||sessionAudiences.map(name=>({name}))).map(a=>({...a,category:'人群包'}))];
     return allItems.filter(item => item.name.toLowerCase().includes(query.toLowerCase()));
   };
 
@@ -1280,10 +1283,10 @@ function SmartInput({ mode, setMode, value, onChange, onSubmit, bubbles, onBubbl
                   <div className="p-1 max-h-48 overflow-y-auto">
                     {getAllMockResults(activeAtQuery).map(res => (
                       <MenuItem
-                        key={res.name}
+                        key={res.id||res.name}
                         icon={getCategoryIcon(res.category)}
-                        label={`[${res.category}] ${res.name}`}
-                        onClick={() => insertItem(res.name)}
+                        label={`[${res.category}] ${res.label||res.name}`}
+                        onClick={() => insertItem(res.name,res.id)}
                       />
                     ))}
                     {getAllMockResults(activeAtQuery).length === 0 && (
@@ -1296,8 +1299,8 @@ function SmartInput({ mode, setMode, value, onChange, onSubmit, bubbles, onBubbl
               <>
                 <div className="px-3 py-2 text-xs font-medium text-zinc-500 border-b border-zinc-100 dark:border-zinc-700">搜索{atCategory}</div>
                 <div className="p-1 max-h-48 overflow-y-auto">
-                  {getMockResults(atCategory, activeAtQuery || '').map(res => (
-                    <MenuItem key={res} icon={getCategoryIcon(atCategory)} label={res} onClick={() => insertItem(res)} />
+                  {(atCategory==='人群包'&&sessionAudienceOptions?sessionAudienceOptions.filter(a=>a.name.includes(activeAtQuery||'')):getMockResults(atCategory, activeAtQuery || '').map(name=>({id:name,name,label:name}))).map(res => (
+                    <MenuItem key={res.id} icon={getCategoryIcon(atCategory)} label={res.label||res.name} onClick={() => insertItem(res.name,atCategory==='人群包'?res.id:undefined)} />
                   ))}
                   {getMockResults(atCategory, activeAtQuery || '').length === 0 && (
                     <div className="px-3 py-4 text-center text-xs text-zinc-500">无匹配结果</div>
@@ -8100,7 +8103,7 @@ function bChannelConfiguration(d:any,c:string){const v=d.contentPack.byChannel[c
 function bCreateSingleTask(d:any,c:string){const key=d.operationKey+'|'+c;const existing=reachState.tasks.find((t:any)=>t.creationKey===key);if(existing)return existing;const items=bContentItems(d.contentPack,c);const sender=bSenderLabel(d,c);const t={id:(c===bInAppChannel?'DEMO-INAPP-':'DEMO-T-')+Date.now()+'-'+Math.floor(Math.random()*10000),executionSystem:c===bInAppChannel?'App消息服务':'推送系统',creationKey:key,name:d.names[c].trim(),source:'手动触达',created:reachNow(),status:'待执行',audience:structuredClone(d.audience),channels:[c],city:d.city,category:d.category,sendMode:d.sendMode,sendTime:d.sendTime,repeat:structuredClone(d.repeat||null),scheduleText:bScheduleLabel(d),sender,channelLabel:bChannelLabel(d,c),blacklistText:bBlacklistLabel(c),interval:c==='企微私聊'?d.interval:'不适用',title:items[0]?.title||'',body:items[0]?.body||'',link:items[0]?.link||'',contents:structuredClone(items),...(c===bInAppChannel?{messageConfigSnapshot:bChannelConfiguration(d,c)}:{pushConfigSnapshot:bChannelConfiguration(d,c)}),results:null};reachState.tasks.unshift(t);reachState.logs.unshift({time:reachNow(),action:c===bInAppChannel?'创建App消息任务':'创建推送任务',name:t.name});return t}
 function BAgentPlan({flowId}:any){
  useReach();const f=reachState.flows[flowId];if(!f)return null;
- const rows:any[]=[{id:'audience',text:f.audience?'人群圈选 · 人群包已就绪':'人群圈选 · 确认条件并建包',status:f.audience?'done':f.stage==='query'?'loading':'wait'}];
+ const rows:any[]=f.goal==='audience'?[{id:'audience',text:f.audience?'人群圈选 · 人群包已创建':'人群圈选 · 确认条件并建包',status:f.audience?'done':f.stage==='query'?'loading':'wait'}]:[];
  if(f.goal==='touch'){
   const done=f.createResults?.filter((r:any)=>r.state==='success').length||0;
   const text=f.stage==='done'?`多渠道触达 · 已创建 ${done} ${f.channels.includes(bInAppChannel)?'项触达':'个单渠道任务'}`:f.stage==='result'?`多渠道触达 · ${done}/${f.channels.length} 创建成功，仍有待处理项`:f.stage==='creating'?'多渠道触达 · 正在分别创建任务':f.stage==='summary'?'多渠道触达 · 等待核对并确认创建':f.stage==='content'?'多渠道触达 · 等待配置渠道内容':'多渠道触达 · 等待人群就绪';
@@ -8129,7 +8132,7 @@ function BContentDialog({flow,onClose,onSave}:any){
  </>}</section></div><details className="bm-demo-tools"><summary>原型演示工具</summary><label>模拟账号数据权限<select aria-label="模拟账号数据权限" value={permissionCities.length===1?(permissionCities[0]==='全国'?'nationwide':'single'):permissionCities.length>1?'multi':'none'} onChange={e=>switchDemoPermissions(e.target.value)}><option value="single">单城市账号（西安）</option><option value="multi">多城市账号（含全国）</option><option value="nationwide">全国权限账号</option><option value="none">无城市权限</option></select></label></details></div>{error&&<div className="bm-error" role="alert">{error}</div>}<footer className="bm-dialog-footer"><span>已选 {pack.channels.length} 个渠道</span><div><ReachButton onClick={closeDraft}>取消</ReachButton><ReachButton primary onClick={()=>{const e=cityError||bContentError(pack);if(e){setError(e);if(cityError){document.querySelector('.bm-city-config')?.scrollIntoView({block:'nearest'});document.querySelector<HTMLSelectElement>('.bm-city-config select')?.focus()}else{const channel=bTouchChannels.find(c=>e.startsWith(c)||c==='服务号模板消息通知'&&e.startsWith('服务号'));if(channel)setActive(channel)}return}onSave(pack,permissionCities)}}>确认配置</ReachButton></div></footer></div></AutoDialog>
 }
 function BConversationCard({data,onAction,onOpenTask,executionMode}:any){const state=useReach();const live=state.flows[data.flowId];const f=data.confirmed?data.snapshot:live;const [audience,setAudience]=useState('');if(!f)return null;const completed=data.confirmed;const blocked=completed||!executionMode;const confirmChannels=f.retryChannels?.length?f.retryChannels:f.channels;return <div className={'b-conversation-card bm-card'+(data.stage==='summary'?' bm-task-confirm':'')} data-testid={'b-'+data.stage+'-card'}><header><span className="b-card-icon">{data.stage==='summary'?<Send size={16}/>:<Bot size={16}/>}</span><strong>{{dependency:'补齐前置依赖',content:'触达配置',config:'多渠道触达配置',summary:'任务信息确认',result:'任务创建结果'}[data.stage]}</strong>{completed&&<small>已确认</small>}</header>{!executionMode&&!completed&&<p className="bm-footnote">请切换到执行模式继续多渠道触达。</p>}
- {data.stage==='dependency'&&<><p>先引用人群包，再继续内容与触达步骤。</p><ReachField label="引用人群包"><select value={audience} onChange={e=>setAudience(e.target.value)} disabled={blocked}><option value="">请选择本人人群包</option>{state.audiences.map((a:any)=><option key={a.id} value={a.id}>{a.name}（{a.count}人）</option>)}</select></ReachField><div className="bm-card-actions"><ReachButton primary disabled={!audience||blocked} onClick={()=>onAction('audience',audience)}>确认引用</ReachButton><ReachButton disabled={completed} onClick={()=>onAction('query')}>先圈选小B</ReachButton></div></>}
+ {data.stage==='dependency'&&<p>请在执行模式中 @人群包，并输入触达要求；尚无人群包时，请先在圈选模式创建。</p>}
  {data.stage==='content'&&<><p>{completed?f.contentPack.city+' · '+f.contentPack.channels.length+'个渠道配置已确认':'选择任务城市与渠道，填写各渠道内容。'}</p>{completed?<div className="bm-confirmed-channels">{f.contentPack.channels.map((c:string)=><NotificationChannel key={c} channel={c}/>)}</div>:<div className="bm-card-actions"><ReachButton primary disabled={blocked} onClick={()=>onAction('content')}>配置多渠道触达</ReachButton></div>}</>}
 
  {data.stage==='summary'&&<>
@@ -8208,6 +8211,7 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
   const [audienceMemberPreview,setAudienceMemberPreview]=useState<any>(null);
   const [bModal,setBModal]=useState<any>(null);
   const bTargetRequest=useRef<string|null>(null);
+  const bInputAudienceIds=useRef<string[]>([]);
   const bSetDraft=(flowId:string,patch:any)=>{reachState.flows[flowId]={...reachState.flows[flowId],...patch};reachCommit();return reachState.flows[flowId]};
   const bMessage=(flowId:string,stage:string,content:string)=>{const d=reachState.flows[flowId];if(stage==='conditions'){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:reachConditionsText(d,content),bFlowId:flowId,bStage:'conditions'}]);return;}setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content,bFlowId:flowId,card:{type:'b_step',flowId,stage,snapshot:structuredClone(d)} as any}]);};
   const bConfirmMessage=(msg:any,patch:any={})=>setMessages(prev=>prev.map(m=>m.id===msg.id?{...m,card:{...m.card,...patch,confirmed:true} as any}:m));
@@ -8218,23 +8222,22 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
     setBModal(null);bTargetRequest.current=null;reachCommit();
   };
   const bMakeSummary=(id:string)=>{const base=bDefaults(reachState.flows[id]);const d=bSetDraft(id,{...base,configured:true,stage:'summary',error:bConfigError({...base,channels:base.retryChannels?.length?base.retryChannels:base.channels})});bMessage(id,'summary',d.retryChannels?.length?'请重新确认失败渠道的发送安排；已成功任务保持不变。':`请核对${d.channels.length}个渠道的触达配置；仅任务名称可手动修改。`)};
-  const bAdvance=(id:string)=>{const f=reachState.flows[id];if(f.goal==='audience'){bSetDraft(id,{stage:'audience_done'});return}if(!f.audience||!f.audience.count){bSetDraft(id,{stage:'dependency'});bMessage(id,'dependency','多渠道触达需要有效小B人群包，请先补齐人群依赖。');return}if(!f.contentPack){bSetDraft(id,{stage:'content'});bMessage(id,'content','');return}bMakeSummary(id)};
-  const beginBReach=(text:string,audience?:any)=>{
-    // 新一轮演示不隐式带入历史内容或唯一人群包；资源页主动传入的人群仍属于明确引用。
+  const bAdvance=(id:string)=>{const f=reachState.flows[id];if(f.goal==='audience'){bSetDraft(id,{stage:'audience_done'});return}if(!f.audience||!f.audience.count){bSetDraft(id,{stage:'dependency'});bMessage(id,'dependency','请在执行模式中 @人群包，并输入触达要求。');return}if(!f.contentPack){bSetDraft(id,{stage:'content'});bMessage(id,'content','');return}bMakeSummary(id)};
+  const beginBReach=(text:string,audience?:any,goal:'audience'|'touch'='audience')=>{
+    // 圈选与触达分别发起；触达只能使用本条指令中明确引用的人群包。
+    if(goal==='touch'&&(!audience||!audience.count)){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'请在执行模式中 @人群包，并输入触达要求；尚无人群包时，请先在圈选模式创建。'}]);return}
     bCancelPending();
     const id='b-chat-'+crypto.randomUUID();
-    const touchIntent=/多渠道触达|多渠道内容|创建.*推送|推送任务|发送|发给|触达/.test(text);
-    const goal=touchIntent||audience?'touch':'audience';
-    const selectedAudience=audience||null;
+    const selectedAudience=goal==='touch'?audience:null;
     const query=selectedAudience?{...selectedAudience.query,...bAudienceSource}:reachParse(text);
-    const needsQuery=!selectedAudience&&(/圈选|筛选|已付费|未付费|体验|注销|注册ID/.test(text));
-    reachState.flows[id]={id,intent:text,requirements:bParseTouch(text),query,goal,stage:needsQuery?'conditions':'start',audience:selectedAudience,contentPack:null,contentDraft:bEmptyContent(),dataPermissionCities:[...bDemoPermissionCities],configured:false,rows:selectedAudience?.people||[],createResults:[],demoResult:'success'};
-    reachCommit();setResourceView('chat');setMode(needsQuery?'圈选模式':'执行模式');
+    const needsQuery=goal==='audience';
+    reachState.flows[id]={id,intent:text,requirements:goal==='touch'?bParseTouch(text):{},query,goal,stage:needsQuery?'conditions':'start',audience:selectedAudience,contentPack:null,contentDraft:bEmptyContent(),dataPermissionCities:[...bDemoPermissionCities],configured:false,rows:selectedAudience?.people||[],createResults:[],demoResult:'success'};
+    reachCommit();setResourceView('chat');
     setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',bPlanFlowId:id} as any]);
     if(needsQuery)bMessage(id,'conditions','');else bAdvance(id)
   };
-  const bQuery=(id:string)=>{const current=reachState.flows[id];const error=reachQueryError(current.query);if(error){bMessage(id,'conditions',error);return}bSetDraft(id,{stage:'query'});setInputLocked(true);setTimeout(()=>{const d=reachState.flows[id];if(d.stage!=='query')return;const rows=reachFilter(d.query);bSetDraft(id,{rows,stage:'preview'});setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:audiencePreviewText+(rows.length?'':'\n\n查询成功，暂无匹配小B。可修改条件后重新确认。'),bFlowId:id,card:{type:'audience',name:d.query.city+(d.query.statuses.length===1?d.query.statuses[0].replace('注册',''):'')+'小B',count:rows.length,updateCycle:d.query.cycle||'once',samples:rows.slice(0,3).map(p=>p.name),audienceType:'b',bFlowId:id} as any}]);setInputLocked(false)},350)};
-  const bPackCreated=(msg:any,name:string)=>{const id=msg.card.bFlowId,d=reachState.flows[id];if(msg.card.confirmed||d.stage!=='preview'||!d.rows.length)return;const a={...bAudienceSource,id:'DEMO-A-'+Date.now(),name,count:d.rows.length,people:d.rows,query:structuredClone(d.query),cycle:d.query.cycle||'once',created:reachNow()};reachState.audiences.unshift(a);bSetDraft(id,{audience:a});bConfirmMessage(msg,{name});setBubbles(prev=>[...prev,{id:a.id,type:'audience',text:'人群包(1)',items:[{id:a.id,name,tabName:'[人群包]'+a.id}]}]);setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:`人群包“${name}”已创建，共${a.count}人。`,bFlowId:id,actionButton:{label:'查看人群包详情',tabName:'[人群包]'+a.id}}]);if(d.goal==='touch')setMode('执行模式');bAdvance(id)};
+  const bQuery=(id:string)=>{if(mode!=='圈选模式'){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'请切换到圈选模式，确认圈选条件。'}]);return}const current=reachState.flows[id];const error=reachQueryError(current.query);if(error){bMessage(id,'conditions',error);return}bSetDraft(id,{stage:'query'});setInputLocked(true);setTimeout(()=>{const d=reachState.flows[id];if(d.stage!=='query')return;const rows=reachFilter(d.query);bSetDraft(id,{rows,stage:'preview'});setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:audiencePreviewText+(rows.length?'':'\n\n查询成功，暂无匹配小B。可修改条件后重新确认。'),bFlowId:id,card:{type:'audience',name:d.query.city+(d.query.statuses.length===1?d.query.statuses[0].replace('注册',''):'')+'小B',count:rows.length,updateCycle:d.query.cycle||'once',samples:rows.slice(0,3).map(p=>p.name),audienceType:'b',bFlowId:id} as any}]);setInputLocked(false)},350)};
+  const bPackCreated=(msg:any,name:string)=>{if(mode!=='圈选模式'){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'请先在圈选模式确认创建人群包，再切换执行模式进行触达。'}]);return}const id=msg.card.bFlowId,d=reachState.flows[id];if(msg.card.confirmed||d.stage!=='preview'||!d.rows.length)return;const a={...bAudienceSource,id:'DEMO-A-'+Date.now(),name,count:d.rows.length,people:d.rows,query:structuredClone(d.query),cycle:d.query.cycle||'once',created:reachNow()};reachState.audiences.unshift(a);bSetDraft(id,{audience:a});bConfirmMessage(msg,{name});setBubbles(prev=>[...prev,{id:a.id,type:'audience',text:'人群包(1)',items:[{id:a.id,name,tabName:'[人群包]'+a.id}]}]);setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:`人群包“${name}”已创建，共${a.count}人。`,bFlowId:id,actionButton:{label:'查看人群包详情',tabName:'[人群包]'+a.id}}]);bSetDraft(id,{goal:'audience',requirements:{},stage:'audience_done'});setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'如需触达，请切换到执行模式，@人群包并输入触达要求。',bFlowId:id}])};
   const confirmAudience = (msg:any, name:string = msg.card.name) => {
     if(msg.card?.type!=='audience'||msg.card.invalidated||msg.card.confirmed)return;
     const error=validateConfirmCardName(name);
@@ -8250,21 +8253,30 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
 
   const bPublishResults=(id:string)=>{const f=reachState.flows[id],done=f.createResults.every((r:any)=>r.state==='success');bSetDraft(id,{stage:done?'done':'result'});setBubbles(prev=>{const others=prev.filter(b=>b.id!==id+'-tasks');const items=f.createResults.filter((r:any)=>r.taskId&&r.channel!==bInAppChannel).map((r:any)=>{const t=reachState.tasks.find((t:any)=>t.id===r.taskId);return {id:t.id,name:t.name,tabName:'[小B任务]'+t.id}});return items.length?[...others,{id:id+'-tasks',type:'task',text:`推送任务(${items.length})`,items}]:others})};
   const bCreate=(id:string)=>{const d=reachState.flows[id];if(d.stage!=='summary')return;const channels=d.retryChannels?.length?d.retryChannels:d.channels;const error=bConfigError({...d,channels});if(error||channels.some((c:string)=>!!validateConfirmCardName(d.names[c]||''))){bSetDraft(id,{error:error||'请填写各任务名称，最多20个字'});return}bSetDraft(id,{stage:'creating',operationKey:d.operationKey||crypto.randomUUID(),error:''});setTimeout(()=>{const f=reachState.flows[id];const created=channels.map((c:string)=>{if((f.demoResult==='partial'&&c==='企微私聊')||(f.demoResult==='inapp-failed'&&c===bInAppChannel))return {channel:c,state:'failed'};if((f.demoResult==='unknown'&&c==='服务号模板消息通知')||(f.demoResult==='inapp-unknown'&&c===bInAppChannel))return {channel:c,state:'unknown'};const t=bCreateSingleTask(f,c);return {channel:c,state:'success',taskId:t.id}});const results=f.channels.map((c:string)=>created.find((r:any)=>r.channel===c)||f.createResults.find((r:any)=>r.channel===c));bSetDraft(id,{createResults:results});bPublishResults(id);bConfirmStage(id,'summary');bMessage(id,'result','已返回各渠道的创建结果。')},400)};
-  const bAction=(msg:any,action:string,value?:any)=>{const id=msg.card.flowId,f=reachState.flows[id];if(!f||f.stage==='cancelled'||msg.card.invalidated)return;if(mode!=='执行模式'&&action!=='query'){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'多渠道触达仅在执行模式可用，请先切换到执行模式。'}]);return}if(action==='audience'){const a=reachState.audiences.find((a:any)=>a.id===value);if(!a)return;bSetDraft(id,{audience:a,query:{...a.query,...bAudienceSource},error:''});bConfirmStage(id,'dependency');bAdvance(id)}else if(action==='query'){bConfirmStage(id,'dependency');bSetDraft(id,{stage:'conditions'});setMode('圈选模式');bMessage(id,'conditions','')}else if(action==='content'){if(f.contentPack){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'本次城市、渠道及内容已确认，不能修改；如需更换请发起新一轮多渠道触达。',bFlowId:id}]);return}setBModal({kind:'content',flowId:id})}else if(action==='name'){bSetDraft(id,{names:{...f.names,[value.channel]:value.name},error:bConfigError({...f,channels:f.retryChannels?.length?f.retryChannels:f.channels})})}else if(action==='demo'){bSetDraft(id,{demoResult:value})}else if(action==='create'){bCreate(id)}else if(action==='retry'||action==='reconcile'){const r=f.createResults.find((r:any)=>r.channel===value);if(f.stage!=='result'||!r||r.state==='success'||(action==='retry'&&r.state!=='failed')||(action==='reconcile'&&r.state!=='unknown'))return;const e=bChannelUnavailableReason(f.city,value)||(action==='retry'?bConfigError({...f,channels:[value]}):'');if(e){bSetDraft(id,{error:e});return}const t=bCreateSingleTask(f,value);bSetDraft(id,{createResults:f.createResults.map((r:any)=>r.channel===value?{...r,state:'success',taskId:t.id}:r),error:''});bPublishResults(id)}};
+  const bAction=(msg:any,action:string,value?:any)=>{const id=msg.card.flowId,f=reachState.flows[id];if(!f||f.stage==='cancelled'||msg.card.invalidated)return;if(mode!=='执行模式'&&action!=='query'){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'多渠道触达仅在执行模式可用，请先切换到执行模式。'}]);return}if(action==='audience'||action==='query'){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'请先在圈选模式创建人群包，再切换执行模式，@人群包并输入触达要求。'}]);return}else if(action==='content'){if(f.contentPack){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'本次城市、渠道及内容已确认，不能修改；如需更换请发起新一轮多渠道触达。',bFlowId:id}]);return}setBModal({kind:'content',flowId:id})}else if(action==='name'){bSetDraft(id,{names:{...f.names,[value.channel]:value.name},error:bConfigError({...f,channels:f.retryChannels?.length?f.retryChannels:f.channels})})}else if(action==='demo'){bSetDraft(id,{demoResult:value})}else if(action==='create'){bCreate(id)}else if(action==='retry'||action==='reconcile'){const r=f.createResults.find((r:any)=>r.channel===value);if(f.stage!=='result'||!r||r.state==='success'||(action==='retry'&&r.state!=='failed')||(action==='reconcile'&&r.state!=='unknown'))return;const e=bChannelUnavailableReason(f.city,value)||(action==='retry'?bConfigError({...f,channels:[value]}):'');if(e){bSetDraft(id,{error:e});return}const t=bCreateSingleTask(f,value);bSetDraft(id,{createResults:f.createResults.map((r:any)=>r.channel===value?{...r,state:'success',taskId:t.id}:r),error:''});bPublishResults(id)}};
   const bTaskCreated=(msg:any,name:string)=>{const f=reachState.flows[msg.card.bFlowId];if(f?.channels)bCreate(f.id)};
-  const handleBIntent=(text:string)=>{
+  const handleBIntent=(text:string,referenceIds:string[]=[])=>{
     if(/交付群|群聊|主动激活/.test(text)&&!/多渠道/.test(text))return false;
-    if(/^\/多渠道触达(?:\s|$)/.test(text.trim())){if(mode!=='执行模式'){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'多渠道触达仅在执行模式可用，请先切换到执行模式。'}]);return true}beginBReach(text);return true}
+    const referenceMatches=reachState.audiences.filter((a:any)=>{const at='@'+a.name;let from=0,index=-1;while((index=text.indexOf(at,from))>=0){const next=text[index+at.length];if(!next||/[\s，,。；;、]/.test(next))return true;from=index+at.length}return false});
+    const selectedReferences=referenceMatches.filter((a:any)=>referenceIds.includes(a.id));
+    const resolvedReferences=referenceMatches.filter((a:any)=>!selectedReferences.some((chosen:any)=>chosen.name===a.name)||referenceIds.includes(a.id));
+    const startTouch=()=>{
+      if(mode!=='执行模式'){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'请切换到执行模式，@人群包并输入触达要求。'}]);return}
+      if(resolvedReferences.length!==1){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:resolvedReferences.length>1?'本次触达请只 @一个人群包，并输入触达要求；同名人群包请从引用列表选择。':'请先 @需要触达的人群包，并输入触达要求；不会自动使用刚创建或历史人群包。'}]);return}
+      beginBReach(text,resolvedReferences[0],'touch');
+    };
+    if(/^\/多渠道触达(?:\s|$)/.test(text.trim())){startTouch();return true}
     const target=reachAudienceTarget(text);
     const startsSelection=/^(?:\/人群圈选|\/小B圈选|(?:帮我|请|重新|再|新建一轮|新一轮)?\s*(?:圈选|筛选))/.test(text.trim());
     if(startsSelection){
       bTargetRequest.current=null;
-      if(target==='b'){beginBReach(text);return true}
+      if(target==='b'){if(mode!=='圈选模式'){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'请切换到圈选模式，输入需要圈选的人群条件。'}]);return true}beginBReach(text);return true}
       if(target==='c'){bCancelPending();return false} // C端仍由原流程处理，绝不进入小B数据分支。
       bCancelPending();bTargetRequest.current=text;
       setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'请说明要圈选C端用户还是小B，并补充圈选条件。'}]);return true;
     }
     if(bTargetRequest.current&&target){const request=bTargetRequest.current;bTargetRequest.current=null;if(target==='b'){beginBReach(request+'，目标对象：'+text);return true}return false}
+    if(referenceMatches.length&&/发送|推送|触达|通知/.test(text)){startTouch();return true}
     const last=[...messages].reverse().find((m:any)=>m.bFlowId||m.card?.flowId||m.bPlanFlowId);const id=last?.bFlowId||last?.card?.flowId||(last as any)?.bPlanFlowId;const old=reachState.flows[id];
     if(old?.stage==='conditions'&&/^(确认|确认条件|确认查询|确认生成|好的|没问题|可以)[。！!\s]*$/.test(text.trim())){bQuery(id);return true}
     const active=old&&!['done','creating','cancelled'].includes(old.stage);
@@ -8274,10 +8286,10 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
     if(active&&old.contentPack?.category&&(/通知类型|消息分类|分类/.test(text)||reachNotificationTypes.some(type=>text.includes(type)))){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'通知类型已在触达配置中确认，本次渠道共用且保持不变；更换分类请发起新一轮触达。发送时间与周期仍可通过自然语言修改。',bFlowId:id}]);return true}
     if(active&&old.contentPack&&(changeChannels||/文案|正文|标题|模板|素材|跳转|客服|发送人|城市|语音|播报|站内/.test(text)||/服务号.{0,8}(?:账号|账户).{0,6}(?:改为|改成|更换)|(?:更换|修改|调整).{0,6}服务号/.test(text))){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'本次触达城市、渠道及内容已确认，保持不变。频率、周期等推送参数可继续用自然语言修改；更换渠道或内容请发起新一轮多渠道触达。',bFlowId:id}]);return true}
     if(active&&old.stage==='content'&&/文案|正文|标题|客服|发送人|城市|语音|播报/.test(text)){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'请点击会话中的“配置多渠道触达”卡片后手动填写。',bFlowId:id}]);return true}
-    if(active&&!old.contentPack&&/调整|改为|改成|增加|排除|区域|板块|注册ID/.test(text)&&/付费|体验|注销|区域|板块|雁塔|未央|碑林|注册ID|DEMO-B-|圈选/.test(text)){const parsed=reachParse(text);const q={...old.query,issue:parsed.issue};if(/付费|体验|注销/.test(text))q.statuses=parsed.statuses;if(/雁塔|未央|碑林/.test(text))q.area=parsed.area;if(/高新|经开|南门/.test(text))q.block=parsed.block;if(/DEMO-B-/.test(text))q.ids=parsed.ids;bInvalidate(id);bSetDraft(id,{query:q,audience:null,configured:false,stage:'conditions'});bMessage(id,'conditions','');return true}
+    if(active&&old.goal==='audience'&&['conditions','preview'].includes(old.stage)&&/调整|改为|改成|增加|排除|区域|板块|注册ID/.test(text)&&/付费|体验|注销|区域|板块|雁塔|未央|碑林|注册ID|DEMO-B-|圈选/.test(text)){const parsed=reachParse(text);const q={...old.query,issue:parsed.issue};if(/付费|体验|注销/.test(text))q.statuses=parsed.statuses;if(/雁塔|未央|碑林/.test(text))q.area=parsed.area;if(/高新|经开|南门/.test(text))q.block=parsed.block;if(/DEMO-B-/.test(text))q.ids=parsed.ids;bInvalidate(id);bSetDraft(id,{query:q,audience:null,configured:false,stage:'conditions'});bMessage(id,'conditions','');return true}
     if(active&&['content','summary','result'].includes(old.stage)&&/推送|触达|发送|定时|立即|即时|每天|每日|每周|每星期|每月|每隔|周期|频率|时|点|间隔|城市|客服|平台类|业务类|系统类|商业类/i.test(text)){if(old.stage==='result'&&old.createResults.some((r:any)=>r.state==='unknown')){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'请先核查结果待确认的渠道，再修改失败任务的发送安排。',bFlowId:id}]);return true}const requirements=bParseTouch(text,old.requirements);if(old.stage==='summary'||old.stage==='result'){const retryChannels=old.stage==='result'?old.createResults.filter((r:any)=>r.state==='failed').map((r:any)=>r.channel):old.retryChannels;bInvalidate(id);bSetDraft(id,{requirements,configured:false,retryChannels});bMakeSummary(id)}else{bSetDraft(id,{requirements});setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'已更新触达要求，完成当前配置后将在任务确认中展示。',bFlowId:id}])}return true}
-    if(active&&old.stage==='audience_done'&&/发送|推送|触达|多渠道内容/.test(text)){bSetDraft(id,{goal:'touch',requirements:bParseTouch(text,old.requirements)});bAdvance(id);return true}
-    if((target!=='c'||/多渠道触达/.test(text))&&/多渠道触达|多渠道内容|小B圈选|(?:圈选|筛选|定向|通知|发给|触达)[^。]{0,55}(?:小\s*[bB]|经纪人)|小\s*[bB][^。]{0,30}(?:圈选|触达|通知)/.test(text)){beginBReach(text);return true}return false;
+    if(active&&old.stage==='audience_done'&&/发送|推送|触达|多渠道内容/.test(text)){startTouch();return true}
+    if((target!=='c'||/多渠道触达/.test(text))&&/多渠道触达|多渠道内容|(?:发送|推送|通知|发给|触达)[^。]{0,55}(?:小\s*[bB]|经纪人)|小\s*[bB][^。]{0,30}(?:触达|通知)|@[^。]+(?:发送|推送|触达|通知)/.test(text)){startTouch();return true}return false;
   };
 
   useEffect(()=>{
@@ -8835,7 +8847,7 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
   };
 
   const useAudienceForPush = (resource: AudienceResource) => {
-    if(resource.id.startsWith('DEMO-A-')){setMode('执行模式');beginBReach('基于 @'+resource.name+' 创建小B触达',reachState.audiences.find(a=>a.id===resource.id));return;}
+    if(resource.id.startsWith('DEMO-A-')){setResourceView('chat');setMode('执行模式');bInputAudienceIds.current=[resource.id];const text='@'+resource.name+' ';setInputValue(text);inputValueRef.current=text;return;}
     setResourceView('chat');
     setMode('执行模式');
     setInputValue(`基于 @${resource.name} 创建一次私聊推送 `);
@@ -8936,7 +8948,8 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
     setMessages(prev => [...prev, { id: Date.now().toString(), role: 'user', content: text, images }]);
     setInputValue('');
     inputValueRef.current = '';
-    if(handleBIntent(text))return;
+    const referenceIds=[...bInputAudienceIds.current];bInputAudienceIds.current=[];
+    if(handleBIntent(text,referenceIds))return;
     if(/^(?:确认|确认创建|确认创建人群包|好的|没问题|可以)[。！!\s]*$/.test(text.trim())){
       const latestCard=[...messages].reverse().find(m=>m.card&&!m.card.invalidated);
       if(latestCard?.card?.type==='audience'){
@@ -8978,7 +8991,7 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
   };
 
   const handleNewChat = () => {
-    bCancelPending();setMode('圈选模式');
+    bCancelPending();bInputAudienceIds.current=[];setMode('圈选模式');
     setMessages([{ id: Date.now().toString(), role: 'ai', content: '你好！我是你的 AI 私域助手。有什么我可以帮你的？' }]);
     setBubbles([]);
     setResourceView('chat');
@@ -9382,7 +9395,7 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
             )}
           </div>
           <div className="grid grid-cols-2 gap-2">
-            <button onClick={()=>{handleNewChat();setMode('圈选模式');setInputValue('/人群圈选 圈选西安已付费经纪人，使用App Push、站内信、企微私聊和服务号创建平台通知触达任务，立即发送。')}} data-testid="b-reach-example" className="h-8 flex items-center justify-center gap-1 rounded-md text-xs font-medium bg-white dark:bg-zinc-950 text-indigo-600 border border-indigo-100 hover:bg-indigo-50"><Users size={12}/>圈选人群包（小B示例）</button>
+            <button onClick={()=>{handleNewChat();setMode('圈选模式');setInputValue('/人群圈选 圈选西安已付费经纪人')}} data-testid="b-reach-example" className="h-8 flex items-center justify-center gap-1 rounded-md text-xs font-medium bg-white dark:bg-zinc-950 text-indigo-600 border border-indigo-100 hover:bg-indigo-50"><Users size={12}/>圈选人群包（小B示例）</button>
             <button
               onClick={() => isPlaying && currentScenario === 1 ? stopDemo() : startDemo(1)}
               className={`h-8 flex items-center justify-center gap-1 rounded-md text-xs font-medium transition-colors ${isPlaying && currentScenario === 1 ? 'bg-red-50 text-red-700 border border-red-100' : 'bg-white dark:bg-zinc-950 text-indigo-600 border border-indigo-100 dark:border-indigo-900/40 hover:bg-indigo-50 dark:hover:bg-indigo-900/20'}`}
@@ -9515,6 +9528,8 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
           onChange={setInputValue}
           onSubmit={handleSendMessage}
           sessionAudiences={[...currentActivationAudiences().map(a=>a.name),...reachState.audiences.map(a=>a.name)]}
+          sessionAudienceOptions={[...currentActivationAudiences().map(a=>({id:a.id,name:a.name})),...reachState.audiences.map(a=>({id:a.id,name:a.name,label:reachState.audiences.filter(other=>other.name===a.name).length>1?a.name+' · '+a.created:a.name}))]}
+          onSelectAudience={id=>{bInputAudienceIds.current=[...new Set([...bInputAudienceIds.current,id])]}}
           bubbles={bubbles}
           onBubbleClick={(tabName) => {
             onOpenTab(tabName);

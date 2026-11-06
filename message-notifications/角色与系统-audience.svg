@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1922" height="758" viewBox="0 0 1922 758" role="img" aria-label="圈选建包角色与系统泳道图">
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#71849d"/></marker></defs>
+<rect width="1922" height="758" fill="#ffffff"/>
+<text x="24" y="36" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="21" fill="#20324a" font-weight="600">圈选建包 · 角色与系统泳道</text>
+<text x="24" y="65" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="13" fill="#718198">从左向右阅读；同一横道内为对应角色或系统负责的动作。</text>
+<rect x="20" y="100" width="1882" height="188" fill="#ffffff" stroke="#dce3ed"/>
+<rect x="20" y="100" width="174" height="188" fill="#eef2f7" stroke="#dce3ed"/>
+<text x="35" y="182.0" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="15" fill="#20324a" font-weight="600">运营</text>
+<text x="35" y="204.0" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="12" fill="#718198" font-weight="400">圈选模式；确认条件与建包</text>
+<rect x="20" y="288" width="1882" height="188" fill="#f8fafc" stroke="#dce3ed"/>
+<rect x="20" y="288" width="174" height="188" fill="#eef2f7" stroke="#dce3ed"/>
+<text x="35" y="370.0" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="15" fill="#20324a" font-weight="600">AI私域助手</text>
+<text x="35" y="392.0" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="12" fill="#718198" font-weight="400">识别条件、预览与人群包</text>
+<rect x="20" y="476" width="1882" height="188" fill="#ffffff" stroke="#dce3ed"/>
+<rect x="20" y="476" width="174" height="188" fill="#eef2f7" stroke="#dce3ed"/>
+<text x="35" y="558.0" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="15" fill="#20324a" font-weight="600">圈选查询服务</text>
+<text x="35" y="580.0" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="12" fill="#718198" font-weight="400">按目标查询对应来源</text>
+<path d="M382 194 L407 194 L407 382 L432 382" fill="none" stroke="#71849d" stroke-width="1.5" marker-end="url(#arrow)"/>
+<path d="M592 382 L617 382 L617 194 L642 194" fill="none" stroke="#71849d" stroke-width="1.5" marker-end="url(#arrow)"/>
+<path d="M802 194 L827 194 L827 570 L852 570" fill="none" stroke="#71849d" stroke-width="1.5" marker-end="url(#arrow)"/>
+<rect x="821.0" y="370.0" width="60" height="22" rx="3" fill="white"/>
+<text x="827.0" y="385.0" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="12" fill="#60728a">确认条件</text>
+<path d="M1012 570 L1037 570 L1037 382 L1062 382" fill="none" stroke="#71849d" stroke-width="1.5" marker-end="url(#arrow)"/>
+<rect x="1031.0" y="464.0" width="60" height="22" rx="3" fill="white"/>
+<text x="1037.0" y="479.0" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="12" fill="#60728a">查询结果</text>
+<path d="M1222 382 L1247 382 L1247 194 L1272 194" fill="none" stroke="#71849d" stroke-width="1.5" marker-end="url(#arrow)"/>
+<path d="M1432 194 L1457 194 L1457 382 L1482 382" fill="none" stroke="#71849d" stroke-width="1.5" marker-end="url(#arrow)"/>
+<rect x="1451.0" y="276.0" width="60" height="22" rx="3" fill="white"/>
+<text x="1457.0" y="291.0" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="12" fill="#60728a">确认建包</text>
+<path d="M1642 382 L1667 382 L1667 194 L1692 194" fill="none" stroke="#71849d" stroke-width="1.5" marker-end="url(#arrow)" stroke-dasharray="5 4"/>
+<rect x="1661.0" y="276.0" width="60" height="22" rx="3" fill="white"/>
+<text x="1667.0" y="291.0" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="12" fill="#60728a">另行发起</text>
+<rect x="222" y="158" width="160" height="72" rx="9" fill="#eef4ff" stroke="#a8bde8"/>
+<text x="302.0" y="189.0" text-anchor="middle" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="14" fill="#24364c">输入目标人群</text>
+<text x="302.0" y="209.0" text-anchor="middle" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="14" fill="#24364c">和圈选条件</text>
+<rect x="432" y="346" width="160" height="72" rx="9" fill="#eef4ff" stroke="#a8bde8"/>
+<text x="512.0" y="377.0" text-anchor="middle" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="14" fill="#24364c">识别C端 / 小B</text>
+<text x="512.0" y="397.0" text-anchor="middle" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="14" fill="#24364c">解析纳入、排除条件</text>
+<rect x="642" y="158" width="160" height="72" rx="9" fill="#eef4ff" stroke="#a8bde8"/>
+<text x="722.0" y="189.0" text-anchor="middle" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="14" fill="#24364c">确认解析条件</text>
+<text x="722.0" y="209.0" text-anchor="middle" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="14" fill="#24364c">或描述变更条件</text>
+<rect x="852" y="534" width="160" height="72" rx="9" fill="#eef4ff" stroke="#a8bde8"/>
+<text x="932.0" y="555.0" text-anchor="middle" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="14" fill="#24364c">查询对应来源</text>
+<text x="932.0" y="575.0" text-anchor="middle" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="14" fill="#24364c">小B：运营新报表</text>
+<text x="932.0" y="595.0" text-anchor="middle" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="14" fill="#24364c">C端：原有数据链路</text>
+<rect x="1062" y="346" width="160" height="72" rx="9" fill="#eef4ff" stroke="#a8bde8"/>
+<text x="1142.0" y="377.0" text-anchor="middle" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="14" fill="#24364c">返回人数、样本</text>
+<text x="1142.0" y="397.0" text-anchor="middle" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="14" fill="#24364c">名称及更新频率</text>
+<rect x="1272" y="158" width="160" height="72" rx="9" fill="#eef4ff" stroke="#a8bde8"/>
+<text x="1352.0" y="189.0" text-anchor="middle" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="14" fill="#24364c">核对人群预览</text>
+<text x="1352.0" y="209.0" text-anchor="middle" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="14" fill="#24364c">确认创建人群包</text>
+<rect x="1482" y="346" width="160" height="72" rx="9" fill="#eef4ff" stroke="#a8bde8"/>
+<text x="1562.0" y="377.0" text-anchor="middle" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="14" fill="#24364c">创建并返回人群包</text>
+<text x="1562.0" y="397.0" text-anchor="middle" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="14" fill="#24364c">本次圈选结束</text>
+<rect x="1692" y="158" width="160" height="72" rx="9" fill="#f0f8f4" stroke="#a6cbb5"/>
+<text x="1772.0" y="179.0" text-anchor="middle" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="14" fill="#24364c">如需触达，手动切换</text>
+<text x="1772.0" y="199.0" text-anchor="middle" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="14" fill="#24364c">执行模式，@人群包</text>
+<text x="1772.0" y="219.0" text-anchor="middle" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="14" fill="#24364c">另行输入触达要求</text>
+<text x="24" y="694" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="13" fill="#718198">条件变更后重新确认；查询失败或0人不创建有效人群包。圈选指令中的发送安排不带入后续触达。</text>
+</svg>
