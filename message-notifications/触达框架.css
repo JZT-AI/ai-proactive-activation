@@ -68,3 +68,5 @@
 .au-dialog.wide:has(>.bm-dialog){width:min(880px,calc(100vw - 32px))}
 
 .bm-fixed-target{display:flex;align-items:center;gap:14px;padding:10px 12px;margin:0 0 20px;background:#f7f9fc;border:1px solid #e5ebf3;border-radius:6px;font-size:12px;color:#74859a}.bm-fixed-target strong{font-weight:500;color:#344e6d}
+
+.bm-channel-option button:disabled,.bm-channel-option input:disabled{cursor:not-allowed;opacity:.55}.bm-channel-unavailable{font-size:10px;color:#8b96a5;margin-left:6px}.bm-unavailable-message{padding:16px 0;font-size:12px;color:#a86053}
