@@ -8069,26 +8069,86 @@ const bInAppChannel='有客App站内信';
 const bYoukeApp={id:'DEMO-APP-YOUKE',name:'有客App'};
 const bServiceAccount={id:'DEMO-OA-365',name:'365淘房服务号'};
 const bTouchChannels=['App Push',bInAppChannel,'企微私聊','服务号模板消息通知'];
-const bEmptyContent=()=>({city:'',channels:[],byChannel:{'App Push':{appId:bYoukeApp.id,title:'',body:'',link:'',voiceEnabled:false,voiceTemplateId:''},'有客App站内信':{appId:bYoukeApp.id,title:'',body:'',link:''},'企微私聊':{body:'',image:'',miniTitle:'',miniPath:''},'服务号模板消息通知':{accountId:bServiceAccount.id,account:bServiceAccount.name,template:'',fields:{},link:''}}});
-const bServiceTemplates=[{id:'demo-service',account:bServiceAccount.name,name:'平台服务通知（演示）',fields:['事项','时间','说明']},{id:'demo-city',account:bServiceAccount.name,name:'业务办理通知（演示）',fields:['业务名称','办理时间','办理结果']}];
+const bServiceTemplate = {
+ id: 'demo-service-progress',
+ name: '服务进度提醒',
+ fields: ['公司名称', '服务内容', '当前进度', '下一进度'],
+};
+const bServiceMiniProgram = '365获客宝小程序';
+const bEmptyContent = () => ({
+ city: '',
+ channels: [],
+ byChannel: {
+  'App Push': {appId:bYoukeApp.id,title:'',body:'',voiceEnabled:false,voiceTemplateId:''},
+  '有客App站内信': {appId:bYoukeApp.id,title:'',body:''},
+  '企微私聊': {body:'',image:'',cardTitle:'',cardLink:'',cardDescription:'',cardCover:''},
+  '服务号模板消息通知': {accountId:bServiceAccount.id,account:bServiceAccount.name,fields:{},miniPath:''},
+ },
+});
 // Demo catalog only. Real speech IDs, supported templates and API field names await integration.
 const bVoiceTemplates=[{id:'DEMO-VOICE-001',name:'通用通知',prompt:'您有一条新的业务通知，请及时查看。'},{id:'DEMO-VOICE-002',name:'客户消息',prompt:'您有新的客户消息，请及时回复。'},{id:'DEMO-VOICE-003',name:'待办提醒',prompt:'您有新的业务待办，请及时处理。'}];
 function BVoicePreview({value}:any){const template=bVoiceTemplates.find(t=>t.id===value.voiceTemplateId);return <div className="bm-voice-note" data-testid="app-voice-preview"><div><Volume2 size={13}/><span>语音播报</span><strong>{value.voiceEnabled?'已开启 · '+(template?.name||'待选择模板'):'未开启'}</strong></div>{value.voiceEnabled&&template&&<p>{template.prompt}</p>}</div>}
-function bContentError(pack:any){if(!pack?.channels?.length)return '请至少选择一个需要配置内容的渠道';for(const c of pack.channels){const unavailable=bChannelUnavailableReason(pack.city,c);if(unavailable)return unavailable;const v=pack.byChannel[c]||{};if((c==='App Push'||c===bInAppChannel)&&v.appId!==bYoukeApp.id)return notificationChannelName(c)+'：本期仅支持有客App';if(c==='服务号模板消息通知'&&(v.accountId!==bServiceAccount.id||v.account!==bServiceAccount.name))return '服务号：本期仅支持365淘房服务号';if(c==='App Push'&&(!v.title?.trim()||!v.body?.trim()))return 'App Push：请填写标题和正文';if(c==='App Push'&&v.voiceEnabled&&!bVoiceTemplates.some(t=>t.id===v.voiceTemplateId))return 'App Push：请选择有效的语音播报模板';if(c===bInAppChannel&&(!v.title?.trim()||!v.body?.trim()))return '站内信：请填写标题和正文';if(c===bInAppChannel&&!reachNotificationTypes.includes(pack.category))return '站内信：请选择有效的通知类型';if(c==='企微私聊'){
-  const hasMiniPath = !!v.miniPath?.trim();
-  const hasMiniTitle = !!v.miniTitle?.trim();
-  if(hasMiniPath!==hasMiniTitle)return '企微私聊：请补齐小程序标题和页面路径';
-  if(!v.body?.trim()&&!v.image&&!hasMiniPath)return '企微私聊：请配置至少一项消息内容';
- }if(c==='服务号模板消息通知'){const t=bServiceTemplates.find(t=>t.id===v.template&&t.account===v.account);if(!t)return '服务号：请选择365淘房服务号的有效消息模板';if(t.fields.some(k=>!v.fields?.[k]?.trim()))return '服务号：请补齐模板字段'}if(v.link&&!/^https:\/\//.test(v.link))return notificationChannelName(c)+'：跳转链接请使用https://地址'}return ''}
-function bContentItems(pack:any,c:string){const v=pack.byChannel[c];if(c==='App Push'){const template=v.voiceEnabled?bVoiceTemplates.find(t=>t.id===v.voiceTemplateId):null;return [{type:'App Push',title:v.title,body:v.body,link:v.link,voiceEnabled:!!v.voiceEnabled,voiceTemplateId:template?.id||'',voiceTemplateName:template?.name||'',voicePrompt:template?.prompt||''}]};if(c===bInAppChannel)return [{type:bInAppChannel,title:v.title,body:v.body,link:v.link}];if(c==='企微私聊'){
+function bContentError(pack:any){
+ if(!pack?.channels?.length)return '请至少选择一个需要配置内容的渠道';
+ for(const c of pack.channels){
+  const unavailable=bChannelUnavailableReason(pack.city,c);
+  if(unavailable)return unavailable;
+  const v=pack.byChannel[c]||{};
+  if(c==='App Push'||c===bInAppChannel){
+   const name=notificationChannelName(c);
+   if(v.appId!==bYoukeApp.id)return name+'：本期仅支持有客App';
+   if(!v.title?.trim()||!v.body?.trim())return name+'：请填写标题和正文';
+   if(c==='App Push'&&v.voiceEnabled&&!bVoiceTemplates.some(t=>t.id===v.voiceTemplateId))return 'App Push：请选择有效的语音播报模板';
+   if(c===bInAppChannel&&!reachNotificationTypes.includes(pack.category))return '站内信：请选择有效的通知类型';
+  }
+  if(c==='企微私聊'){
+   const fields=[v.cardTitle?.trim(),v.cardLink?.trim(),v.cardDescription?.trim(),v.cardCover];
+   if(fields.some(Boolean)){
+    if(!fields.every(Boolean))return '企微私聊：请填写链接卡片的标题、跳转地址和描述，并上传封面图';
+    if(!/^https:\/\/[^\s]+$/i.test(fields[1])||!URL.canParse(fields[1]))return '企微私聊：链接卡片的跳转地址须为有效的 HTTPS 地址';
+   }
+   if(!v.body?.trim()&&!v.image&&!fields.every(Boolean))return '企微私聊：请配置至少一项消息内容';
+  }
+  if(c==='服务号模板消息通知'){
+   if(v.accountId!==bServiceAccount.id||v.account!==bServiceAccount.name)return '服务号：本期仅支持365淘房服务号';
+   const missing=bServiceTemplate.fields.find(field=>!v.fields?.[field]?.trim());
+   if(missing)return '服务号：请填写'+missing;
+   const path=v.miniPath?.trim();
+   if(path&&!/^\/?[\w-]+(?:\/[\w-]+)*(?:\?[^\s#]*)?$/.test(path))return '服务号：请填写有效的365获客宝小程序路径';
+  }
+ }
+ return '';
+}
+function bContentItems(pack:any,c:string){
+ const v=pack.byChannel[c];
+ if(c==='App Push'){
+  const template=v.voiceEnabled?bVoiceTemplates.find(t=>t.id===v.voiceTemplateId):null;
+  return [{type:'App Push',title:v.title,body:v.body,voiceEnabled:!!v.voiceEnabled,voiceTemplateId:template?.id||'',voiceTemplateName:template?.name||'',voicePrompt:template?.prompt||''}];
+ }
+ if(c===bInAppChannel)return [{type:bInAppChannel,title:v.title,body:v.body}];
+ if(c==='企微私聊'){
   const items = [
    ...(v.body?.trim() ? [{type:'文本',body:v.body}] : []),
    ...(v.image ? [{type:'图片',body:'已选择图片',image:v.image}] : []),
-   ...(v.miniPath?.trim() && v.miniTitle?.trim() ? [{type:'小程序',title:v.miniTitle,body:v.miniPath}] : []),
+   ...(v.cardLink?.trim() ? [{type:'链接卡片',title:v.cardTitle,body:v.cardDescription,link:v.cardLink.trim(),image:v.cardCover}] : []),
   ];
   return items.map((item, index) => ({...item, delay:index * 2}));
- }const t=bServiceTemplates.find(t=>t.id===v.template);return [{type:'服务号模板消息',title:t?.name,body:(t?.fields||[]).map(k=>k+'：'+(v.fields?.[k]||'')).join('\n'),link:v.link}]}
-function bContentSummary(pack:any,c:string){if(!pack?.byChannel?.[c])return '尚未配置';return bContentItems(pack,c).map(v=>[v.title,v.body].filter(Boolean).join(' · ')).join('；')}
+ }
+ const miniPath=v.miniPath?.trim();
+ return [{
+  type:'服务号模板消息',
+  title:bServiceTemplate.name,
+  body:bServiceTemplate.fields.map(field=>field+'：'+(v.fields?.[field]||'')).join('\n'),
+  ...(miniPath ? {miniProgram:bServiceMiniProgram,miniPath} : {}),
+ }];
+}
+function bContentSummary(pack:any,c:string){
+ if(!pack?.byChannel?.[c])return '尚未配置';
+ return bContentItems(pack,c).map((item:any)=>[
+  item.title,item.body,item.link,
+  item.miniPath ? item.miniProgram+' · '+item.miniPath : '',
+ ].filter(Boolean).join('\n')).join('\n\n');
+}
 function bScheduleNumber(text:string){if(/^\d+$/.test(text))return Number(text);const chars:any={'零':0,'一':1,'二':2,'两':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9};if(text.includes('十')){const [a,b]=text.split('十');return (a?chars[a]:1)*10+(b?chars[b]:0)}return chars[text]}
 function bParseTouch(text:string,base:any={}){
  const v:any={...base};const channels=bTouchChannels.filter(c=>c==='App Push'?/app[ -]?push|push/i.test(text):c===bInAppChannel?/站内信|站内消息/.test(text):c==='企微私聊'?/企微|私聊/.test(text):/服务号/.test(text));if(channels.length)v.requestedChannels=channels;
@@ -8118,7 +8178,7 @@ function bSenderLabel(d:any,c:string){return c==='企微私聊'?'B端客服':c==
 function bChannelLabel(d:any,c:string){if(c==='企微私聊')return bWecomCityChannels[d.city]||'暂无可用通道';return notificationChannelName(c)+' · '+d.city+'（演示）'}
 function bBlacklistLabel(c:string){return c==='企微私聊'?'小B适用黑名单规则待接入确认':'本渠道过滤规则待接入确认'}
 function bConfigError(d:any){if(!d.audience)return '请先引用或创建人群包';if(!d.audience.count)return '当前人群为0人，不能创建推送任务';if(!d.channels?.length)return '请至少选择一个发送渠道';if(bCityConfigError(d))return bCityConfigError(d);const unavailable=d.channels.map((c:string)=>bChannelUnavailableReason(d.city,c)).find(Boolean);if(unavailable)return unavailable;if(d.channels.some((c:string)=>!d.contentPack?.channels.includes(c)))return '所选渠道缺少已确认内容，请先补齐内容';if(d.channels.includes('App Push')&&d.audience.people?.some((p:any)=>p.status==='注销经纪人'))return '当前人群包含注销经纪人，App Push不可用，请调整名单或渠道';if(d.sendMode==='周期发送'&&(!d.repeat||d.scheduleIssue))return d.scheduleIssue||'请用自然语言补齐推送频率/周期。';if(d.sendMode==='定时发送'&&(!d.sendTime||new Date(d.sendTime+'+08:00').getTime()<=Date.now()))return '请用自然语言补齐有效的未来定时时间（北京时间）';return bContentError({city:d.city,channels:d.channels,category:d.category,byChannel:d.contentPack.byChannel})}
-function bChannelConfiguration(d:any,c:string){const v=d.contentPack.byChannel[c];const content=bContentItems(d.contentPack,c).map(({voiceTemplateName,voicePrompt,...item}:any)=>item);return {name:d.names[c].trim(),audienceId:d.audience.id,city:d.city,channel:c===bInAppChannel?'应用内发送':c,category:d.category,sendMode:d.sendMode,sendTime:d.sendTime||'',repeat:structuredClone(d.repeat||null),interval:c==='企微私聊'?d.interval:null,sender:bSenderLabel(d,c),channelLabel:bChannelLabel(d,c),content,...(c==='App Push'||c===bInAppChannel?{appId:v.appId}:{}),...(c==='服务号模板消息通知'?{accountId:v.accountId,account:v.account,templateId:v.template,templateFields:structuredClone(v.fields)}:{})};}
+function bChannelConfiguration(d:any,c:string){const v=d.contentPack.byChannel[c];const content=bContentItems(d.contentPack,c).map(({voiceTemplateName,voicePrompt,...item}:any)=>item);return {name:d.names[c].trim(),audienceId:d.audience.id,city:d.city,channel:c===bInAppChannel?'应用内发送':c,category:d.category,sendMode:d.sendMode,sendTime:d.sendTime||'',repeat:structuredClone(d.repeat||null),interval:c==='企微私聊'?d.interval:null,sender:bSenderLabel(d,c),channelLabel:bChannelLabel(d,c),content,...(c==='App Push'||c===bInAppChannel?{appId:v.appId}:{}),...(c==='服务号模板消息通知'?{accountId:v.accountId,account:v.account,templateId:bServiceTemplate.id,templateFields:Object.fromEntries(bServiceTemplate.fields.map(field=>[field,v.fields[field]]))}:{})};}
 function bCreateSingleTask(d:any,c:string){const key=d.operationKey+'|'+c;const existing=reachState.tasks.find((t:any)=>t.creationKey===key);if(existing)return existing;const items=bContentItems(d.contentPack,c);const sender=bSenderLabel(d,c);const t={id:'DEMO-T-'+Date.now()+'-'+Math.floor(Math.random()*10000),executionSystem:'推送系统',creationKey:key,name:d.names[c].trim(),source:'手动触达',created:reachNow(),status:'待执行',audience:structuredClone(d.audience),channels:[c],city:d.city,category:d.category,sendMode:d.sendMode,sendTime:d.sendTime,repeat:structuredClone(d.repeat||null),scheduleText:bScheduleLabel(d),sender,channelLabel:bChannelLabel(d,c),blacklistText:bBlacklistLabel(c),interval:c==='企微私聊'?d.interval:'不适用',title:items[0]?.title||'',body:items[0]?.body||'',link:items[0]?.link||'',contents:structuredClone(items),pushConfigSnapshot:bChannelConfiguration(d,c),results:null};reachState.tasks.unshift(t);reachState.logs.unshift({time:reachNow(),action:'创建推送任务',name:t.name});return t}
 function BAgentPlan({flowId}:any){
  useReach();const f=reachState.flows[flowId];if(!f)return null;
@@ -8139,15 +8199,47 @@ function BContentDialog({flow,onClose,onSave}:any){
  const selectChannel=(c:string)=>{const unavailable=bChannelUnavailableReason(pack.city,c);if(unavailable&&!pack.channels.includes(c)){setError(unavailable);return}setPack((p:any)=>({...p,channels:p.channels.includes(c)?p.channels.filter((x:string)=>x!==c):[...p.channels,c],...(c===bInAppChannel&&!p.category?{category:flow.requirements?.category||'平台类'}:{})}));setActive(c);setError('')};
  const switchDemoPermissions=(type:string)=>{const cities=type==='single'?['西安']:type==='multi'?[...bDemoPushCities]:type==='nationwide'?['全国']:[];setPermissionCities(cities);setPack((p:any)=>({...p,city:cities.length===1?cities[0]:''}));setError('')};
  const closeDraft=()=>onClose(pack,permissionCities);
- const selected=pack.channels.includes(active);const template=bServiceTemplates.find(t=>t.id===v.template&&t.account===v.account);
+ const selected=pack.channels.includes(active);
+ const readImage=(field:'image'|'cardCover',file?:File)=>{
+  if(!file)return;
+  if(!file.type.startsWith('image/')){setError('请选择图片文件');return}
+  if(file.size>1500000){setError('演示图片请小于1.5MB');return}
+  const reader=new FileReader();
+  reader.onload=()=>setValue({[field]:reader.result});
+  reader.onerror=()=>setError('读取图片失败，请重新选择');
+  reader.readAsDataURL(file);
+ };
  const cityError=bCityConfigError({...flow,city:pack.city,dataPermissionCities:permissionCities});
  const activeUnavailable=bChannelUnavailableReason(pack.city,active);
 
  return <AutoDialog title="多渠道触达配置" onClose={closeDraft} wide><div className="bm-dialog"><header className="bm-dialog-head"><div><h2>多渠道触达配置</h2><p>勾选渠道，点击渠道名称切换编辑。切换时保留已填内容。</p></div><button aria-label="关闭内容配置" onClick={closeDraft}><X size={18}/></button></header><div className="bm-dialog-body"><div className="bm-city-config"><ReachField label="任务城市">{permissionCities.length===1?<div className="bm-city-value" aria-label="任务城市">{permissionCities[0]}<small>推送系统城市</small></div>:permissionCities.length>1?<select aria-label="任务城市" value={pack.city} onChange={e=>{setPack((p:any)=>({...p,city:e.target.value}));setError('')}}><option value="">请选择任务城市</option>{permissionCities.map(c=><option key={c}>{c}</option>)}</select>:<p role="alert">当前账号无城市数据权限</p>}</ReachField>{permissionCities.length>1&&<p className="bm-city-hint">选项来自推送系统</p>}{cityError&&permissionCities.length>0&&pack.city&&<p className="bm-inline-error" role="alert">{cityError}</p>}</div><div className="bm-channel-select" role="group" aria-label="选择及编辑渠道">{bTouchChannels.map(c=><div key={c} className={'bm-channel-option'+(active===c?' active':'')}><label><input type="checkbox" aria-label={notificationChannelName(c)} checked={pack.channels.includes(c)} disabled={!!bChannelUnavailableReason(pack.city,c)&&!pack.channels.includes(c)} title={bChannelUnavailableReason(pack.city,c)||undefined} onChange={()=>selectChannel(c)}/></label><button type="button" aria-label={'编辑'+notificationChannelName(c)+'内容'} aria-pressed={active===c} disabled={!!bChannelUnavailableReason(pack.city,c)} title={bChannelUnavailableReason(pack.city,c)||undefined} onClick={()=>setActive(c)}><NotificationChannel channel={c}/>{bChannelUnavailableReason(pack.city,c)&&<small className="bm-channel-unavailable">{pack.city==='全国'?'全国暂无通道':'暂无通道'}</small>}</button></div>)}</div>{pack.city==='全国'&&pack.channels.includes('企微私聊')&&<p className="bm-inline-error" role="alert">{bChannelUnavailableReason(pack.city,'企微私聊')}</p>}<div className="bm-content-grid"><section><h3>{active==='服务号模板消息通知'?'模板配置':'消息内容'}</h3>{selected&&!activeUnavailable&&active!=='企微私聊'&&<div className="bm-fixed-target" data-testid="channel-fixed-target"><span>{active==='服务号模板消息通知'?'发送服务号':'发送应用'}</span><strong>{active==='服务号模板消息通知'?bServiceAccount.name:bYoukeApp.name}</strong></div>}{activeUnavailable?<p className="bm-unavailable-message">{activeUnavailable}</p>:!selected?<div className="bm-empty"><p>尚未选择此渠道</p><ReachButton onClick={()=>selectChannel(active)}>配置此渠道</ReachButton></div>:<>
- {active==='App Push'&&<><ReachField label="Push标题"><input value={v.title} onChange={e=>setValue({title:e.target.value})} placeholder="填写通知标题"/></ReachField><ReachField label="Push正文"><textarea value={v.body} onChange={e=>setValue({body:e.target.value})} rows={5} placeholder="填写通知正文"/></ReachField><ReachField label="Push跳转链接（可选）"><input value={v.link} onChange={e=>setValue({link:e.target.value})} placeholder="https://..."/></ReachField><section className="bm-voice-config"><label className="bm-voice-toggle"><input type="checkbox" aria-label="语音播报" checked={!!v.voiceEnabled} onChange={e=>setValue({voiceEnabled:e.target.checked})}/><span>语音播报</span></label>{v.voiceEnabled&&<><ReachField label="语音播报模板"><select value={v.voiceTemplateId||''} onChange={e=>setValue({voiceTemplateId:e.target.value})}><option value="">请选择播报模板</option>{bVoiceTemplates.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}</select></ReachField>{bVoiceTemplates.find(t=>t.id===v.voiceTemplateId)&&<p className="bm-footnote" data-testid="voice-template-prompt">播报提示：{bVoiceTemplates.find(t=>t.id===v.voiceTemplateId)?.prompt}</p>}<p className="bm-footnote">预置播报提示为演示内容，正式模板待接入。</p></>}</section></>}
- {active===bInAppChannel&&<><ReachField label="通知类型"><select value={pack.category||''} onChange={e=>{setPack((p:any)=>({...p,category:e.target.value}));setError('')}}><option value="">请选择通知类型</option>{reachNotificationTypes.map(type=><option key={type}>{type}</option>)}</select></ReachField><p className="bm-type-hint">用于站内信分类，本次所选渠道共用。</p><ReachField label="站内信标题"><input value={v.title} onChange={e=>setValue({title:e.target.value})} placeholder="填写消息标题"/></ReachField><ReachField label="站内信正文"><textarea value={v.body} onChange={e=>setValue({body:e.target.value})} rows={7} placeholder="填写完整通知内容"/></ReachField><ReachField label="站内信跳转链接（可选）"><input value={v.link} onChange={e=>setValue({link:e.target.value})} placeholder="https://..."/></ReachField></>}
- {active==='企微私聊'&&<><div className="bm-fixed-target" data-testid="wecom-sender-route"><span>发送客服</span><strong>B端客服</strong><span>通道</span><strong>{pack.city?(bWecomCityChannels[pack.city]||'暂无可用通道'):'选择任务城市后显示'}</strong></div><ReachField label="企微消息正文"><textarea value={v.body} onChange={e=>setValue({body:e.target.value})} rows={5} placeholder="填写发送给经纪人的消息"/></ReachField><details className="bm-extra"><summary>添加图片或小程序</summary><ReachField label="企微图片"><input type="file" accept="image/*" onChange={e=>{const file=e.target.files?.[0];if(!file)return;if(file.size>1500000){setError('演示图片请小于1.5MB');return}const r=new FileReader();r.onload=()=>setValue({image:r.result});r.readAsDataURL(file)}}/></ReachField>{v.image&&<ReachButton onClick={()=>setValue({image:''})}>移除图片</ReachButton>}<ReachField label="小程序标题"><input value={v.miniTitle} onChange={e=>setValue({miniTitle:e.target.value})}/></ReachField><ReachField label="小程序页面路径"><input value={v.miniPath} onChange={e=>setValue({miniPath:e.target.value})}/></ReachField></details></>}
- {active==='服务号模板消息通知'&&<><ReachField label="服务号模板"><select value={v.template} disabled={!v.account} onChange={e=>setValue({template:e.target.value,fields:{}})}><option value="">请选择模板</option>{bServiceTemplates.filter(t=>t.account===v.account).map(t=><option key={t.id} value={t.id}>{t.name}</option>)}</select></ReachField>{template?.fields.map(k=><ReachField label={'模板'+k} key={k}><input value={v.fields?.[k]||''} onChange={e=>setValue({fields:{...v.fields,[k]:e.target.value}})}/></ReachField>)}<ReachField label="服务号跳转链接（可选）"><input value={v.link} onChange={e=>setValue({link:e.target.value})}/></ReachField></>}
+ {active==='App Push'&&<><ReachField label="Push标题"><input value={v.title} onChange={e=>setValue({title:e.target.value})} placeholder="填写通知标题"/></ReachField><ReachField label="Push正文"><textarea value={v.body} onChange={e=>setValue({body:e.target.value})} rows={5} placeholder="填写通知正文"/></ReachField><section className="bm-voice-config"><label className="bm-voice-toggle"><input type="checkbox" aria-label="语音播报" checked={!!v.voiceEnabled} onChange={e=>setValue({voiceEnabled:e.target.checked})}/><span>语音播报</span></label>{v.voiceEnabled&&<><ReachField label="语音播报模板"><select value={v.voiceTemplateId||''} onChange={e=>setValue({voiceTemplateId:e.target.value})}><option value="">请选择播报模板</option>{bVoiceTemplates.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}</select></ReachField>{bVoiceTemplates.find(t=>t.id===v.voiceTemplateId)&&<p className="bm-footnote" data-testid="voice-template-prompt">播报提示：{bVoiceTemplates.find(t=>t.id===v.voiceTemplateId)?.prompt}</p>}<p className="bm-footnote">预置播报提示为演示内容，正式模板待接入。</p></>}</section></>}
+ {active===bInAppChannel&&<><ReachField label="通知类型"><select value={pack.category||''} onChange={e=>{setPack((p:any)=>({...p,category:e.target.value}));setError('')}}><option value="">请选择通知类型</option>{reachNotificationTypes.map(type=><option key={type}>{type}</option>)}</select></ReachField><p className="bm-type-hint">用于站内信分类，本次所选渠道共用。</p><ReachField label="站内信标题"><input value={v.title} onChange={e=>setValue({title:e.target.value})} placeholder="填写消息标题"/></ReachField><ReachField label="站内信正文"><textarea value={v.body} onChange={e=>setValue({body:e.target.value})} rows={7} placeholder="填写完整通知内容"/></ReachField></>}
+ {active==='企微私聊'&&<>
+  <div className="bm-fixed-target" data-testid="wecom-sender-route"><span>发送客服</span><strong>B端客服</strong><span>通道</span><strong>{pack.city?(bWecomCityChannels[pack.city]||'暂无可用通道'):'选择任务城市后显示'}</strong></div>
+  <ReachField label="企微消息正文"><textarea value={v.body} onChange={e=>setValue({body:e.target.value})} rows={5} placeholder="填写发送给经纪人的消息"/></ReachField>
+  <details className="bm-extra">
+   <summary>添加图片</summary>
+   <ReachField label="企微图片"><input type="file" accept="image/*" onChange={e=>readImage('image',e.target.files?.[0])}/></ReachField>
+   {v.image&&<ReachButton onClick={()=>setValue({image:''})}>移除图片</ReachButton>}
+  </details>
+  <details className="bm-extra">
+   <summary>添加链接卡片</summary>
+   <ReachField label="标题"><input value={v.cardTitle} onChange={e=>setValue({cardTitle:e.target.value})}/></ReachField>
+   <ReachField label="跳转地址"><input value={v.cardLink} onChange={e=>setValue({cardLink:e.target.value})} placeholder="https://..."/></ReachField>
+   <ReachField label="描述"><textarea value={v.cardDescription} onChange={e=>setValue({cardDescription:e.target.value})} rows={3}/></ReachField>
+   <ReachField label="卡片封面图"><input type="file" accept="image/*" onChange={e=>readImage('cardCover',e.target.files?.[0])}/></ReachField>
+   {v.cardCover&&<small className="bm-footnote">已上传封面图</small>}
+   {(v.cardTitle||v.cardLink||v.cardDescription||v.cardCover)&&<ReachButton onClick={()=>setValue({cardTitle:'',cardLink:'',cardDescription:'',cardCover:''})}>移除链接卡片</ReachButton>}
+  </details>
+ </>}
+ {active==='服务号模板消息通知'&&<>
+  <div className="bm-fixed-target"><span>模板名称</span><strong>{bServiceTemplate.name}</strong></div>
+  <p className="bm-footnote">仅填写服务进度等通知内容，禁止填写营销推广内容。</p>
+  {bServiceTemplate.fields.map(field=><ReachField label={field} key={field}><input value={v.fields?.[field]||''} onChange={e=>setValue({fields:{...v.fields,[field]:e.target.value}})} placeholder={'请输入'+field}/></ReachField>)}
+  <div className="bm-fixed-target"><span>跳转小程序</span><strong>{bServiceMiniProgram}</strong></div>
+  <ReachField label="小程序路径" hint="选填"><input value={v.miniPath} onChange={e=>setValue({miniPath:e.target.value})} placeholder="请输入小程序路径"/></ReachField>
+ </>}
  </>}</section></div><details className="bm-demo-tools"><summary>原型演示工具</summary><label>模拟账号数据权限<select aria-label="模拟账号数据权限" value={permissionCities.length===1?(permissionCities[0]==='全国'?'nationwide':'single'):permissionCities.length>1?'multi':'none'} onChange={e=>switchDemoPermissions(e.target.value)}><option value="single">单城市账号（西安）</option><option value="multi">多城市账号（含全国）</option><option value="nationwide">全国权限账号</option><option value="none">无城市权限</option></select></label></details></div>{error&&<div className="bm-error" role="alert">{error}</div>}<footer className="bm-dialog-footer"><span>已选 {pack.channels.length} 个渠道</span><div><ReachButton onClick={closeDraft}>取消</ReachButton><ReachButton primary onClick={()=>{const e=cityError||bContentError(pack);if(e){setError(e);if(cityError){document.querySelector('.bm-city-config')?.scrollIntoView({block:'nearest'});document.querySelector<HTMLSelectElement>('.bm-city-config select')?.focus()}else{const channel=bTouchChannels.find(c=>e.startsWith(c)||c==='服务号模板消息通知'&&e.startsWith('服务号'));if(channel)setActive(channel)}return}onSave(pack,permissionCities)}}>确认配置</ReachButton></div></footer></div></AutoDialog>
 }
 function BConversationCard({data,onAction,onOpenTask,executionMode}:any){const state=useReach();const live=state.flows[data.flowId];const f=data.confirmed?data.snapshot:live;const [audience,setAudience]=useState('');if(!f)return null;const completed=data.confirmed;const blocked=completed||!executionMode;const confirmChannels=f.retryChannels?.length?f.retryChannels:f.channels;return <div className={'b-conversation-card bm-card'+(data.stage==='summary'?' bm-task-confirm':'')} data-testid={'b-'+data.stage+'-card'}><header><span className="b-card-icon">{data.stage==='summary'?<Send size={16}/>:<Bot size={16}/>}</span><strong>{{dependency:'补齐前置依赖',content:'触达配置',config:'多渠道触达配置',summary:'任务信息确认',result:'任务创建结果'}[data.stage]}</strong>{completed&&<small>已确认</small>}</header>{!executionMode&&!completed&&<p className="bm-footnote">请切换到执行模式继续多渠道触达。</p>}
@@ -8159,7 +8251,7 @@ function BConversationCard({data,onAction,onOpenTask,executionMode}:any){const s
  {confirmChannels.map((c:string)=><section className="bm-summary-item" key={c}><div className="bm-confirm-channel"><NotificationChannel channel={c}/></div>
  <label className="bm-task-name"><span>任务名称</span>{completed?<strong>{f.names[c]}</strong>:<><input aria-label={notificationChannelName(c)+'任务名称'} aria-invalid={!!validateConfirmCardName(f.names[c]||'')} disabled={blocked||f.stage==='creating'} value={f.names[c]||''} onChange={e=>onAction('name',{channel:c,name:e.target.value})}/>{validateConfirmCardName(f.names[c]||'')&&<small className="bm-name-error" role="alert">{validateConfirmCardName(f.names[c]||'')}</small>}</>}</label>
  <div className="bm-confirm-grid">{(c==='企微私聊'?[['发送客服',bSenderLabel(f,c)],['通道',bChannelLabel(f,c)],['推送间隔',f.interval+' 秒'],['黑名单',bBlacklistLabel(c)]]:[[c==='服务号模板消息通知'?'发送服务号':'发送应用',bSenderLabel(f,c)]]).map(([k,v])=><div key={k}><span>{k}</span><strong>{v}</strong></div>)}</div>
- <div className="bm-confirm-content"><span>发送内容</span><div>{bContentSummary(f.contentPack,c)}</div>{c==='企微私聊'&&f.contentPack.byChannel[c].image&&<img src={f.contentPack.byChannel[c].image} alt="企微待发送图片"/>}{c==='App Push'&&<BVoicePreview value={f.contentPack.byChannel[c]}/>}</div></section>)}
+ <div className="bm-confirm-content"><span>发送内容</span><div>{bContentSummary(f.contentPack,c)}</div>{c==='企微私聊'&&bContentItems(f.contentPack,c).map((item:any)=>item.image&&<img key={item.type} src={item.image} alt={item.type==='链接卡片'?'链接卡片封面图':'企微待发送图片'}/>)}{c==='App Push'&&<BVoicePreview value={f.contentPack.byChannel[c]}/>}</div></section>)}
  <div className="bm-card-actions"><ReachButton primary disabled={blocked||f.stage==='creating'||!!f.error||confirmChannels.some((c:string)=>!!validateConfirmCardName(f.names[c]||''))} onClick={()=>onAction('create')}>{completed?'已确认执行':f.stage==='creating'?'正在创建…':`确认创建${confirmChannels.length}个任务`}</ReachButton></div>
  {!completed&&<p className="bm-footnote">频率、周期、时间和间隔通过自然语言修改。城市、渠道及内容已确认。</p>}
  {!completed&&<details className="bm-demo-tools"><summary>原型演示工具</summary><label>模拟创建结果<select aria-label="模拟创建结果" disabled={blocked} value={f.demoResult||'success'} onChange={e=>onAction('demo',e.target.value)}><option value="success">全部创建成功</option><option value="partial">企微创建失败</option><option value="unknown">服务号结果待确认</option><option value="inapp-failed">站内信创建失败</option><option value="inapp-unknown">站内信结果待确认</option></select></label></details>}</>}
@@ -8177,7 +8269,7 @@ function PushTaskDetailView({task,children}:any){
  <section data-testid="push-basic-info"><h3 className="text-lg font-bold text-blue-600 mb-4">基本信息</h3><div className="grid grid-cols-1 lg:grid-cols-2 gap-y-4 gap-x-12 text-sm">{basic.map(([k,v])=>row(k,v))}</div></section>
  <section data-testid="push-recipients"><h3 className="text-lg font-bold text-blue-600 mb-4">收件人</h3><div className="space-y-4 text-sm">{row(task.recipientMode==='event'?'对象来源:':'人群包类型:',task.audienceType)}<div className="flex flex-wrap items-center gap-x-4 gap-y-3">{row(task.recipientMode==='event'?'接收对象:':'人群包名称:',task.audienceName)}<div className="flex"><span className="text-zinc-500 mr-2">{task.recipientMode==='event'?'对象数:':'人数:'}</span><span className="text-zinc-900 dark:text-zinc-100">{task.audienceCountText||<>{task.audienceCount}{task.recipientMode==='event'?'个':'人'}</>}</span></div><div className="flex"><span className="text-zinc-500 mr-2">更新时间:</span><span className="text-zinc-900 dark:text-zinc-100">{task.audienceUpdated||'-'}</span></div></div>{task.recipientMode==='event'?row('对象规则:',task.recipientRule):<>{row('黑名单:',task.blacklist)}{row('白名单:',task.whitelist)}</>}</div></section>
  <section data-testid="push-senders"><h3 className="text-lg font-bold text-blue-600 mb-4">{task.senderTitle||'发送人'}</h3><div className="text-sm">{row((task.senderTitle||'发送人')+':',task.senders)}</div></section>
- <section data-testid="push-content"><h3 className="text-lg font-bold text-blue-600 mb-4">推送内容</h3><div className="space-y-6 text-sm bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-lg border border-zinc-200 dark:border-zinc-800">{(task.contents||[]).map((item:any,i:number)=><React.Fragment key={i}>{i>0&&<div className="h-px bg-zinc-200 dark:bg-zinc-800"/>}<div className="grid grid-cols-[1fr_auto] gap-4"><div className="space-y-2 min-w-0">{row(`信息${i+1}类型:`,notificationChannelName(item.type))}{item.delay!=null&&row(`发送延时:`,item.delay+'秒',`delay-${i}`)}{item.title&&row(`信息${i+1}标题:`,item.title)}{row(`信息${i+1}内容:`,item.body)}{item.type==='App Push'&&typeof item.voiceEnabled==='boolean'&&<>{row('语音播报:',item.voiceEnabled?'已开启':'未开启')}{item.voiceEnabled&&<>{row('播报模板:',item.voiceTemplateName||'未提供')}{row('播报提示:',item.voicePrompt||'未提供')}</>}</>}{item.image&&<img className="max-w-[200px] rounded-lg" src={item.image} alt={`信息${i+1}图片`}/>}</div></div></React.Fragment>)}</div></section>
+ <section data-testid="push-content"><h3 className="text-lg font-bold text-blue-600 mb-4">推送内容</h3><div className="space-y-6 text-sm bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-lg border border-zinc-200 dark:border-zinc-800">{(task.contents||[]).map((item:any,i:number)=><React.Fragment key={i}>{i>0&&<div className="h-px bg-zinc-200 dark:bg-zinc-800"/>}<div className="grid grid-cols-[1fr_auto] gap-4"><div className="space-y-2 min-w-0">{row(`信息${i+1}类型:`,notificationChannelName(item.type))}{item.delay!=null&&row(`发送延时:`,item.delay+'秒',`delay-${i}`)}{item.title&&row(`信息${i+1}标题:`,item.title)}{row(`信息${i+1}内容:`,item.body)}{item.type==='链接卡片'&&row('跳转地址:',item.link)}{item.miniPath&&<>{row('跳转小程序:',item.miniProgram)}{row('小程序路径:',item.miniPath)}</>}{item.type==='App Push'&&typeof item.voiceEnabled==='boolean'&&<>{row('语音播报:',item.voiceEnabled?'已开启':'未开启')}{item.voiceEnabled&&<>{row('播报模板:',item.voiceTemplateName||'未提供')}{row('播报提示:',item.voicePrompt||'未提供')}</>}</>}{item.image&&<img className="max-w-[200px] rounded-lg" src={item.image} alt={`信息${i+1}图片`}/>}</div></div></React.Fragment>)}</div></section>
  {children}
  </div></div>
 }
