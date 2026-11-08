@@ -947,6 +947,7 @@ interface SmartInputProps {
   activeBubbleId?: string | null;
   onBubbleToggle?: (id: string | null) => void;
   locked?: boolean;
+  lockPlaceholder?: string;
   pendingAction?: { type: 'append', text: string, id: number } | null;
 }
 
@@ -956,7 +957,7 @@ interface ContextItem {
   type: 'group';
 }
 
-function SmartInput({ mode, setMode, value, onChange, onSubmit, bubbles, onBubbleClick, activeBubbleId: propActiveBubbleId, onBubbleToggle, locked, pendingAction, sessionAudiences, sessionAudienceOptions, onSelectAudience }: SmartInputProps) {
+function SmartInput({ mode, setMode, value, onChange, onSubmit, bubbles, onBubbleClick, activeBubbleId: propActiveBubbleId, onBubbleToggle, locked, lockPlaceholder, pendingAction, sessionAudiences, sessionAudienceOptions, onSelectAudience }: SmartInputProps) {
   const [internalActiveBubbleId, setInternalActiveBubbleId] = useState<string | null>(null);
   const [atCategory, setAtCategory] = useState<string | null>(null);
   // Contexts removed as per request to have inline text
@@ -1264,7 +1265,7 @@ function SmartInput({ mode, setMode, value, onChange, onSubmit, bubbles, onBubbl
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={handleKeyDown}
           onPaste={handlePaste}
-          placeholder={locked ? "任务执行中，无法输入指令..." : "输入指令，或输入 @ 引用素材，/ 调用技能..."}
+          placeholder={locked ? (lockPlaceholder || "任务执行中，无法输入指令...") : "输入指令，或输入 @ 引用素材，/ 调用技能..."}
           disabled={locked}
           className="relative z-10 w-full bg-transparent border-none focus:ring-0 resize-none px-3 py-2 text-sm font-sans leading-normal text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 min-h-[60px] max-h-[200px] outline-none disabled:opacity-50"
           rows={2}
@@ -8292,6 +8293,7 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
   const openReachTask = (t:any) => {onOpenTab('[小B任务]'+t.id,t.name);onClose();};
   const [audienceMemberPreview,setAudienceMemberPreview]=useState<any>(null);
   const [bModal,setBModal]=useState<any>(null);
+  const bConfigPending=messages.some(m=>m.card?.type==='b_step'&&m.card.stage==='content'&&!m.card.confirmed&&!m.card.invalidated&&reachState.flows[m.card.flowId]?.stage==='content');
   const bTargetRequest=useRef<string|null>(null);
   const bInputAudienceIds=useRef<string[]>([]);
   const bSetDraft=(flowId:string,patch:any)=>{reachState.flows[flowId]={...reachState.flows[flowId],...patch};reachCommit();return reachState.flows[flowId]};
@@ -8366,12 +8368,10 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
     const last=[...messages].reverse().find((m:any)=>m.bFlowId||m.card?.flowId||m.bPlanFlowId);const id=last?.bFlowId||last?.card?.flowId||(last as any)?.bPlanFlowId;const old=reachState.flows[id];
     if(old?.stage==='conditions'&&/^(确认|确认条件|确认查询|确认生成|好的|没问题|可以)[。！!\s]*$/.test(text.trim())){bQuery(id);return true}
     const active=old&&!['done','creating','cancelled'].includes(old.stage);
-    if(old?.stage==='content'&&old.audience&&/^(?:确认|确认创建|确认创建人群包|好的|没问题|可以)[。！!\s]*$/.test(text.trim())){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'人群包已创建，请点击“配置多渠道触达”继续。',bFlowId:id}]);return true}
     if(mode!=='执行模式'&&((active&&old.goal==='touch'&&!['conditions','query','preview'].includes(old.stage))||(active&&old.stage==='audience_done'&&/发送|推送|触达|多渠道内容/.test(text))||/多渠道触达|多渠道内容|(?:发送|推送|触达).*(?:小\s*[bB]|经纪人)|(?:小\s*[bB]|经纪人).*(?:发送|推送|触达)/.test(text))){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'小B通知触达仅在执行模式可用，请先切换到执行模式。'}]);return true}
     const changeChannels=/(?:新增|增加|添加|取消|去掉|删除|移除)\s*(?:一个|这个)?\s*(?:App[ -]?Push|Push|企微|私聊|服务号|渠道)|(?:改为|改成|换成|换为|只用|只发|仅用|仅发)\s*(?:只|仅)?\s*(?:App[ -]?Push|Push|企微|私聊|服务号)|(?:Push|企微|私聊|服务号|渠道).{0,6}(?:取消|删除|移除|去掉)/i.test(text);
     if(active&&old.contentPack?.category&&(/通知类型|消息分类|分类/.test(text)||reachNotificationTypes.some(type=>text.includes(type)))){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'通知类型已在触达配置中确认，本次渠道共用且保持不变；更换分类请发起新一轮触达。发送时间与周期仍可通过自然语言修改。',bFlowId:id}]);return true}
     if(active&&old.contentPack&&(changeChannels||/文案|正文|标题|模板|素材|跳转|客服|发送人|城市|语音|播报|站内/.test(text)||/服务号.{0,8}(?:账号|账户).{0,6}(?:改为|改成|更换)|(?:更换|修改|调整).{0,6}服务号/.test(text))){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'本次触达城市、渠道及内容已确认，保持不变。频率、周期等推送参数可继续用自然语言修改；更换渠道或内容请发起新一轮多渠道触达。',bFlowId:id}]);return true}
-    if(active&&old.stage==='content'&&/文案|正文|标题|客服|发送人|城市|语音|播报/.test(text)){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'请点击会话中的“配置多渠道触达”卡片后手动填写。',bFlowId:id}]);return true}
     if(active&&old.goal==='audience'&&['conditions','preview'].includes(old.stage)&&/调整|改为|改成|增加|排除|区域|板块|注册ID/.test(text)&&/付费|体验|注销|区域|板块|雁塔|未央|碑林|注册ID|DEMO-B-|圈选/.test(text)){const parsed=reachParse(text);const q={...old.query,issue:parsed.issue};if(/付费|体验|注销/.test(text))q.statuses=parsed.statuses;if(/雁塔|未央|碑林/.test(text))q.area=parsed.area;if(/高新|经开|南门/.test(text))q.block=parsed.block;if(/DEMO-B-/.test(text))q.ids=parsed.ids;bInvalidate(id);bSetDraft(id,{query:q,audience:null,configured:false,stage:'conditions'});bMessage(id,'conditions','');return true}
     if(active&&['content','summary','result'].includes(old.stage)&&/推送|触达|发送|定时|立即|即时|每天|每日|每周|每星期|每月|每隔|周期|频率|时|点|间隔|城市|客服|平台类|业务类|系统类|商业类/i.test(text)){if(old.stage==='result'&&old.createResults.some((r:any)=>r.state==='unknown')){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'请先核查结果待确认的渠道，再修改失败任务的发送安排。',bFlowId:id}]);return true}const requirements=bParseTouch(text,old.requirements);if(old.stage==='summary'||old.stage==='result'){const retryChannels=old.stage==='result'?old.createResults.filter((r:any)=>r.state==='failed').map((r:any)=>r.channel):old.retryChannels;bInvalidate(id);bSetDraft(id,{requirements,configured:false,retryChannels});bMakeSummary(id)}else{bSetDraft(id,{requirements});setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'已更新触达要求，完成当前配置后将在任务确认中展示。',bFlowId:id}])}return true}
     return false;
@@ -9025,7 +9025,7 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
     beginActivationRun({content:'任务创建成功。',actionButton:{label:'查看主动激活任务详情',tabName:route}},undefined,undefined,()=>{setPushTaskResources(prev=>[...prev,resource]);syncBubbleItems('task',[...pushTaskResources,resource]);});
   };
   const handleSendMessage = (text: string, images?: string[]) => {
-    if ((!text.trim() && (!images || images.length === 0)) || inputLocked) return;
+    if ((!text.trim() && (!images || images.length === 0)) || inputLocked || bConfigPending) return;
 
     // 使用全局 logEvent 避免闭包引用问题
     window.logEvent('send_message', { length: text.length, hasImages: !!images });
@@ -9622,7 +9622,8 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
           }}
           activeBubbleId={activeBubbleId}
           onBubbleToggle={setActiveBubbleId}
-          locked={inputLocked}
+          locked={inputLocked || bConfigPending}
+          lockPlaceholder={bConfigPending ? "请先完成触达配置" : undefined}
           pendingAction={pendingAction}
         />
       </div>
