@@ -1410,7 +1410,7 @@ function SmartInput({ mode, setMode, value, onChange, onSubmit, bubbles, onBubbl
                   <MenuItem icon={<Users size={14} />} label="群聊推送" onClick={() => insertItem('群聊推送')} />
                   <MenuItem icon={<ImageIcon size={14} />} label="朋友圈推送" onClick={() => insertItem('朋友圈推送')} />
                   <MenuItem icon={<FileText size={14} />} label="内容生成" onClick={() => insertItem('内容生成')} />
-                  {notifyBAvailable&&<MenuItem icon={<Send size={14} />} label="通知小B" description="引用人群包，可选一个或多个渠道。" onClick={() => insertItem('通知小B')} />}
+                  {notifyBAvailable&&<MenuItem icon={<Send size={14} />} label="通知小B" onClick={() => insertItem('通知小B')} />}
                 </>
               )}
             </div>
@@ -8389,8 +8389,9 @@ function BContentDialog({flow,onClose,onSave}:any){
 
  return <AutoDialog title="多渠道触达配置" onClose={closeDraft} wide><div className="bm-dialog"><header className="bm-dialog-head"><div><h2>多渠道触达配置</h2><p>勾选渠道，点击渠道名称切换编辑。切换时保留已填内容。</p></div><button aria-label="关闭内容配置" onClick={closeDraft}><X size={18}/></button></header><div className="bm-dialog-body"><div className="bm-city-config"><ReachField label="任务城市" hint="本期仅西安可用"><select value={pack.city} onChange={e=>{setPack((prev:any)=>({...prev,city:e.target.value}));setError('')}}><option value="">请选择任务城市</option>{taskCities.map((city:string)=><option key={city} value={city} disabled={city!==bNotificationCity}>{city}{city===bNotificationCity?'':'（暂未开放）'}</option>)}</select></ReachField>
  <div className="bm-quiet-config">
-  <span className="bm-quiet-icon" aria-hidden="true"><Moon size={16}/></span>
-  <div className="bm-quiet-copy"><strong>免打扰</strong><small id={quietScopeId}>所有所选渠道共用</small></div>
+  <span className="bm-quiet-icon" aria-hidden="true"><Moon size={14}/></span>
+  <strong className="bm-quiet-label">免打扰</strong>
+  <span id={quietScopeId} className="sr-only">所有所选渠道共用</span>
   <span className="bm-quiet-time">{pack.quietEnabled?bQuietHours:'已关闭'}</span>
   <button type="button" role="switch" aria-label="免打扰" aria-describedby={quietScopeId} aria-checked={!!pack.quietEnabled} className="bm-quiet-switch" onClick={()=>setPack((prev:any)=>({...prev,quietEnabled:!prev.quietEnabled}))}><span/></button>
  </div></div><div className="bm-channel-select" role="group" aria-label="选择及编辑渠道">{bTouchChannels.map(c=><div key={c} className={'bm-channel-option'+(active===c?' active':'')}><label><input type="checkbox" aria-label={notificationChannelName(c)} checked={pack.channels.includes(c)} onChange={()=>selectChannel(c)}/></label><button type="button" aria-label={'编辑'+notificationChannelName(c)+'内容'} aria-pressed={active===c} onClick={()=>setActive(c)}><NotificationChannel channel={c}/></button></div>)}</div><div className="bm-content-grid"><section><h3>{active==='服务号模板消息通知'?'模板配置':'消息内容'}</h3>{selected&&active!=='企微私聊'&&<div className="bm-fixed-target" data-testid="channel-fixed-target"><span>{active==='服务号模板消息通知'?'发送服务号':'发送应用'}</span><strong>{active==='服务号模板消息通知'?bServiceAccount.name:bYoukeApp.name}</strong></div>}{!selected?<div className="bm-empty"><p>尚未选择此渠道</p><ReachButton onClick={()=>selectChannel(active)}>配置此渠道</ReachButton></div>:<>
