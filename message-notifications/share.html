@@ -8094,7 +8094,18 @@ function AutoStatus({value}:any){return <span className={'au-status '+(value==='
 function AutoDialog({title,children,onClose,wide=false}:any){const ref=useRef<any>(null);useEffect(()=>{const last=document.activeElement as HTMLElement;const node=ref.current;node?.focus();return()=>last?.focus()},[]);return createPortal(<div className="au-mask"><div className={'au-dialog '+(wide?'wide':'')} role="dialog" aria-modal="true" aria-label={title} tabIndex={-1} ref={ref} onKeyDown={e=>{if(e.key==='Escape'){e.stopPropagation();onClose()}if(e.key==='Tab'){const all=ref.current.querySelectorAll('button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),a[href]');const first=all[0],last=all[all.length-1];if(e.shiftKey&&(document.activeElement===first||document.activeElement===ref.current)){e.preventDefault();last?.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus()}}}}>{children}</div></div>,document.body)}
 // 仅供原型走查：生产身份和当前城市由平台登录态/工作城市提供。
 const autoDemoContextKey='ai-private-automation-demo-context';
-function autoReadDemoContext(){try{const v=JSON.parse(localStorage.getItem(autoDemoContextKey)||'null');return {role:v?.role==='admin'?'admin':'member',city:typeof v?.city==='string'&&v.city.trim()?v.city:'西安'}}catch{return {role:'member',city:'西安'}}}
+const bDemoTaskCities=['西安','合肥','南京'];
+function autoReadDemoContext(){
+ const defaults={role:'member',city:'西安',taskCities:bDemoTaskCities};
+ try{
+  const value=JSON.parse(localStorage.getItem(autoDemoContextKey)||'null');
+  return {
+   role:value?.role==='admin'?'admin':defaults.role,
+   city:typeof value?.city==='string'&&value.city.trim()?value.city:defaults.city,
+   taskCities:Array.isArray(value?.taskCities)?value.taskCities.filter((city:any)=>typeof city==='string'):defaults.taskCities,
+  };
+ }catch{return defaults}
+}
 function autoCanSwitch(p:any,ctx:any){return ctx.role==='admin'&&p?.city===ctx.city}
 function AutomationWorkspace(){
  const data=useReach();const [access,setAccess]=useState(autoReadDemoContext);const isAdmin=access.role==='admin';
@@ -8114,7 +8125,7 @@ function AutomationWorkspace(){
  <h2 className="au-category-heading" data-testid="automation-category">消息通知</h2>
  <section className="au-list-panel"><div className="au-toolbar"><div className="au-tabs">{['全部','已开启','已关闭'].map(f=><button className={f===filter?'active':''} onClick={()=>setFilter(f)} key={f}>{f}<span>{plans.filter((p:any)=>f==='全部'||(f==='已开启')===p.enabled).length}</span></button>)}</div><div className="au-actions"><select aria-label="通知类型" value={notificationType} onChange={e=>setNotificationType(e.target.value)}>{['全部通知类型',...reachNotificationTypes].map(c=><option key={c}>{c}</option>)}</select><label className="au-search"><Search size={16}/><input placeholder="搜索任务" aria-label="搜索自动化任务" value={query} onChange={e=>setQuery(e.target.value)}/></label></div></div>
  <div className="au-table-frame"><table className="au-table au-plan-table"><thead><tr><th>任务名称</th><th>触达渠道</th><th>通知类型</th><th>状态</th></tr></thead><tbody>{visiblePlans.map((p:any)=><tr key={p.id}><td><span className="au-task-name">{p.name}</span></td><td><div className="au-chips">{p.channels.map((c:string)=><NotificationChannel key={c} channel={c}/>)}</div></td><td>{p.messageCategory}</td><td><div className="au-row-controls">{isAdmin?<><button role="switch" aria-checked={p.enabled} aria-label={`${p.name}开关`} className={'automation-switch '+(p.enabled?'on':'')} onClick={()=>toggle(p)}><span/></button><span>{p.enabled?'已开启':'已关闭'}</span></>:<AutoStatus value={p.enabled?'已开启':'已关闭'}/>}</div></td></tr>)}</tbody></table>{!visiblePlans.length&&<div className="au-empty">{plans.length?'没有匹配任务，请调整搜索或筛选条件。':'当前城市暂无已注册的自动化任务。'}</div>}</div><footer className="au-list-footer">共 {visiblePlans.length} 项任务</footer></section>
- <footer className="au-prototype-footer"><span>原型演示</span>任务、身份、城市及开关均为模拟数据，不影响线上。</footer><details className="au-permission-demo"><summary>原型演示工具</summary><div><label>模拟身份<select aria-label="模拟身份" value={access.role} onChange={e=>switchContext({role:e.target.value})}><option value="member">普通成员</option><option value="admin">管理员</option></select></label><label>模拟当前城市<select aria-label="模拟当前城市" value={access.city} onChange={e=>switchContext({city:e.target.value})}><option>西安</option><option>合肥</option><option>全国</option></select></label><small>仅用于走查权限与城市范围；生产身份和城市由平台提供。</small></div></details>
+ <footer className="au-prototype-footer"><span>原型演示</span>任务、身份、城市及开关均为模拟数据，不影响线上。</footer><details className="au-permission-demo"><summary>原型演示工具</summary><div><label>模拟身份<select aria-label="模拟身份" value={access.role} onChange={e=>switchContext({role:e.target.value})}><option value="member">普通成员</option><option value="admin">管理员</option></select></label><label>模拟当前城市<select aria-label="模拟当前城市" value={access.city} onChange={e=>switchContext({city:e.target.value})}><option>西安</option><option>合肥</option><option>全国</option></select></label><label>模拟任务城市权限<select aria-label="模拟任务城市权限" value={access.taskCities.includes('西安')?(access.taskCities.length===1?'xian':'multi'):'other'} onChange={e=>switchContext({taskCities:e.target.value==='xian'?['西安']:e.target.value==='other'?['合肥']:bDemoTaskCities})}><option value="multi">西安、合肥、南京</option><option value="xian">仅西安</option><option value="other">仅合肥</option></select></label><small>仅用于走查权限与城市范围；生产身份和城市由平台提供。</small></div></details>
  </div>
  {stopId&&<AutoDialog title="关闭自动化任务" onClose={()=>setStopId('')}><header className="au-dialog-header"><h2>关闭这个任务？</h2></header><div className="au-confirm-body"><p><strong>{access.city} · {plans.find((p:any)=>p.id===stopId)?.name}</strong></p><p>关闭后，对应业务系统将停止当前城市该规则的后续消息触达，其他城市和规则不受影响。已到达消息保留，重新开启不补发关闭期间的通知。</p></div><footer className="au-dialog-footer"><ReachButton onClick={()=>setStopId('')}>返回</ReachButton><ReachButton primary onClick={()=>{const p=reachState.plans.find((p:any)=>p.id===stopId&&p.city===access.city);if(!p||!permitted(p))return;applyState(p,false)}}>确认关闭</ReachButton></footer></AutoDialog>}
  </div>
@@ -8158,9 +8169,13 @@ const bServiceMiniProgram = '365获客宝小程序';
 const bNotificationCity='西安';
 const bNotificationSiteNotice='通知小B本期仅在西安站开放';
 const bWecomChannel='企微私聊-光年本地（西安）';
-function bNotificationSiteOpen(){return autoReadDemoContext().city===bNotificationCity}
+function bNotificationAccessError(access=autoReadDemoContext()){
+ if(access.city!==bNotificationCity)return bNotificationSiteNotice;
+ return access.taskCities.includes(bNotificationCity)?'':'当前账号没有西安的任务城市权限';
+}
+function bNotificationSiteOpen(){return !bNotificationAccessError()}
 const bEmptyContent = () => ({
- city: bNotificationCity,
+ city: '',
  channels: [],
  byChannel: {
   'App Push': {appId:bYoukeApp.id,title:'',body:'',voiceEnabled:false,voiceTemplateId:''},
@@ -8253,8 +8268,12 @@ const bQuietHours='22:00 至次日 08:00';
 function bDefaults(f:any){const req=f.requirements||{};const channels=[...(f.contentPack?.channels||[])];return {...f,channels,city:f.contentPack?.city||'',category:f.contentPack?.category||req.category||'平台类',sendMode:req.sendMode||'立即发送',sendTime:req.sendTime||'',repeat:req.repeat||null,scheduleIssue:req.scheduleIssue||'',sender:channels.includes('企微私聊')?'B端客服':'',interval:req.interval||'0～0',taskName:f.taskName??'小B通知'}}
 // 演示沿用推送系统的城市通道，发送身份固定为B端客服。
 function bCityConfigError(d:any){
- if(!bNotificationSiteOpen())return bNotificationSiteNotice;
- return d.city===bNotificationCity?'':'通知小B的任务城市固定为西安';
+ const access=autoReadDemoContext();
+ const accessError=bNotificationAccessError(access);
+ if(accessError)return accessError;
+ if(!d.city)return '请选择任务城市';
+ if(!access.taskCities.includes(d.city))return '当前账号没有该任务城市的权限';
+ return d.city===bNotificationCity?'':'该任务城市暂未开放，仅西安可用';
 }
 function bSenderLabel(d:any,c:string){return c==='企微私聊'?'西安 B 端客服':c==='服务号模板消息通知'?d.contentPack.byChannel[c].account:bYoukeApp.name}
 function bChannelLabel(d:any,c:string){if(c==='企微私聊')return bWecomChannel;return notificationChannelName(c)+' · '+d.city+'（演示）'}
@@ -8273,7 +8292,12 @@ function BAgentPlan({flowId}:any){
  return <div className="b-agent-plan" data-testid="b-agent-plan"><TaskPlan tasks={rows}/></div>
 }
 function BContentDialog({flow,onClose,onSave}:any){
- const [pack,setPack]=useState<any>(()=>({...structuredClone(flow.contentDraft||bEmptyContent()),city:bNotificationCity}));
+ const {taskCities}=autoReadDemoContext();
+ const [pack,setPack]=useState<any>(()=>{
+  const draft=structuredClone(flow.contentDraft||bEmptyContent());
+  if(draft.city===bNotificationCity&&taskCities.includes(draft.city))return draft;
+  return {...draft,city:taskCities.length===1&&taskCities[0]===bNotificationCity?bNotificationCity:''};
+ });
  const [active,setActive]=useState('App Push');const [error,setError]=useState('');const v=pack.byChannel[active];
  const setValue=(patch:any)=>{setPack((p:any)=>({...p,byChannel:{...p.byChannel,[active]:{...p.byChannel[active],...patch}}}));setError('')};
  const selectChannel=(c:string)=>{setPack((p:any)=>({...p,channels:p.channels.includes(c)?p.channels.filter((x:string)=>x!==c):[...p.channels,c],...(c===bInAppChannel&&!p.category?{category:flow.requirements?.category||'平台类'}:{})}));setActive(c);setError('')};
@@ -8290,7 +8314,7 @@ function BContentDialog({flow,onClose,onSave}:any){
  };
  const cityError=bCityConfigError(pack);
 
- return <AutoDialog title="多渠道触达配置" onClose={closeDraft} wide><div className="bm-dialog"><header className="bm-dialog-head"><div><h2>多渠道触达配置</h2><p>勾选渠道，点击渠道名称切换编辑。切换时保留已填内容。</p></div><button aria-label="关闭内容配置" onClick={closeDraft}><X size={18}/></button></header><div className="bm-dialog-body"><div className="bm-city-config"><div className="bm-fixed-target" aria-label="任务城市"><span>任务城市</span><strong>{bNotificationCity}</strong></div></div><div className="bm-channel-select" role="group" aria-label="选择及编辑渠道">{bTouchChannels.map(c=><div key={c} className={'bm-channel-option'+(active===c?' active':'')}><label><input type="checkbox" aria-label={notificationChannelName(c)} checked={pack.channels.includes(c)} onChange={()=>selectChannel(c)}/></label><button type="button" aria-label={'编辑'+notificationChannelName(c)+'内容'} aria-pressed={active===c} onClick={()=>setActive(c)}><NotificationChannel channel={c}/></button></div>)}</div><div className="bm-content-grid"><section><h3>{active==='服务号模板消息通知'?'模板配置':'消息内容'}</h3>{selected&&active!=='企微私聊'&&<div className="bm-fixed-target" data-testid="channel-fixed-target"><span>{active==='服务号模板消息通知'?'发送服务号':'发送应用'}</span><strong>{active==='服务号模板消息通知'?bServiceAccount.name:bYoukeApp.name}</strong></div>}{!selected?<div className="bm-empty"><p>尚未选择此渠道</p><ReachButton onClick={()=>selectChannel(active)}>配置此渠道</ReachButton></div>:<>
+ return <AutoDialog title="多渠道触达配置" onClose={closeDraft} wide><div className="bm-dialog"><header className="bm-dialog-head"><div><h2>多渠道触达配置</h2><p>勾选渠道，点击渠道名称切换编辑。切换时保留已填内容。</p></div><button aria-label="关闭内容配置" onClick={closeDraft}><X size={18}/></button></header><div className="bm-dialog-body"><div className="bm-city-config"><ReachField label="任务城市" hint="本期仅西安可用"><select value={pack.city} onChange={e=>{setPack((prev:any)=>({...prev,city:e.target.value}));setError('')}}><option value="">请选择任务城市</option>{taskCities.map((city:string)=><option key={city} value={city} disabled={city!==bNotificationCity}>{city}{city===bNotificationCity?'':'（暂未开放）'}</option>)}</select></ReachField></div><div className="bm-channel-select" role="group" aria-label="选择及编辑渠道">{bTouchChannels.map(c=><div key={c} className={'bm-channel-option'+(active===c?' active':'')}><label><input type="checkbox" aria-label={notificationChannelName(c)} checked={pack.channels.includes(c)} onChange={()=>selectChannel(c)}/></label><button type="button" aria-label={'编辑'+notificationChannelName(c)+'内容'} aria-pressed={active===c} onClick={()=>setActive(c)}><NotificationChannel channel={c}/></button></div>)}</div><div className="bm-content-grid"><section><h3>{active==='服务号模板消息通知'?'模板配置':'消息内容'}</h3>{selected&&active!=='企微私聊'&&<div className="bm-fixed-target" data-testid="channel-fixed-target"><span>{active==='服务号模板消息通知'?'发送服务号':'发送应用'}</span><strong>{active==='服务号模板消息通知'?bServiceAccount.name:bYoukeApp.name}</strong></div>}{!selected?<div className="bm-empty"><p>尚未选择此渠道</p><ReachButton onClick={()=>selectChannel(active)}>配置此渠道</ReachButton></div>:<>
  {active==='App Push'&&<><ReachField label="Push标题"><input value={v.title} onChange={e=>setValue({title:e.target.value})} placeholder="填写通知标题"/></ReachField><ReachField label="Push正文"><textarea value={v.body} onChange={e=>setValue({body:e.target.value})} rows={5} placeholder="填写通知正文"/></ReachField><section className="bm-voice-config"><label className="bm-voice-toggle"><input type="checkbox" aria-label="语音播报" checked={!!v.voiceEnabled} onChange={e=>setValue({voiceEnabled:e.target.checked})}/><span>语音播报</span></label>{v.voiceEnabled&&<><ReachField label="语音播报模板"><select value={v.voiceTemplateId||''} onChange={e=>setValue({voiceTemplateId:e.target.value})}><option value="">请选择播报模板</option>{bVoiceTemplates.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}</select></ReachField>{bVoiceTemplates.find(t=>t.id===v.voiceTemplateId)&&<p className="bm-footnote" data-testid="voice-template-prompt">播报提示：{bVoiceTemplates.find(t=>t.id===v.voiceTemplateId)?.prompt}</p>}<p className="bm-footnote">预置播报提示为演示内容，正式模板待接入。</p></>}</section></>}
  {active===bInAppChannel&&<><ReachField label="通知类型"><select value={pack.category||''} onChange={e=>{setPack((p:any)=>({...p,category:e.target.value}));setError('')}}><option value="">请选择通知类型</option>{reachNotificationTypes.map(type=><option key={type}>{type}</option>)}</select></ReachField><p className="bm-type-hint">用于站内信分类，本次所选渠道共用。</p><ReachField label="站内信标题"><input value={v.title} onChange={e=>setValue({title:e.target.value})} placeholder="填写消息标题"/></ReachField><ReachField label="站内信正文"><textarea value={v.body} onChange={e=>setValue({body:e.target.value})} rows={7} placeholder="填写完整通知内容"/></ReachField></>}
  {active==='企微私聊'&&<>
@@ -8501,8 +8525,9 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
     const selectedReferences=referenceMatches.filter((a:any)=>referenceIds.includes(a.id));
     const resolvedReferences=referenceMatches.filter((a:any)=>!selectedReferences.some((chosen:any)=>chosen.name===a.name)||referenceIds.includes(a.id));
     const startTouch=()=>{
-      if(!bNotificationSiteOpen()){
-        setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:bNotificationSiteNotice+'。'}]);
+      const accessError=bNotificationAccessError();
+      if(accessError){
+        setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:accessError+'。'}]);
         return;
       }
       if(mode!=='执行模式'){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'请切换到执行模式，@人群包并输入触达要求。'}]);return}

@@ -53,7 +53,7 @@
 <text x="609.0" y="448.0" text-anchor="middle" font-size="14" fill="#374151">返回触达配置卡</text>
 <text x="609.0" y="468.0" text-anchor="middle" font-size="14" fill="#374151">等待点击，不自动弹窗</text>
 <rect x="163.0" y="546.0" width="232" height="66" rx="5" fill="white" stroke="#596bb0" stroke-width="1"/>
-<text x="279.0" y="574.0" text-anchor="middle" font-size="14" fill="#374151">任务城市固定为西安</text>
+<text x="279.0" y="574.0" text-anchor="middle" font-size="14" fill="#374151">按账号权限选择任务城市</text>
 <text x="279.0" y="594.0" text-anchor="middle" font-size="14" fill="#374151">选择渠道并填写内容</text>
 <rect x="493.0" y="672.0" width="232" height="66" rx="5" fill="white" stroke="#8870b5" stroke-width="1"/>
 <text x="609.0" y="700.0" text-anchor="middle" font-size="14" fill="#374151">校验配置并展示</text>
