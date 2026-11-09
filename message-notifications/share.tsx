@@ -869,6 +869,7 @@ interface SmartInputProps {
   onBubbleToggle?: (id: string | null) => void;
   locked?: boolean;
   lockPlaceholder?: string;
+  notifyBAvailable?: boolean;
   pendingAction?: { type: 'append', text: string, id: number } | null;
 }
 
@@ -878,7 +879,7 @@ interface ContextItem {
   type: 'group';
 }
 
-function SmartInput({ mode, setMode, value, onChange, onSubmit, bubbles, onBubbleClick, activeBubbleId: propActiveBubbleId, onBubbleToggle, locked, lockPlaceholder, pendingAction, sessionAudiences, sessionAudienceOptions, onSelectAudience }: SmartInputProps) {
+function SmartInput({ mode, setMode, value, onChange, onSubmit, bubbles, onBubbleClick, activeBubbleId: propActiveBubbleId, onBubbleToggle, locked, lockPlaceholder, notifyBAvailable, pendingAction, sessionAudiences, sessionAudienceOptions, onSelectAudience }: SmartInputProps) {
   const [internalActiveBubbleId, setInternalActiveBubbleId] = useState<string | null>(null);
   const [atCategory, setAtCategory] = useState<string | null>(null);
   // Contexts removed as per request to have inline text
@@ -1330,7 +1331,7 @@ function SmartInput({ mode, setMode, value, onChange, onSubmit, bubbles, onBubbl
                   <MenuItem icon={<Users size={14} />} label="群聊推送" onClick={() => insertItem('群聊推送')} />
                   <MenuItem icon={<ImageIcon size={14} />} label="朋友圈推送" onClick={() => insertItem('朋友圈推送')} />
                   <MenuItem icon={<FileText size={14} />} label="内容生成" onClick={() => insertItem('内容生成')} />
-                  <MenuItem icon={<Send size={14} />} label="通知小B" description="引用人群包，可选一个或多个渠道。" onClick={() => insertItem('通知小B')} />
+                  {notifyBAvailable&&<MenuItem icon={<Send size={14} />} label="通知小B" description="引用人群包，可选一个或多个渠道。" onClick={() => insertItem('通知小B')} />}
                 </>
               )}
             </div>
@@ -8014,14 +8015,14 @@ function AutoStatus({value}:any){return <span className={'au-status '+(value==='
 function AutoDialog({title,children,onClose,wide=false}:any){const ref=useRef<any>(null);useEffect(()=>{const last=document.activeElement as HTMLElement;const node=ref.current;node?.focus();return()=>last?.focus()},[]);return createPortal(<div className="au-mask"><div className={'au-dialog '+(wide?'wide':'')} role="dialog" aria-modal="true" aria-label={title} tabIndex={-1} ref={ref} onKeyDown={e=>{if(e.key==='Escape'){e.stopPropagation();onClose()}if(e.key==='Tab'){const all=ref.current.querySelectorAll('button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),a[href]');const first=all[0],last=all[all.length-1];if(e.shiftKey&&(document.activeElement===first||document.activeElement===ref.current)){e.preventDefault();last?.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus()}}}}>{children}</div></div>,document.body)}
 // 仅供原型走查：生产身份和当前城市由平台登录态/工作城市提供。
 const autoDemoContextKey='ai-private-automation-demo-context';
-function autoReadDemoContext(){try{const v=JSON.parse(localStorage.getItem(autoDemoContextKey)||'null');return {role:v?.role==='admin'?'admin':'member',city:['西安','合肥'].includes(v?.city)?v.city:'西安'}}catch{return {role:'member',city:'西安'}}}
+function autoReadDemoContext(){try{const v=JSON.parse(localStorage.getItem(autoDemoContextKey)||'null');return {role:v?.role==='admin'?'admin':'member',city:typeof v?.city==='string'&&v.city.trim()?v.city:'西安'}}catch{return {role:'member',city:'西安'}}}
 function autoCanSwitch(p:any,ctx:any){return ctx.role==='admin'&&p?.city===ctx.city}
 function AutomationWorkspace(){
  const data=useReach();const [access,setAccess]=useState(autoReadDemoContext);const isAdmin=access.role==='admin';
  const plans=data.plans.filter((p:any)=>p.moduleId==='message-notification'&&p.city===access.city);
  const [query,setQuery]=useState(''),[filter,setFilter]=useState('全部'),[notificationType,setNotificationType]=useState('全部通知类型');
  const [notice,setNotice]=useState(''),[stopId,setStopId]=useState('');
- const switchContext=(patch:any)=>{const ctx={...access,...patch};localStorage.setItem(autoDemoContextKey,JSON.stringify(ctx));setAccess(ctx);setStopId('');setNotice('');setQuery('');setFilter('全部');setNotificationType('全部通知类型')};
+ const switchContext=(patch:any)=>{const ctx={...access,...patch};localStorage.setItem(autoDemoContextKey,JSON.stringify(ctx));window.dispatchEvent(new Event('b-reach-change'));setAccess(ctx);setStopId('');setNotice('');setQuery('');setFilter('全部');setNotificationType('全部通知类型')};
  const permitted=(p:any)=>{const current=autoReadDemoContext();if(current.city!==access.city||!autoCanSwitch(p,current)){setAccess(current);setStopId('');setNotice('仅管理员可调整当前城市的通知状态，身份或城市已变化，请刷新后重试。');return false}return true};
  const visiblePlans=plans.filter((p:any)=>p.name.includes(query.trim())&&(filter==='全部'||(filter==='已开启')===p.enabled)&&(notificationType==='全部通知类型'||p.messageCategory===notificationType));
  // 本地只模拟业务系统返回生效成功；生产须以实际业务接口结果更新状态。
@@ -8034,7 +8035,7 @@ function AutomationWorkspace(){
  <h2 className="au-category-heading" data-testid="automation-category">消息通知</h2>
  <section className="au-list-panel"><div className="au-toolbar"><div className="au-tabs">{['全部','已开启','已关闭'].map(f=><button className={f===filter?'active':''} onClick={()=>setFilter(f)} key={f}>{f}<span>{plans.filter((p:any)=>f==='全部'||(f==='已开启')===p.enabled).length}</span></button>)}</div><div className="au-actions"><select aria-label="通知类型" value={notificationType} onChange={e=>setNotificationType(e.target.value)}>{['全部通知类型',...reachNotificationTypes].map(c=><option key={c}>{c}</option>)}</select><label className="au-search"><Search size={16}/><input placeholder="搜索任务" aria-label="搜索自动化任务" value={query} onChange={e=>setQuery(e.target.value)}/></label></div></div>
  <div className="au-table-frame"><table className="au-table au-plan-table"><thead><tr><th>任务名称</th><th>触达渠道</th><th>通知类型</th><th>状态</th></tr></thead><tbody>{visiblePlans.map((p:any)=><tr key={p.id}><td><span className="au-task-name">{p.name}</span></td><td><div className="au-chips">{p.channels.map((c:string)=><NotificationChannel key={c} channel={c}/>)}</div></td><td>{p.messageCategory}</td><td><div className="au-row-controls">{isAdmin?<><button role="switch" aria-checked={p.enabled} aria-label={`${p.name}开关`} className={'automation-switch '+(p.enabled?'on':'')} onClick={()=>toggle(p)}><span/></button><span>{p.enabled?'已开启':'已关闭'}</span></>:<AutoStatus value={p.enabled?'已开启':'已关闭'}/>}</div></td></tr>)}</tbody></table>{!visiblePlans.length&&<div className="au-empty">{plans.length?'没有匹配任务，请调整搜索或筛选条件。':'当前城市暂无已注册的自动化任务。'}</div>}</div><footer className="au-list-footer">共 {visiblePlans.length} 项任务</footer></section>
- <footer className="au-prototype-footer"><span>原型演示</span>任务、身份、城市及开关均为模拟数据，不影响线上。</footer><details className="au-permission-demo"><summary>原型演示工具</summary><div><label>模拟身份<select aria-label="模拟身份" value={access.role} onChange={e=>switchContext({role:e.target.value})}><option value="member">普通成员</option><option value="admin">管理员</option></select></label><label>模拟当前城市<select aria-label="模拟当前城市" value={access.city} onChange={e=>switchContext({city:e.target.value})}><option>西安</option><option>合肥</option></select></label><small>仅用于走查权限与城市范围；生产身份和城市由平台提供。合肥暂无演示任务。</small></div></details>
+ <footer className="au-prototype-footer"><span>原型演示</span>任务、身份、城市及开关均为模拟数据，不影响线上。</footer><details className="au-permission-demo"><summary>原型演示工具</summary><div><label>模拟身份<select aria-label="模拟身份" value={access.role} onChange={e=>switchContext({role:e.target.value})}><option value="member">普通成员</option><option value="admin">管理员</option></select></label><label>模拟当前城市<select aria-label="模拟当前城市" value={access.city} onChange={e=>switchContext({city:e.target.value})}><option>西安</option><option>合肥</option><option>全国</option></select></label><small>仅用于走查权限与城市范围；生产身份和城市由平台提供。</small></div></details>
  </div>
  {stopId&&<AutoDialog title="关闭自动化任务" onClose={()=>setStopId('')}><header className="au-dialog-header"><h2>关闭这个任务？</h2></header><div className="au-confirm-body"><p><strong>{access.city} · {plans.find((p:any)=>p.id===stopId)?.name}</strong></p><p>关闭后，对应业务系统将停止当前城市该规则的后续消息触达，其他城市和规则不受影响。已到达消息保留，重新开启不补发关闭期间的通知。</p></div><footer className="au-dialog-footer"><ReachButton onClick={()=>setStopId('')}>返回</ReachButton><ReachButton primary onClick={()=>{const p=reachState.plans.find((p:any)=>p.id===stopId&&p.city===access.city);if(!p||!permitted(p))return;applyState(p,false)}}>确认关闭</ReachButton></footer></AutoDialog>}
  </div>
@@ -8075,8 +8076,12 @@ const bServiceTemplate = {
  fields: ['公司名称', '服务内容', '当前进度', '下一进度'],
 };
 const bServiceMiniProgram = '365获客宝小程序';
+const bNotificationCity='西安';
+const bNotificationSiteNotice='通知小B本期仅在西安站开放';
+const bWecomChannel='企微私聊-光年本地（西安）';
+function bNotificationSiteOpen(){return autoReadDemoContext().city===bNotificationCity}
 const bEmptyContent = () => ({
- city: '',
+ city: bNotificationCity,
  channels: [],
  byChannel: {
   'App Push': {appId:bYoukeApp.id,title:'',body:'',voiceEnabled:false,voiceTemplateId:''},
@@ -8091,8 +8096,6 @@ function BVoicePreview({value}:any){const template=bVoiceTemplates.find(t=>t.id=
 function bContentError(pack:any){
  if(!pack?.channels?.length)return '请至少选择一个需要配置内容的渠道';
  for(const c of pack.channels){
-  const unavailable=bChannelUnavailableReason(pack.city,c);
-  if(unavailable)return unavailable;
   const v=pack.byChannel[c]||{};
   if(c==='App Push'||c===bInAppChannel){
    const name=notificationChannelName(c);
@@ -8170,15 +8173,14 @@ function bScheduleLabel(d:any){if(d.sendMode==='周期发送'){const r=d.repeat;
 const bQuietHours='22:00 至次日 08:00';
 function bDefaults(f:any){const req=f.requirements||{};const channels=[...(f.contentPack?.channels||[])];return {...f,channels,city:f.contentPack?.city||'',category:f.contentPack?.category||req.category||'平台类',sendMode:req.sendMode||'立即发送',sendTime:req.sendTime||'',repeat:req.repeat||null,scheduleIssue:req.scheduleIssue||'',sender:channels.includes('企微私聊')?'B端客服':'',interval:req.interval||'0～0',taskName:f.taskName??'小B通知'}}
 // 演示沿用推送系统的城市通道，发送身份固定为B端客服。
-const bWecomCityChannels={'合肥':'企微私聊-光年本地（合肥）','南京':'企微私聊-光年本地（南京新房）','无锡':'企微私聊-光年本地（无锡）','西安':'企微私聊-光年本地（西安）','苏州':'企微私聊-光年本地（苏州）','芜湖':'企微私聊-光年本地（芜湖）'};
-const bDemoPushCities=['全国',...Object.keys(bWecomCityChannels)];
-const bDemoPermissionCities=[...bDemoPushCities];
-function bChannelUnavailableReason(city:string,channel:string){if(channel!=='企微私聊'||!city)return '';return city==='全国'?'全国暂无企微私聊通道，请取消该渠道或选择具体城市。':!bWecomCityChannels[city]?'当前城市暂无企微私聊通道，请取消该渠道或选择其他城市。':''}
-function bCityConfigError(d:any){const allowed=d.dataPermissionCities||bDemoPermissionCities;if(!allowed.length)return '当前账号无城市数据权限';if(!d.city)return '请选择任务城市';if(!allowed.includes(d.city)||!bDemoPushCities.includes(d.city))return '任务城市不在可选范围内';return ''}
-function bSenderLabel(d:any,c:string){return c==='企微私聊'?'B端客服':c==='服务号模板消息通知'?d.contentPack.byChannel[c].account:bYoukeApp.name}
-function bChannelLabel(d:any,c:string){if(c==='企微私聊')return bWecomCityChannels[d.city]||'暂无可用通道';return notificationChannelName(c)+' · '+d.city+'（演示）'}
+function bCityConfigError(d:any){
+ if(!bNotificationSiteOpen())return bNotificationSiteNotice;
+ return d.city===bNotificationCity?'':'通知小B的任务城市固定为西安';
+}
+function bSenderLabel(d:any,c:string){return c==='企微私聊'?'西安 B 端客服':c==='服务号模板消息通知'?d.contentPack.byChannel[c].account:bYoukeApp.name}
+function bChannelLabel(d:any,c:string){if(c==='企微私聊')return bWecomChannel;return notificationChannelName(c)+' · '+d.city+'（演示）'}
 function bBlacklistLabel(c:string){return c==='企微私聊'?'小B适用黑名单规则待接入确认':'本渠道过滤规则待接入确认'}
-function bConfigError(d:any){if(!d.audience)return '请先引用或创建人群包';if(!d.audience.count)return '当前人群为0人，不能创建推送任务';if(!d.channels?.length)return '请至少选择一个发送渠道';if(bCityConfigError(d))return bCityConfigError(d);const unavailable=d.channels.map((c:string)=>bChannelUnavailableReason(d.city,c)).find(Boolean);if(unavailable)return unavailable;if(d.channels.some((c:string)=>!d.contentPack?.channels.includes(c)))return '所选渠道缺少已确认内容，请先补齐内容';if(d.channels.includes('App Push')&&d.audience.people?.some((p:any)=>p.status==='注销经纪人'))return '当前人群包含注销经纪人，App Push不可用，请调整名单或渠道';if(d.sendMode==='周期发送'&&(!d.repeat||d.scheduleIssue))return d.scheduleIssue||'请用自然语言补齐推送频率/周期。';if(d.sendMode==='定时发送'&&(!d.sendTime||new Date(d.sendTime+'+08:00').getTime()<=Date.now()))return '请用自然语言补齐有效的未来定时时间（北京时间）';return bContentError({city:d.city,channels:d.channels,category:d.category,byChannel:d.contentPack.byChannel})}
+function bConfigError(d:any){if(!d.audience)return '请先引用或创建人群包';if(!d.audience.count)return '当前人群为0人，不能创建推送任务';if(!d.channels?.length)return '请至少选择一个发送渠道';const cityError=bCityConfigError(d);if(cityError)return cityError;if(d.channels.some((c:string)=>!d.contentPack?.channels.includes(c)))return '所选渠道缺少已确认内容，请先补齐内容';if(d.channels.includes('App Push')&&d.audience.people?.some((p:any)=>p.status==='注销经纪人'))return '当前人群包含注销经纪人，App Push不可用，请调整名单或渠道';if(d.sendMode==='周期发送'&&(!d.repeat||d.scheduleIssue))return d.scheduleIssue||'请用自然语言补齐推送频率/周期。';if(d.sendMode==='定时发送'&&(!d.sendTime||new Date(d.sendTime+'+08:00').getTime()<=Date.now()))return '请用自然语言补齐有效的未来定时时间（北京时间）';return bContentError({city:d.city,channels:d.channels,category:d.category,byChannel:d.contentPack.byChannel})}
 function bChannelConfiguration(d:any,c:string){const v=d.contentPack.byChannel[c];const content=bContentItems(d.contentPack,c).map(({voiceTemplateName,voicePrompt,...item}:any)=>item);return {name:d.taskName.trim(),audienceId:d.audience.id,city:d.city,channel:c===bInAppChannel?'应用内发送':c,category:d.category,sendMode:d.sendMode,sendTime:d.sendTime||'',repeat:structuredClone(d.repeat||null),quietHours:bQuietHours,interval:c==='企微私聊'?d.interval:null,sender:bSenderLabel(d,c),channelLabel:bChannelLabel(d,c),content,...(c==='App Push'||c===bInAppChannel?{appId:v.appId}:{}),...(c==='服务号模板消息通知'?{accountId:v.accountId,account:v.account,templateId:bServiceTemplate.id,templateFields:Object.fromEntries(bServiceTemplate.fields.map(field=>[field,v.fields[field]]))}:{})};}
 function bCreateSingleTask(d:any,c:string){const key=d.operationKey+'|'+c;const existing=reachState.tasks.find((t:any)=>t.creationKey===key);if(existing)return existing;const items=bContentItems(d.contentPack,c);const sender=bSenderLabel(d,c);const t={id:'DEMO-T-'+Date.now()+'-'+Math.floor(Math.random()*10000),executionSystem:'推送系统',creationKey:key,name:d.taskName.trim(),source:'手动触达',created:reachNow(),status:'待执行',audience:structuredClone(d.audience),channels:[c],city:d.city,category:d.category,sendMode:d.sendMode,sendTime:d.sendTime,repeat:structuredClone(d.repeat||null),scheduleText:bScheduleLabel(d),sender,channelLabel:bChannelLabel(d,c),blacklistText:bBlacklistLabel(c),interval:c==='企微私聊'?d.interval:'不适用',title:items[0]?.title||'',body:items[0]?.body||'',link:items[0]?.link||'',contents:structuredClone(items),pushConfigSnapshot:bChannelConfiguration(d,c),results:null};reachState.tasks.unshift(t);reachState.logs.unshift({time:reachNow(),action:'创建推送任务',name:t.name});return t}
 function BAgentPlan({flowId}:any){
@@ -8192,14 +8194,11 @@ function BAgentPlan({flowId}:any){
  return <div className="b-agent-plan" data-testid="b-agent-plan"><TaskPlan tasks={rows}/></div>
 }
 function BContentDialog({flow,onClose,onSave}:any){
- const initialCities=(flow.dataPermissionCities||bDemoPermissionCities).filter((c:string)=>bDemoPushCities.includes(c));
- const [permissionCities,setPermissionCities]=useState<string[]>(()=>[...initialCities]);
- const [pack,setPack]=useState<any>(()=>{const defaults=bEmptyContent();const draft=structuredClone(flow.contentDraft||defaults);return {...defaults,...draft,byChannel:{...defaults.byChannel,...draft.byChannel},city:initialCities.length===1?initialCities[0]:draft.city&&initialCities.includes(draft.city)?draft.city:''}});
+ const [pack,setPack]=useState<any>(()=>({...structuredClone(flow.contentDraft||bEmptyContent()),city:bNotificationCity}));
  const [active,setActive]=useState('App Push');const [error,setError]=useState('');const v=pack.byChannel[active];
  const setValue=(patch:any)=>{setPack((p:any)=>({...p,byChannel:{...p.byChannel,[active]:{...p.byChannel[active],...patch}}}));setError('')};
- const selectChannel=(c:string)=>{const unavailable=bChannelUnavailableReason(pack.city,c);if(unavailable&&!pack.channels.includes(c)){setError(unavailable);return}setPack((p:any)=>({...p,channels:p.channels.includes(c)?p.channels.filter((x:string)=>x!==c):[...p.channels,c],...(c===bInAppChannel&&!p.category?{category:flow.requirements?.category||'平台类'}:{})}));setActive(c);setError('')};
- const switchDemoPermissions=(type:string)=>{const cities=type==='single'?['西安']:type==='multi'?[...bDemoPushCities]:type==='nationwide'?['全国']:[];setPermissionCities(cities);setPack((p:any)=>({...p,city:cities.length===1?cities[0]:''}));setError('')};
- const closeDraft=()=>onClose(pack,permissionCities);
+ const selectChannel=(c:string)=>{setPack((p:any)=>({...p,channels:p.channels.includes(c)?p.channels.filter((x:string)=>x!==c):[...p.channels,c],...(c===bInAppChannel&&!p.category?{category:flow.requirements?.category||'平台类'}:{})}));setActive(c);setError('')};
+ const closeDraft=()=>onClose(pack);
  const selected=pack.channels.includes(active);
  const readImage=(field:'image'|'cardCover',file?:File)=>{
   if(!file)return;
@@ -8210,14 +8209,13 @@ function BContentDialog({flow,onClose,onSave}:any){
   reader.onerror=()=>setError('读取图片失败，请重新选择');
   reader.readAsDataURL(file);
  };
- const cityError=bCityConfigError({...flow,city:pack.city,dataPermissionCities:permissionCities});
- const activeUnavailable=bChannelUnavailableReason(pack.city,active);
+ const cityError=bCityConfigError(pack);
 
- return <AutoDialog title="多渠道触达配置" onClose={closeDraft} wide><div className="bm-dialog"><header className="bm-dialog-head"><div><h2>多渠道触达配置</h2><p>勾选渠道，点击渠道名称切换编辑。切换时保留已填内容。</p></div><button aria-label="关闭内容配置" onClick={closeDraft}><X size={18}/></button></header><div className="bm-dialog-body"><div className="bm-city-config"><ReachField label="任务城市">{permissionCities.length===1?<div className="bm-city-value" aria-label="任务城市">{permissionCities[0]}<small>推送系统城市</small></div>:permissionCities.length>1?<select aria-label="任务城市" value={pack.city} onChange={e=>{setPack((p:any)=>({...p,city:e.target.value}));setError('')}}><option value="">请选择任务城市</option>{permissionCities.map(c=><option key={c}>{c}</option>)}</select>:<p role="alert">当前账号无城市数据权限</p>}</ReachField>{permissionCities.length>1&&<p className="bm-city-hint">选项来自推送系统</p>}{cityError&&permissionCities.length>0&&pack.city&&<p className="bm-inline-error" role="alert">{cityError}</p>}</div><div className="bm-channel-select" role="group" aria-label="选择及编辑渠道">{bTouchChannels.map(c=><div key={c} className={'bm-channel-option'+(active===c?' active':'')}><label><input type="checkbox" aria-label={notificationChannelName(c)} checked={pack.channels.includes(c)} disabled={!!bChannelUnavailableReason(pack.city,c)&&!pack.channels.includes(c)} title={bChannelUnavailableReason(pack.city,c)||undefined} onChange={()=>selectChannel(c)}/></label><button type="button" aria-label={'编辑'+notificationChannelName(c)+'内容'} aria-pressed={active===c} disabled={!!bChannelUnavailableReason(pack.city,c)} title={bChannelUnavailableReason(pack.city,c)||undefined} onClick={()=>setActive(c)}><NotificationChannel channel={c}/>{bChannelUnavailableReason(pack.city,c)&&<small className="bm-channel-unavailable">{pack.city==='全国'?'全国暂无通道':'暂无通道'}</small>}</button></div>)}</div>{pack.city==='全国'&&pack.channels.includes('企微私聊')&&<p className="bm-inline-error" role="alert">{bChannelUnavailableReason(pack.city,'企微私聊')}</p>}<div className="bm-content-grid"><section><h3>{active==='服务号模板消息通知'?'模板配置':'消息内容'}</h3>{selected&&!activeUnavailable&&active!=='企微私聊'&&<div className="bm-fixed-target" data-testid="channel-fixed-target"><span>{active==='服务号模板消息通知'?'发送服务号':'发送应用'}</span><strong>{active==='服务号模板消息通知'?bServiceAccount.name:bYoukeApp.name}</strong></div>}{activeUnavailable?<p className="bm-unavailable-message">{activeUnavailable}</p>:!selected?<div className="bm-empty"><p>尚未选择此渠道</p><ReachButton onClick={()=>selectChannel(active)}>配置此渠道</ReachButton></div>:<>
+ return <AutoDialog title="多渠道触达配置" onClose={closeDraft} wide><div className="bm-dialog"><header className="bm-dialog-head"><div><h2>多渠道触达配置</h2><p>勾选渠道，点击渠道名称切换编辑。切换时保留已填内容。</p></div><button aria-label="关闭内容配置" onClick={closeDraft}><X size={18}/></button></header><div className="bm-dialog-body"><div className="bm-city-config"><div className="bm-fixed-target" aria-label="任务城市"><span>任务城市</span><strong>{bNotificationCity}</strong></div></div><div className="bm-channel-select" role="group" aria-label="选择及编辑渠道">{bTouchChannels.map(c=><div key={c} className={'bm-channel-option'+(active===c?' active':'')}><label><input type="checkbox" aria-label={notificationChannelName(c)} checked={pack.channels.includes(c)} onChange={()=>selectChannel(c)}/></label><button type="button" aria-label={'编辑'+notificationChannelName(c)+'内容'} aria-pressed={active===c} onClick={()=>setActive(c)}><NotificationChannel channel={c}/></button></div>)}</div><div className="bm-content-grid"><section><h3>{active==='服务号模板消息通知'?'模板配置':'消息内容'}</h3>{selected&&active!=='企微私聊'&&<div className="bm-fixed-target" data-testid="channel-fixed-target"><span>{active==='服务号模板消息通知'?'发送服务号':'发送应用'}</span><strong>{active==='服务号模板消息通知'?bServiceAccount.name:bYoukeApp.name}</strong></div>}{!selected?<div className="bm-empty"><p>尚未选择此渠道</p><ReachButton onClick={()=>selectChannel(active)}>配置此渠道</ReachButton></div>:<>
  {active==='App Push'&&<><ReachField label="Push标题"><input value={v.title} onChange={e=>setValue({title:e.target.value})} placeholder="填写通知标题"/></ReachField><ReachField label="Push正文"><textarea value={v.body} onChange={e=>setValue({body:e.target.value})} rows={5} placeholder="填写通知正文"/></ReachField><section className="bm-voice-config"><label className="bm-voice-toggle"><input type="checkbox" aria-label="语音播报" checked={!!v.voiceEnabled} onChange={e=>setValue({voiceEnabled:e.target.checked})}/><span>语音播报</span></label>{v.voiceEnabled&&<><ReachField label="语音播报模板"><select value={v.voiceTemplateId||''} onChange={e=>setValue({voiceTemplateId:e.target.value})}><option value="">请选择播报模板</option>{bVoiceTemplates.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}</select></ReachField>{bVoiceTemplates.find(t=>t.id===v.voiceTemplateId)&&<p className="bm-footnote" data-testid="voice-template-prompt">播报提示：{bVoiceTemplates.find(t=>t.id===v.voiceTemplateId)?.prompt}</p>}<p className="bm-footnote">预置播报提示为演示内容，正式模板待接入。</p></>}</section></>}
  {active===bInAppChannel&&<><ReachField label="通知类型"><select value={pack.category||''} onChange={e=>{setPack((p:any)=>({...p,category:e.target.value}));setError('')}}><option value="">请选择通知类型</option>{reachNotificationTypes.map(type=><option key={type}>{type}</option>)}</select></ReachField><p className="bm-type-hint">用于站内信分类，本次所选渠道共用。</p><ReachField label="站内信标题"><input value={v.title} onChange={e=>setValue({title:e.target.value})} placeholder="填写消息标题"/></ReachField><ReachField label="站内信正文"><textarea value={v.body} onChange={e=>setValue({body:e.target.value})} rows={7} placeholder="填写完整通知内容"/></ReachField></>}
  {active==='企微私聊'&&<>
-  <div className="bm-fixed-target" data-testid="wecom-sender-route"><span>发送客服</span><strong>B端客服</strong><span>通道</span><strong>{pack.city?(bWecomCityChannels[pack.city]||'暂无可用通道'):'选择任务城市后显示'}</strong></div>
+  <div className="bm-fixed-target" data-testid="wecom-sender-route"><span>发送客服</span><strong>西安 B 端客服</strong><span>通道</span><strong>{bWecomChannel}</strong></div>
   <ReachField label="企微消息正文"><textarea value={v.body} onChange={e=>setValue({body:e.target.value})} rows={5} placeholder="填写发送给经纪人的消息"/></ReachField>
   <details className="bm-extra">
    <summary>添加图片</summary>
@@ -8241,9 +8239,9 @@ function BContentDialog({flow,onClose,onSave}:any){
   <div className="bm-fixed-target"><span>跳转小程序</span><strong>{bServiceMiniProgram}</strong></div>
   <ReachField label="小程序路径" hint="选填"><input value={v.miniPath} onChange={e=>setValue({miniPath:e.target.value})} placeholder="请输入小程序路径"/></ReachField>
  </>}
- </>}</section></div><details className="bm-demo-tools"><summary>原型演示工具</summary><label>模拟账号数据权限<select aria-label="模拟账号数据权限" value={permissionCities.length===1?(permissionCities[0]==='全国'?'nationwide':'single'):permissionCities.length>1?'multi':'none'} onChange={e=>switchDemoPermissions(e.target.value)}><option value="single">单城市账号（西安）</option><option value="multi">多城市账号（含全国）</option><option value="nationwide">全国权限账号</option><option value="none">无城市权限</option></select></label></details></div>{error&&<div className="bm-error" role="alert">{error}</div>}<footer className="bm-dialog-footer"><span>已选 {pack.channels.length} 个渠道</span><div><ReachButton onClick={closeDraft}>取消</ReachButton><ReachButton primary onClick={()=>{const e=cityError||bContentError(pack);if(e){setError(e);if(cityError){document.querySelector('.bm-city-config')?.scrollIntoView({block:'nearest'});document.querySelector<HTMLSelectElement>('.bm-city-config select')?.focus()}else{const channel=bTouchChannels.find(c=>e.startsWith(c)||c==='服务号模板消息通知'&&e.startsWith('服务号'));if(channel)setActive(channel)}return}onSave(pack,permissionCities)}}>确认配置</ReachButton></div></footer></div></AutoDialog>
+ </>}</section></div></div>{error&&<div className="bm-error" role="alert">{error}</div>}<footer className="bm-dialog-footer"><span>已选 {pack.channels.length} 个渠道</span><div><ReachButton onClick={closeDraft}>取消</ReachButton><ReachButton primary onClick={()=>{const e=cityError||bContentError(pack);if(e){setError(e);if(!cityError){const channel=bTouchChannels.find(c=>e.startsWith(c)||c==='服务号模板消息通知'&&e.startsWith('服务号'));if(channel)setActive(channel)}return}onSave(pack)}}>确认配置</ReachButton></div></footer></div></AutoDialog>
 }
-function BConversationCard({data,onAction,onOpenTask,executionMode}:any){const state=useReach();const live=state.flows[data.flowId];const f=data.confirmed?data.snapshot:live;const [audience,setAudience]=useState('');if(!f)return null;const completed=data.confirmed;const blocked=completed||!executionMode;const confirmChannels=f.channels;return <div className={'b-conversation-card bm-card'+(data.stage==='summary'?' bm-task-confirm':'')} data-testid={'b-'+data.stage+'-card'}><header><span className="b-card-icon">{data.stage==='summary'?<Send size={16}/>:<Bot size={16}/>}</span><strong>{{dependency:'补齐前置依赖',content:'触达配置',config:'多渠道触达配置',summary:'任务信息确认',result:'任务创建结果'}[data.stage]}</strong>{completed&&<small>已确认</small>}</header>{!executionMode&&!completed&&<p className="bm-footnote">请切换到执行模式继续多渠道触达。</p>}
+function BConversationCard({data,onAction,onOpenTask,executionMode}:any){const state=useReach();const live=state.flows[data.flowId];const f=data.confirmed?data.snapshot:live;const [audience,setAudience]=useState('');if(!f)return null;const completed=data.confirmed;const blocked=completed||!executionMode||!bNotificationSiteOpen();const confirmChannels=f.channels;return <div className={'b-conversation-card bm-card'+(data.stage==='summary'?' bm-task-confirm':'')} data-testid={'b-'+data.stage+'-card'}><header><span className="b-card-icon">{data.stage==='summary'?<Send size={16}/>:<Bot size={16}/>}</span><strong>{{dependency:'补齐前置依赖',content:'触达配置',config:'多渠道触达配置',summary:'任务信息确认',result:'任务创建结果'}[data.stage]}</strong>{completed&&<small>已确认</small>}</header>{!executionMode&&!completed&&<p className="bm-footnote">请切换到执行模式继续多渠道触达。</p>}
  {data.stage==='dependency'&&<p>请在执行模式中 @人群包，并输入触达要求；尚无人群包时，请先在圈选模式创建。</p>}
  {data.stage==='content'&&<><p>{completed?f.contentPack.city+' · '+f.contentPack.channels.length+'个渠道配置已确认':'选择任务城市与渠道，填写各渠道内容。'}</p>{completed?<div className="bm-confirmed-channels">{f.contentPack.channels.map((c:string)=><NotificationChannel key={c} channel={c}/>)}</div>:<div className="bm-card-actions"><ReachButton primary disabled={blocked} onClick={()=>onAction('content')}>配置多渠道触达</ReachButton></div>}</>}
 
@@ -8331,7 +8329,8 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
   const openReachTask = (t:any) => {onOpenTab('[小B任务]'+t.id,t.name);onClose();};
   const [audienceMemberPreview,setAudienceMemberPreview]=useState<any>(null);
   const [bModal,setBModal]=useState<any>(null);
-  const bConfigPending=messages.some(m=>m.card?.type==='b_step'&&m.card.stage==='content'&&!m.card.confirmed&&!m.card.invalidated&&reachState.flows[m.card.flowId]?.stage==='content');
+  const notifyBAvailable=bNotificationSiteOpen();
+  const bConfigPending=notifyBAvailable&&messages.some(m=>m.card?.type==='b_step'&&m.card.stage==='content'&&!m.card.confirmed&&!m.card.invalidated&&reachState.flows[m.card.flowId]?.stage==='content');
   const bTargetRequest=useRef<string|null>(null);
   const bInputAudienceIds=useRef<string[]>([]);
   const bSetDraft=(flowId:string,patch:any)=>{reachState.flows[flowId]={...reachState.flows[flowId],...patch};reachCommit();return reachState.flows[flowId]};
@@ -8357,7 +8356,7 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
     const selectedAudience=goal==='touch'?audience:null;
     const query=selectedAudience?{...selectedAudience.query,...bAudienceSource}:reachParse(text);
     const needsQuery=goal==='audience';
-    reachState.flows[id]={id,intent:text,requirements:goal==='touch'?bParseTouch(text):{},query,goal,stage:needsQuery?'conditions':'start',audience:selectedAudience,contentPack:null,contentDraft:bEmptyContent(),dataPermissionCities:[...bDemoPermissionCities],configured:false,rows:selectedAudience?.people||[],createResults:[],demoResult:'success'};
+    reachState.flows[id]={id,intent:text,requirements:goal==='touch'?bParseTouch(text):{},query,goal,stage:needsQuery?'conditions':'start',audience:selectedAudience,contentPack:null,contentDraft:bEmptyContent(),configured:false,rows:selectedAudience?.people||[],createResults:[],demoResult:'success'};
     reachCommit();setResourceView('chat');
     setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',bPlanFlowId:id} as any]);
     if(needsQuery)bMessage(id,'conditions','');else bAdvance(id)
@@ -8374,8 +8373,21 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
     }else setMessages(prev=>prev.map(m=>m.id===msg.id?{...m,card:{...m.card,name:name.trim(),nameError:'',confirmed:true} as CardData}:m));
   };
 
-  const bCloseContent=(draft?:any,permissionCities?:string[])=>{const id=bModal?.flowId;const f=reachState.flows[id];if(f?.stage==='content'&&draft)bSetDraft(id,{contentDraft:structuredClone(draft),dataPermissionCities:[...(permissionCities||f.dataPermissionCities||bDemoPermissionCities)]});setBModal(null)};
-  const bSaveContent=(pack:any,permissionCities:string[])=>{const id=bModal?.flowId;const f=reachState.flows[id];if(!f||f.stage!=='content')return;const confirmed=structuredClone(pack);const error=bCityConfigError({...f,city:confirmed.city,dataPermissionCities:permissionCities})||bContentError(confirmed);if(error)return;bSetDraft(id,{contentPack:confirmed,contentDraft:confirmed,dataPermissionCities:[...permissionCities],configured:false,error:''});bConfirmStage(id,'content');setBModal(null);bAdvance(id)};
+  const bCloseContent=(draft?:any)=>{
+    const id=bModal?.flowId;
+    if(reachState.flows[id]?.stage==='content'&&draft)bSetDraft(id,{contentDraft:structuredClone(draft)});
+    setBModal(null);
+  };
+  const bSaveContent=(pack:any)=>{
+    const id=bModal?.flowId;
+    if(reachState.flows[id]?.stage!=='content')return;
+    const confirmed=structuredClone(pack);
+    if(bCityConfigError(confirmed)||bContentError(confirmed))return;
+    bSetDraft(id,{contentPack:confirmed,contentDraft:confirmed,configured:false,error:''});
+    bConfirmStage(id,'content');
+    setBModal(null);
+    bAdvance(id);
+  };
 
   const bPublishResults=(id:string)=>{const f=reachState.flows[id];bSetDraft(id,{stage:'done'});setBubbles(prev=>{const others=prev.filter(b=>b.id!==id+'-tasks');const ids=[...new Set<string>(f.createResults.filter((r:any)=>r.state==='success'&&r.taskId).map((r:any)=>r.taskId))];const items=ids.flatMap(taskId=>{const t=reachState.tasks.find((t:any)=>t.id===taskId);return t?[{id:t.id,name:t.name,tabName:'[小B任务]'+t.id,channel:t.channels.map(notificationChannelName).join('、')}]:[]});return items.length?[...others,{id:id+'-tasks',type:'task',text:`推送任务(${items.length})`,items}]:others})};
   const bCreate=(id:string)=>{
@@ -8410,6 +8422,10 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
     const selectedReferences=referenceMatches.filter((a:any)=>referenceIds.includes(a.id));
     const resolvedReferences=referenceMatches.filter((a:any)=>!selectedReferences.some((chosen:any)=>chosen.name===a.name)||referenceIds.includes(a.id));
     const startTouch=()=>{
+      if(!bNotificationSiteOpen()){
+        setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:bNotificationSiteNotice+'。'}]);
+        return;
+      }
       if(mode!=='执行模式'){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'请切换到执行模式，@人群包并输入触达要求。'}]);return}
       if(resolvedReferences.length!==1){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:resolvedReferences.length>1?'本次触达请只 @一个人群包，并输入触达要求；同名人群包请从引用列表选择。':'请先 @需要触达的人群包，并输入触达要求；不会自动使用刚创建或历史人群包。'}]);return}
       beginBReach(text,resolvedReferences[0],'touch');
@@ -9698,6 +9714,7 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
           }}
           activeBubbleId={activeBubbleId}
           onBubbleToggle={setActiveBubbleId}
+          notifyBAvailable={notifyBAvailable}
           locked={inputLocked || bConfigPending}
           lockPlaceholder={bConfigPending ? "请先完成触达配置" : undefined}
           pendingAction={pendingAction}
@@ -9705,7 +9722,7 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
       </div>
       )}
 
-      {bModal?.kind==='content'&&<BContentDialog key={bModal.flowId+'content'} flow={reachState.flows[bModal.flowId]} onClose={bCloseContent} onSave={bSaveContent}/>}
+      {notifyBAvailable&&bModal?.kind==='content'&&<BContentDialog key={bModal.flowId+'content'} flow={reachState.flows[bModal.flowId]} onClose={bCloseContent} onSave={bSaveContent}/>}
 
       {audienceMemberPreview&&<AudienceMemberDrawer key={audienceMemberPreview.memberId} members={audienceMemberPreview.members} memberId={audienceMemberPreview.memberId} onClose={()=>setAudienceMemberPreview(null)}/>}
 
