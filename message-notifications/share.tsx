@@ -6,7 +6,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createPortal } from 'react-dom';
-import { Archive, ArrowUp, AtSign, Bot, Check, CheckCircle2, ChevronDown, ChevronRight, ChevronLeft, Circle, Clock, Copy, FileText, Filter, History, Image as ImageIcon, ListFilter, Loader2, Mail, MessageSquare, MoreHorizontal, Pencil, Pin, Play, Plus, RefreshCw, Search, Send, Slash, Smile, Square, User, UserPlus, Users, X, Zap, Workflow, LineChart, UserCircle, FolderPlus, Eye, Trash2, PanelLeftOpen, AlertCircle, Megaphone, Tag, Settings, LayoutGrid, Command, Image, FolderOpen, Flame, Heart, MessageCircle, Share2, ExternalLink, Compass, Smartphone, Bell, Radio, Volume2, Link as LinkIcon } from 'lucide-react';
+import { Archive, ArrowUp, AtSign, Bot, Check, CheckCircle2, ChevronDown, ChevronRight, ChevronLeft, Circle, Clock, Copy, FileText, Filter, History, Image as ImageIcon, ListFilter, Loader2, Mail, MessageSquare, Moon, MoreHorizontal, Pencil, Pin, Play, Plus, RefreshCw, Search, Send, Slash, Smile, Square, User, UserPlus, Users, X, Zap, Workflow, LineChart, UserCircle, FolderPlus, Eye, Trash2, PanelLeftOpen, AlertCircle, Megaphone, Tag, Settings, LayoutGrid, Command, Image, FolderOpen, Flame, Heart, MessageCircle, Share2, ExternalLink, Compass, Smartphone, Bell, Radio, Volume2, Link as LinkIcon } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 
 // --- Analytics Hook (埋点统计工具) ---
@@ -8028,22 +8028,93 @@ function autoReadDemoContext(){
  }catch{return defaults}
 }
 function autoCanSwitch(p:any,ctx:any){return ctx.role==='admin'&&p?.city===ctx.city}
+
+const sentInAppSamples=[
+ {id:'demo-inbox-04',city:'西安',title:'本周房源核验提醒',body:'请查看名下待核验房源，并在本周五前确认房源状态。',sentAt:'2026-11-09 10:00',hidden:false},
+ {id:'demo-inbox-03',city:'西安',title:'本周房源核验提醒',body:'请查看名下待核验房源，并在本周五前确认房源状态。',sentAt:'2026-11-02 10:00',hidden:false},
+ {id:'demo-inbox-02',city:'西安',title:'11月平台服务安排',body:'11月平台服务时间为工作日 09:00–18:00。\n如需协助，请联系城市运营。',sentAt:'2026-11-01 14:30',hidden:true},
+ {id:'demo-inbox-01',city:'合肥',title:'经纪人服务提醒',body:'请确认经纪人服务资料是否完整。',sentAt:'2026-11-02 09:00',hidden:false},
+];
+function SentInAppWorkspace({access,onBack,onAccessChange}:any){
+ const data=useReach();
+ const [query,setQuery]=useState('');
+ const [filter,setFilter]=useState('全部状态');
+ const [detailId,setDetailId]=useState('');
+ const [pending,setPending]=useState<{id:string;hidden:boolean}|null>(null);
+ const [notice,setNotice]=useState<{text:string;error?:boolean}|null>(null);
+ const isAdmin=access.role==='admin';
+ const records=sentInAppSamples.filter(record=>record.city===access.city)
+  .sort((a,b)=>b.sentAt.localeCompare(a.sentAt))
+  .map(record=>({...record,hidden:data.inAppVisibility?.[record.id]??record.hidden}));
+ const visible=records.filter(record=>record.title.includes(query.trim())&&(filter==='全部状态'||record.hidden===(filter==='已屏蔽')));
+ const detail=records.find(record=>record.id===detailId);
+ const target=records.find(record=>record.id===pending?.id);
+ const applyVisibility=()=>{
+  if(!target||!pending)return;
+  const current=autoReadDemoContext();
+  if(!autoCanSwitch(target,current)){
+   onAccessChange(current);
+   setNotice({text:'权限或工作城市已变化，操作未生效。',error:true});
+   setPending(null);
+   return;
+  }
+  reachState.inAppVisibility={...reachState.inAppVisibility,[target.id]:pending.hidden};
+  reachCommit();
+  setNotice({text:pending.hidden?'站内信已屏蔽。':'站内信已恢复显示。'});
+  setPending(null);
+ };
+ return <div className="au-page au-lean" data-testid="sent-in-app-workspace"><div className="au-shell">
+  <nav className="au-breadcrumb" aria-label="页面路径"><Bot size={14}/><span>AI私域助手</span><ChevronRight size={12}/><button type="button" onClick={onBack}>自动化任务</button><ChevronRight size={12}/><span>已发站内信</span></nav>
+  <header className="au-header"><div><h1>已发站内信</h1><div className="au-access-context"><span>有客App</span><i/><span>当前城市 <b>{access.city}</b></span>{!isAdmin&&<><i/><span>仅管理员可调整显示状态</span></>}</div></div></header>
+  {notice&&<div className="au-notice" role={notice.error?'alert':'status'}>{notice.error?<AlertCircle size={15}/>:<CheckCircle2 size={15}/>}<span>{notice.text}</span><button aria-label="关闭提示" onClick={()=>setNotice(null)}><X size={15}/></button></div>}
+  <section className="au-list-panel">
+   <div className="au-toolbar inbox-toolbar"><div className="au-actions">
+    <label className="au-search"><Search size={16}/><input placeholder="搜索站内信标题" aria-label="搜索站内信标题" value={query} onChange={e=>setQuery(e.target.value)}/></label>
+    <select aria-label="显示状态" value={filter} onChange={e=>setFilter(e.target.value)}>{['全部状态','显示中','已屏蔽'].map(value=><option key={value}>{value}</option>)}</select>
+   </div></div>
+   <div className="au-table-frame"><table className="au-table inbox-table">
+    <thead><tr><th>标题</th><th>发送时间</th><th>显示状态</th>{isAdmin&&<th>操作</th>}</tr></thead>
+    <tbody>{visible.map(record=><tr key={record.id}>
+     <td><button type="button" className="inbox-title" onClick={()=>setDetailId(record.id)}>{record.title}</button></td>
+     <td><time dateTime={record.sentAt.replace(' ','T')+'+08:00'}>{record.sentAt}</time></td>
+     <td><span className={'au-status '+(record.hidden?'':'good')}><i/>{record.hidden?'已屏蔽':'显示中'}</span></td>
+     {isAdmin&&<td><button type="button" className="inbox-action" onClick={()=>setPending({id:record.id,hidden:!record.hidden})}>{record.hidden?'恢复显示':'屏蔽'}</button></td>}
+    </tr>)}</tbody>
+   </table>{!visible.length&&<div className="au-empty">{records.length?'没有匹配的站内信，请调整搜索或筛选条件。':'当前城市暂无已发站内信。'}</div>}</div>
+  </section>
+  <footer className="au-prototype-footer"><span>原型演示</span>站内信及显示状态为模拟数据。</footer>
+ </div>
+ {detail&&<AutoDialog title="站内信内容" onClose={()=>setDetailId('')}>
+  <header className="au-dialog-header"><h2>站内信内容</h2></header>
+  <div className="au-confirm-body inbox-detail"><strong>{detail.title}</strong><time>{detail.sentAt}</time><p>{detail.body}</p></div>
+  <footer className="au-dialog-footer"><ReachButton onClick={()=>setDetailId('')}>关闭</ReachButton></footer>
+ </AutoDialog>}
+ {pending&&target&&<AutoDialog title={pending.hidden?'屏蔽站内信':'恢复显示站内信'} onClose={()=>setPending(null)}>
+  <header className="au-dialog-header"><h2>{pending.hidden?'屏蔽这条站内信？':'恢复显示这条站内信？'}</h2></header>
+  <div className="au-confirm-body"><p><strong>{target.title}</strong> · {target.sentAt}</p><p>{pending.hidden?'屏蔽后，本次接收人将在有客App中看不到这条站内信。':'恢复后，本次接收人将在有客App中重新看到这条站内信。'}</p></div>
+  <footer className="au-dialog-footer"><ReachButton onClick={()=>setPending(null)}>取消</ReachButton><ReachButton primary onClick={applyVisibility}>{pending.hidden?'确认屏蔽':'确认恢复'}</ReachButton></footer>
+ </AutoDialog>}
+ </div>;
+}
+
 function AutomationWorkspace(){
  const data=useReach();const [access,setAccess]=useState(autoReadDemoContext);const isAdmin=access.role==='admin';
  const plans=data.plans.filter((p:any)=>p.moduleId==='message-notification'&&p.city===access.city);
  const [query,setQuery]=useState(''),[filter,setFilter]=useState('全部'),[notificationType,setNotificationType]=useState('全部通知类型');
  const [notice,setNotice]=useState(''),[stopId,setStopId]=useState('');
+ const [showSentInApp,setShowSentInApp]=useState(false);
  const switchContext=(patch:any)=>{const ctx={...access,...patch};localStorage.setItem(autoDemoContextKey,JSON.stringify(ctx));window.dispatchEvent(new Event('b-reach-change'));setAccess(ctx);setStopId('');setNotice('');setQuery('');setFilter('全部');setNotificationType('全部通知类型')};
  const permitted=(p:any)=>{const current=autoReadDemoContext();if(current.city!==access.city||!autoCanSwitch(p,current)){setAccess(current);setStopId('');setNotice('仅管理员可调整当前城市的通知状态，身份或城市已变化，请刷新后重试。');return false}return true};
  const visiblePlans=plans.filter((p:any)=>p.name.includes(query.trim())&&(filter==='全部'||(filter==='已开启')===p.enabled)&&(notificationType==='全部通知类型'||p.messageCategory===notificationType));
  // 本地只模拟业务系统返回生效成功；生产须以实际业务接口结果更新状态。
  const applyState=(p:any,enabled:boolean)=>{reachState.plans=reachState.plans.map((x:any)=>x.id===p.id&&x.city===access.city?{...x,enabled}:x);reachCommit();setStopId('');setNotice(access.city+'的任务已'+(enabled?'开启，业务系统将按原规则处理后续事件。':'关闭，业务系统将停止该规则的后续消息触达。'))};
  const toggle=(p:any)=>{const target=reachState.plans.find((x:any)=>x.id===p.id&&x.city===access.city);if(!target||!permitted(target))return;if(target.enabled){setStopId(target.id);return}applyState(target,true)};
+ if(showSentInApp)return <SentInAppWorkspace access={access} onAccessChange={setAccess} onBack={()=>setShowSentInApp(false)}/>;
  return <div className="au-page au-lean" data-testid="automation-workspace"><div className="au-shell">
  <nav className="au-breadcrumb"><Bot size={14}/><span>AI私域助手</span><ChevronRight size={12}/><span>自动化任务</span></nav>
  <header className="au-header"><div><h1>自动化任务</h1><div className="au-access-context"><span>当前城市 <b>{access.city}</b></span><i/><span>{isAdmin?'管理员':'仅管理员可调整状态'}</span></div></div></header>
  {notice&&<div className="au-notice" role="status"><CheckCircle2 size={15}/>{notice}<button aria-label="关闭提示" onClick={()=>setNotice('')}><X size={15}/></button></div>}
- <h2 className="au-category-heading" data-testid="automation-category">消息通知</h2>
+ <div className="au-category-bar"><h2 className="au-category-heading" data-testid="automation-category">消息通知</h2><ReachButton onClick={()=>setShowSentInApp(true)}><Mail size={15}/>已发站内信</ReachButton></div>
  <section className="au-list-panel"><div className="au-toolbar"><div className="au-tabs">{['全部','已开启','已关闭'].map(f=><button className={f===filter?'active':''} onClick={()=>setFilter(f)} key={f}>{f}<span>{plans.filter((p:any)=>f==='全部'||(f==='已开启')===p.enabled).length}</span></button>)}</div><div className="au-actions"><select aria-label="通知类型" value={notificationType} onChange={e=>setNotificationType(e.target.value)}>{['全部通知类型',...reachNotificationTypes].map(c=><option key={c}>{c}</option>)}</select><label className="au-search"><Search size={16}/><input placeholder="搜索任务" aria-label="搜索自动化任务" value={query} onChange={e=>setQuery(e.target.value)}/></label></div></div>
  <div className="au-table-frame"><table className="au-table au-plan-table"><thead><tr><th>任务名称</th><th>触达渠道</th><th>通知类型</th><th>状态</th></tr></thead><tbody>{visiblePlans.map((p:any)=><tr key={p.id}><td><span className="au-task-name">{p.name}</span></td><td><div className="au-chips">{p.channels.map((c:string)=><NotificationChannel key={c} channel={c}/>)}</div></td><td>{p.messageCategory}</td><td><div className="au-row-controls">{isAdmin?<><button role="switch" aria-checked={p.enabled} aria-label={`${p.name}开关`} className={'automation-switch '+(p.enabled?'on':'')} onClick={()=>toggle(p)}><span/></button><span>{p.enabled?'已开启':'已关闭'}</span></>:<AutoStatus value={p.enabled?'已开启':'已关闭'}/>}</div></td></tr>)}</tbody></table>{!visiblePlans.length&&<div className="au-empty">{plans.length?'没有匹配任务，请调整搜索或筛选条件。':'当前城市暂无已注册的自动化任务。'}</div>}</div><footer className="au-list-footer">共 {visiblePlans.length} 项任务</footer></section>
  <footer className="au-prototype-footer"><span>原型演示</span>任务、身份、城市及开关均为模拟数据，不影响线上。</footer><details className="au-permission-demo"><summary>原型演示工具</summary><div><label>模拟身份<select aria-label="模拟身份" value={access.role} onChange={e=>switchContext({role:e.target.value})}><option value="member">普通成员</option><option value="admin">管理员</option></select></label><label>模拟当前城市<select aria-label="模拟当前城市" value={access.city} onChange={e=>switchContext({city:e.target.value})}><option>西安</option><option>合肥</option><option>全国</option></select></label><label>模拟任务城市权限<select aria-label="模拟任务城市权限" value={access.taskCities.includes('西安')?(access.taskCities.length===1?'xian':'multi'):'other'} onChange={e=>switchContext({taskCities:e.target.value==='xian'?['西安']:e.target.value==='other'?['合肥']:bDemoTaskCities})}><option value="multi">西安、合肥、南京</option><option value="xian">仅西安</option><option value="other">仅合肥</option></select></label><small>仅用于走查权限与城市范围；生产身份和城市由平台提供。</small></div></details>
@@ -8097,6 +8168,7 @@ function bNotificationAccessError(access=autoReadDemoContext()){
 function bNotificationSiteOpen(){return !bNotificationAccessError()}
 const bEmptyContent = () => ({
  city: '',
+ quietEnabled: true,
  channels: [],
  byChannel: {
   'App Push': {appId:bYoukeApp.id,title:'',body:'',voiceEnabled:false,voiceTemplateId:''},
@@ -8200,7 +8272,7 @@ function bSenderLabel(d:any,c:string){return c==='企微私聊'?'西安 B 端客
 function bChannelLabel(d:any,c:string){if(c==='企微私聊')return bWecomChannel;return notificationChannelName(c)+' · '+d.city+'（演示）'}
 function bBlacklistLabel(c:string){return c==='企微私聊'?'小B适用黑名单规则待接入确认':'本渠道过滤规则待接入确认'}
 function bConfigError(d:any){if(!d.audience)return '请先引用或创建人群包';if(!d.audience.count)return '当前人群为0人，不能创建推送任务';if(!d.channels?.length)return '请至少选择一个发送渠道';const cityError=bCityConfigError(d);if(cityError)return cityError;if(d.channels.some((c:string)=>!d.contentPack?.channels.includes(c)))return '所选渠道缺少已确认内容，请先补齐内容';if(d.channels.includes('App Push')&&d.audience.people?.some((p:any)=>p.status==='注销经纪人'))return '当前人群包含注销经纪人，App Push不可用，请调整名单或渠道';if(d.sendMode==='周期发送'&&(!d.repeat||d.scheduleIssue))return d.scheduleIssue||'请用自然语言补齐推送频率/周期。';if(d.sendMode==='定时发送'&&(!d.sendTime||new Date(d.sendTime+'+08:00').getTime()<=Date.now()))return '请用自然语言补齐有效的未来定时时间（北京时间）';return bContentError({city:d.city,channels:d.channels,category:d.category,byChannel:d.contentPack.byChannel})}
-function bChannelConfiguration(d:any,c:string){const v=d.contentPack.byChannel[c];const content=bContentItems(d.contentPack,c).map(({voiceTemplateName,voicePrompt,...item}:any)=>item);return {name:d.taskName.trim(),audienceId:d.audience.id,city:d.city,channel:c===bInAppChannel?'应用内发送':c,category:d.category,sendMode:d.sendMode,sendTime:d.sendTime||'',repeat:structuredClone(d.repeat||null),quietHours:bQuietHours,interval:c==='企微私聊'?d.interval:null,sender:bSenderLabel(d,c),channelLabel:bChannelLabel(d,c),content,...(c==='App Push'||c===bInAppChannel?{appId:v.appId}:{}),...(c==='服务号模板消息通知'?{accountId:v.accountId,account:v.account,templateId:bServiceTemplate.id,templateFields:Object.fromEntries(bServiceTemplate.fields.map(field=>[field,v.fields[field]]))}:{})};}
+function bChannelConfiguration(d:any,c:string){const v=d.contentPack.byChannel[c];const content=bContentItems(d.contentPack,c).map(({voiceTemplateName,voicePrompt,...item}:any)=>item);return {name:d.taskName.trim(),audienceId:d.audience.id,city:d.city,channel:c===bInAppChannel?'应用内发送':c,category:d.category,sendMode:d.sendMode,sendTime:d.sendTime||'',repeat:structuredClone(d.repeat||null),...(d.contentPack.quietEnabled?{quietHours:bQuietHours}:{}),interval:c==='企微私聊'?d.interval:null,sender:bSenderLabel(d,c),channelLabel:bChannelLabel(d,c),content,...(c==='App Push'||c===bInAppChannel?{appId:v.appId}:{}),...(c==='服务号模板消息通知'?{accountId:v.accountId,account:v.account,templateId:bServiceTemplate.id,templateFields:Object.fromEntries(bServiceTemplate.fields.map(field=>[field,v.fields[field]]))}:{})};}
 function bCreateSingleTask(d:any,c:string){const key=d.operationKey+'|'+c;const existing=reachState.tasks.find((t:any)=>t.creationKey===key);if(existing)return existing;const items=bContentItems(d.contentPack,c);const sender=bSenderLabel(d,c);const t={id:'DEMO-T-'+Date.now()+'-'+Math.floor(Math.random()*10000),executionSystem:'推送系统',creationKey:key,name:d.taskName.trim(),source:'手动触达',created:reachNow(),status:'待执行',audience:structuredClone(d.audience),channels:[c],city:d.city,category:d.category,sendMode:d.sendMode,sendTime:d.sendTime,repeat:structuredClone(d.repeat||null),scheduleText:bScheduleLabel(d),sender,channelLabel:bChannelLabel(d,c),blacklistText:bBlacklistLabel(c),interval:c==='企微私聊'?d.interval:'不适用',title:items[0]?.title||'',body:items[0]?.body||'',link:items[0]?.link||'',contents:structuredClone(items),pushConfigSnapshot:bChannelConfiguration(d,c),results:null};reachState.tasks.unshift(t);reachState.logs.unshift({time:reachNow(),action:'创建推送任务',name:t.name});return t}
 function BAgentPlan({flowId}:any){
  useReach();const f=reachState.flows[flowId];if(!f)return null;
@@ -8215,7 +8287,7 @@ function BAgentPlan({flowId}:any){
 function BContentDialog({flow,onClose,onSave}:any){
  const {taskCities}=autoReadDemoContext();
  const [pack,setPack]=useState<any>(()=>{
-  const draft=structuredClone(flow.contentDraft||bEmptyContent());
+  const draft={...bEmptyContent(),...structuredClone(flow.contentDraft)};
   if(draft.city===bNotificationCity&&taskCities.includes(draft.city))return draft;
   return {...draft,city:taskCities.length===1&&taskCities[0]===bNotificationCity?bNotificationCity:''};
  });
@@ -8234,8 +8306,15 @@ function BContentDialog({flow,onClose,onSave}:any){
   reader.readAsDataURL(file);
  };
  const cityError=bCityConfigError(pack);
+ const quietScopeId=React.useId();
 
- return <AutoDialog title="多渠道触达配置" onClose={closeDraft} wide><div className="bm-dialog"><header className="bm-dialog-head"><div><h2>多渠道触达配置</h2><p>勾选渠道，点击渠道名称切换编辑。切换时保留已填内容。</p></div><button aria-label="关闭内容配置" onClick={closeDraft}><X size={18}/></button></header><div className="bm-dialog-body"><div className="bm-city-config"><ReachField label="任务城市" hint="本期仅西安可用"><select value={pack.city} onChange={e=>{setPack((prev:any)=>({...prev,city:e.target.value}));setError('')}}><option value="">请选择任务城市</option>{taskCities.map((city:string)=><option key={city} value={city} disabled={city!==bNotificationCity}>{city}{city===bNotificationCity?'':'（暂未开放）'}</option>)}</select></ReachField></div><div className="bm-channel-select" role="group" aria-label="选择及编辑渠道">{bTouchChannels.map(c=><div key={c} className={'bm-channel-option'+(active===c?' active':'')}><label><input type="checkbox" aria-label={notificationChannelName(c)} checked={pack.channels.includes(c)} onChange={()=>selectChannel(c)}/></label><button type="button" aria-label={'编辑'+notificationChannelName(c)+'内容'} aria-pressed={active===c} onClick={()=>setActive(c)}><NotificationChannel channel={c}/></button></div>)}</div><div className="bm-content-grid"><section><h3>{active==='服务号模板消息通知'?'模板配置':'消息内容'}</h3>{selected&&active!=='企微私聊'&&<div className="bm-fixed-target" data-testid="channel-fixed-target"><span>{active==='服务号模板消息通知'?'发送服务号':'发送应用'}</span><strong>{active==='服务号模板消息通知'?bServiceAccount.name:bYoukeApp.name}</strong></div>}{!selected?<div className="bm-empty"><p>尚未选择此渠道</p><ReachButton onClick={()=>selectChannel(active)}>配置此渠道</ReachButton></div>:<>
+ return <AutoDialog title="多渠道触达配置" onClose={closeDraft} wide><div className="bm-dialog"><header className="bm-dialog-head"><div><h2>多渠道触达配置</h2><p>勾选渠道，点击渠道名称切换编辑。切换时保留已填内容。</p></div><button aria-label="关闭内容配置" onClick={closeDraft}><X size={18}/></button></header><div className="bm-dialog-body"><div className="bm-city-config"><ReachField label="任务城市" hint="本期仅西安可用"><select value={pack.city} onChange={e=>{setPack((prev:any)=>({...prev,city:e.target.value}));setError('')}}><option value="">请选择任务城市</option>{taskCities.map((city:string)=><option key={city} value={city} disabled={city!==bNotificationCity}>{city}{city===bNotificationCity?'':'（暂未开放）'}</option>)}</select></ReachField>
+ <div className="bm-quiet-config">
+  <span className="bm-quiet-icon" aria-hidden="true"><Moon size={16}/></span>
+  <div className="bm-quiet-copy"><strong>免打扰</strong><small id={quietScopeId}>所有所选渠道共用</small></div>
+  <span className="bm-quiet-time">{pack.quietEnabled?bQuietHours:'已关闭'}</span>
+  <button type="button" role="switch" aria-label="免打扰" aria-describedby={quietScopeId} aria-checked={!!pack.quietEnabled} className="bm-quiet-switch" onClick={()=>setPack((prev:any)=>({...prev,quietEnabled:!prev.quietEnabled}))}><span/></button>
+ </div></div><div className="bm-channel-select" role="group" aria-label="选择及编辑渠道">{bTouchChannels.map(c=><div key={c} className={'bm-channel-option'+(active===c?' active':'')}><label><input type="checkbox" aria-label={notificationChannelName(c)} checked={pack.channels.includes(c)} onChange={()=>selectChannel(c)}/></label><button type="button" aria-label={'编辑'+notificationChannelName(c)+'内容'} aria-pressed={active===c} onClick={()=>setActive(c)}><NotificationChannel channel={c}/></button></div>)}</div><div className="bm-content-grid"><section><h3>{active==='服务号模板消息通知'?'模板配置':'消息内容'}</h3>{selected&&active!=='企微私聊'&&<div className="bm-fixed-target" data-testid="channel-fixed-target"><span>{active==='服务号模板消息通知'?'发送服务号':'发送应用'}</span><strong>{active==='服务号模板消息通知'?bServiceAccount.name:bYoukeApp.name}</strong></div>}{!selected?<div className="bm-empty"><p>尚未选择此渠道</p><ReachButton onClick={()=>selectChannel(active)}>配置此渠道</ReachButton></div>:<>
  {active==='App Push'&&<><ReachField label="Push标题"><input value={v.title} onChange={e=>setValue({title:e.target.value})} placeholder="填写通知标题"/></ReachField><ReachField label="Push正文"><textarea value={v.body} onChange={e=>setValue({body:e.target.value})} rows={5} placeholder="填写通知正文"/></ReachField><section className="bm-voice-config"><label className="bm-voice-toggle"><input type="checkbox" aria-label="语音播报" checked={!!v.voiceEnabled} onChange={e=>setValue({voiceEnabled:e.target.checked})}/><span>语音播报</span></label>{v.voiceEnabled&&<><ReachField label="语音播报模板"><select value={v.voiceTemplateId||''} onChange={e=>setValue({voiceTemplateId:e.target.value})}><option value="">请选择播报模板</option>{bVoiceTemplates.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}</select></ReachField>{bVoiceTemplates.find(t=>t.id===v.voiceTemplateId)&&<p className="bm-footnote" data-testid="voice-template-prompt">播报提示：{bVoiceTemplates.find(t=>t.id===v.voiceTemplateId)?.prompt}</p>}<p className="bm-footnote">预置播报提示为演示内容，正式模板待接入。</p></>}</section></>}
  {active===bInAppChannel&&<><ReachField label="通知类型"><select value={pack.category||''} onChange={e=>{setPack((p:any)=>({...p,category:e.target.value}));setError('')}}><option value="">请选择通知类型</option>{reachNotificationTypes.map(type=><option key={type}>{type}</option>)}</select></ReachField><p className="bm-type-hint">用于站内信分类，本次所选渠道共用。</p><ReachField label="站内信标题"><input value={v.title} onChange={e=>setValue({title:e.target.value})} placeholder="填写消息标题"/></ReachField><ReachField label="站内信正文"><textarea value={v.body} onChange={e=>setValue({body:e.target.value})} rows={7} placeholder="填写完整通知内容"/></ReachField></>}
  {active==='企微私聊'&&<>
@@ -8277,13 +8356,13 @@ function BConversationCard({data,onAction,onOpenTask,executionMode}:any){const s
    {validateConfirmCardName(f.taskName||'')&&<small className="bm-name-error" role="alert">{validateConfirmCardName(f.taskName||'')}</small>}
   </>}
  </label>
- <div className="bm-confirm-grid bm-confirm-common">{[['接收对象',f.audience?.name+'（'+f.audience?.count+'人）'],['任务城市',f.city],['推送时间',bScheduleLabel(f)],['免打扰时段',bQuietHours],['通知类型',f.category]].map(([k,v])=><div key={k}><span>{k}</span><strong>{v}</strong></div>)}</div>
+ <div className="bm-confirm-grid bm-confirm-common">{[['接收对象',f.audience?.name+'（'+f.audience?.count+'人）'],['任务城市',f.city],['推送时间',bScheduleLabel(f)],['免打扰时段',f.contentPack?.quietEnabled?bQuietHours:'未开启'],['通知类型',f.category]].map(([k,v])=><div key={k}><span>{k}</span><strong>{v}</strong></div>)}</div>
  {confirmChannels.map((c:string)=><section className="bm-summary-item" key={c}><div className="bm-confirm-channel"><NotificationChannel channel={c}/></div>
 
  <div className="bm-confirm-grid">{(c==='企微私聊'?[['发送客服',bSenderLabel(f,c)],['通道',bChannelLabel(f,c)],['推送间隔',f.interval+' 秒'],['黑名单',bBlacklistLabel(c)]]:[[c==='服务号模板消息通知'?'发送服务号':'发送应用',bSenderLabel(f,c)]]).map(([k,v])=><div key={k}><span>{k}</span><strong>{v}</strong></div>)}</div>
  <div className="bm-confirm-content"><span>发送内容</span><div>{bContentSummary(f.contentPack,c)}</div>{c==='企微私聊'&&bContentItems(f.contentPack,c).map((item:any)=>item.image&&<img key={item.type} src={item.image} alt={item.type==='链接卡片'?'链接卡片封面图':'企微待发送图片'}/>)}{c==='App Push'&&<BVoicePreview value={f.contentPack.byChannel[c]}/>}</div></section>)}
  <div className="bm-card-actions"><ReachButton primary disabled={blocked||f.stage==='creating'||!!f.error||!!validateConfirmCardName(f.taskName||'')} onClick={()=>onAction('create')}>{completed?'已确认执行':f.stage==='creating'?'正在创建…':`确认创建${confirmChannels.length}个任务`}</ReachButton></div>
- {!completed&&<p className="bm-footnote">频率、周期、时间和间隔通过自然语言修改。城市、渠道及内容已确认。</p>}
+ {!completed&&<p className="bm-footnote">推送频率、周期、时间和间隔可用自然语言修改。</p>}
  {!completed&&<details className="bm-demo-tools"><summary>原型演示工具</summary><label>模拟创建结果<select aria-label="模拟创建结果" disabled={blocked} value={f.demoResult||'success'} onChange={e=>onAction('demo',e.target.value)}><option value="success">全部创建成功</option><option value="partial">企微创建失败</option><option value="unknown">服务号未返回结果</option><option value="inapp-failed">站内信创建失败</option><option value="inapp-unknown">站内信未返回结果</option></select></label></details>}</>}
 
  {data.stage==='result'&&<><p>创建成功 {f.createResults?.filter((r:any)=>r.state==='success').length||0} / {f.channels.length}；创建成功不代表发送完成。</p>{f.createResults?.map((r:any)=><div className="bm-result-item" key={r.channel}><NotificationChannel channel={r.channel}/><span className={'bm-result-state '+r.state}>{r.state==='success'?'创建成功':r.state==='failed'?'创建失败':'未返回结果'}</span>{r.taskId?<div className="bm-result-id"><small>推送任务ID</small><button className="bm-task-link" onClick={()=>onOpenTask(state.tasks.find((t:any)=>t.id===r.taskId))}>{r.taskId}<ExternalLink size={12}/></button></div>:<small>{r.reason}</small>}</div>)}</>}
@@ -8310,7 +8389,7 @@ function ReachTaskDetail({taskId}:any){
  const contents=t.contents?t.contents.map((item:any,i:number)=>({...item,delay:i*2,body:item.body+(item.link?'\n'+item.link:'')})):[{type:'文本',title:t.title,body:t.body,delay:0},...(t.link?[{type:'链接',body:t.link,delay:0}]:[])];
  const singleChannel=t.contents&&t.channels.length===1?t.channels[0]:null;
  const senderTitle=singleChannel==='企微私聊'?'发送客服':singleChannel==='服务号模板消息通知'?'发送服务号':singleChannel==='App Push'||singleChannel===bInAppChannel?'发送应用':undefined;
- const view={senderTitle,channelTitle:singleChannel&&singleChannel!=='企微私聊'?'渠道:':undefined,hideInterval:!!singleChannel&&singleChannel!=='企微私聊',detailTitle:t.channels.includes(bInAppChannel)?'站内信任务详情':undefined,idLabel:t.contents?'推送任务ID:':undefined,recipientMode:'audience',id:t.id,name:t.name,status:t.status,creator:'当前运营（演示）',created:t.created,theme:'-',pushTime:t.repeat||t.sendMode==='周期发送'?bScheduleLabel(t):t.sendMode==='定时发送'?'定时推送 '+t.sendTime.replace('T',' '):t.sendMode==='立即发送'?'即时推送':t.sendTime||'未提供',interval:t.interval||'按渠道规则，待确认',channel:singleChannel&&singleChannel!=='企微私聊'?notificationChannelName(singleChannel):(t.channelLabel||t.channels.join('、')).replaceAll('有客App站内信','站内信'),quietHours:t.pushConfigSnapshot?.quietHours||'待确认',priority:'待确认',extraBasic:[['通知类型:',t.category||'-'],['来源:','手动触达']],audienceType:'AI人群包',audienceName:t.audience.name,audienceCount:t.audience.count,audienceUpdated:t.audience.created||t.created,blacklist:t.blacklistText||'小B适用规则待接入确认',whitelist:'-',senders:senderTitle?t.sender:t.contents?notificationChannelName(t.channels[0])+'：'+t.sender:t.channels.map(c=>notificationChannelName(c)+'：'+(c==='B端企微'?(t.sender||'B端客服')+'（演示）':c==='服务号'?'有客服务号（演示）':'AI有客App（演示）')).join(' | '),contents};
+ const view={senderTitle,channelTitle:singleChannel&&singleChannel!=='企微私聊'?'渠道:':undefined,hideInterval:!!singleChannel&&singleChannel!=='企微私聊',detailTitle:t.channels.includes(bInAppChannel)?'站内信任务详情':undefined,idLabel:t.contents?'推送任务ID:':undefined,recipientMode:'audience',id:t.id,name:t.name,status:t.status,creator:'当前运营（演示）',created:t.created,theme:'-',pushTime:t.repeat||t.sendMode==='周期发送'?bScheduleLabel(t):t.sendMode==='定时发送'?'定时推送 '+t.sendTime.replace('T',' '):t.sendMode==='立即发送'?'即时推送':t.sendTime||'未提供',interval:t.interval||'按渠道规则，待确认',channel:singleChannel&&singleChannel!=='企微私聊'?notificationChannelName(singleChannel):(t.channelLabel||t.channels.join('、')).replaceAll('有客App站内信','站内信'),quietHours:t.pushConfigSnapshot?t.pushConfigSnapshot.quietHours||'未开启':'待确认',priority:'待确认',extraBasic:[['通知类型:',t.category||'-'],['来源:','手动触达']],audienceType:'AI人群包',audienceName:t.audience.name,audienceCount:t.audience.count,audienceUpdated:t.audience.created||t.created,blacklist:t.blacklistText||'小B适用规则待接入确认',whitelist:'-',senders:senderTitle?t.sender:t.contents?notificationChannelName(t.channels[0])+'：'+t.sender:t.channels.map(c=>notificationChannelName(c)+'：'+(c==='B端企微'?(t.sender||'B端客服')+'（演示）':c==='服务号'?'有客服务号（演示）':'AI有客App（演示）')).join(' | '),contents};
  return <PushTaskDetailView task={view}>
  <section><h3 className="text-lg font-bold text-blue-600 mb-4">发送结果</h3>{!t.results?<p className="text-sm text-zinc-500">{t.status==='已取消'?'任务已停止，尚未发送。':'尚无发送回执，创建任务不代表发送成功。'}</p>:<div className="space-y-4 text-sm">{t.results.map(r=><details key={r.channel} className="border border-zinc-200 dark:border-zinc-800 rounded-lg p-4"><summary className="cursor-pointer text-zinc-700 dark:text-zinc-200">{r.channel} · 受理 {r.rows.filter(x=>x.result==='渠道已受理').length} · 失败 {r.rows.filter(x=>x.result==='发送失败').length} · 跳过 {r.rows.filter(x=>x.result==='已跳过').length}</summary><div className="overflow-x-auto mt-4"><table className="w-full text-left text-xs min-w-[400px]"><thead><tr className="text-zinc-500 border-b"><th className="py-2 font-normal">经纪人 / 注册ID</th><th className="font-normal">发送结果</th><th className="font-normal">原因 / 回执</th><th className="font-normal">已读</th></tr></thead><tbody>{r.rows.map(x=><tr key={x.id} className="border-b border-zinc-100 dark:border-zinc-800"><td className="py-3">{x.name}<small className="block text-zinc-400">{x.id}</small></td><td>{x.result}</td><td>{x.reason}</td><td>未知</td></tr>)}</tbody></table></div></details>)}<p className="text-xs text-zinc-400">执行结束可包含失败或跳过，渠道受理不等于送达或已读。</p></div>}</section>
  <details className="text-sm text-zinc-500"><summary className="cursor-pointer">操作记录</summary><div className="space-y-2 mt-3"><p>当前运营 · {t.created} · 创建任务</p>{t.status==='已完成'&&<p>演示操作 · 模拟执行完成</p>}{t.status==='已取消'&&<p>演示操作 · 停止未发送部分</p>}</div></details>
@@ -8438,7 +8517,7 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
       bMessage(id,'result','');
     },400);
   };
-  const bAction=(msg:any,action:string,value?:any)=>{const id=msg.card.flowId,f=reachState.flows[id];if(!f||f.stage==='cancelled'||msg.card.invalidated)return;if(mode!=='执行模式'&&action!=='query'){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'通知小B仅在执行模式可用，请先切换到执行模式。'}]);return}if(action==='audience'||action==='query'){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'请先在圈选模式创建人群包，再切换执行模式，@人群包并输入触达要求。'}]);return}else if(action==='content'){if(f.contentPack){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'本次城市、渠道及内容已确认，不能修改；如需更换请发起新一轮多渠道触达。',bFlowId:id}]);return}setBModal({kind:'content',flowId:id})}else if(action==='name'){bSetDraft(id,{taskName:value,error:bConfigError(f)})}else if(action==='demo'){bSetDraft(id,{demoResult:value})}else if(action==='create'){bCreate(id)}};
+  const bAction=(msg:any,action:string,value?:any)=>{const id=msg.card.flowId,f=reachState.flows[id];if(!f||f.stage==='cancelled'||msg.card.invalidated)return;if(mode!=='执行模式'&&action!=='query'){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'通知小B仅在执行模式可用，请先切换到执行模式。'}]);return}if(action==='audience'||action==='query'){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'请先在圈选模式创建人群包，再切换执行模式，@人群包并输入触达要求。'}]);return}else if(action==='content'){if(f.contentPack){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'本次任务城市、免打扰、渠道和内容已确认。',bFlowId:id}]);return}setBModal({kind:'content',flowId:id})}else if(action==='name'){bSetDraft(id,{taskName:value,error:bConfigError(f)})}else if(action==='demo'){bSetDraft(id,{demoResult:value})}else if(action==='create'){bCreate(id)}};
   const bTaskCreated=(msg:any,name:string)=>{const f=reachState.flows[msg.card.bFlowId];if(f?.channels)bCreate(f.id)};
   const handleBIntent=(text:string,referenceIds:string[]=[])=>{
     if(/交付群|群聊|朋友圈|主动激活|(?:使用|引用|用).{0,12}(?:工作流|内容包)/.test(text))return false;
@@ -8475,6 +8554,10 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
     if(old?.stage==='conditions'&&/^(确认|确认条件|确认查询|确认生成|好的|没问题|可以)[。！!\s]*$/.test(text.trim())){bQuery(id);return true}
     const active=old&&!['done','creating','cancelled'].includes(old.stage);
     if(mode!=='执行模式'&&((active&&old.goal==='touch'&&!['conditions','query','preview'].includes(old.stage))||(active&&old.stage==='audience_done'&&/发送|推送|触达|多渠道内容/.test(text))||/多渠道触达|多渠道内容|(?:发送|推送|触达).*(?:小\s*[bB]|经纪人)|(?:小\s*[bB]|经纪人).*(?:发送|推送|触达)/.test(text))){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'通知小B仅在执行模式可用，请先切换到执行模式。'}]);return true}
+    if(active&&old.stage==='summary'&&/免打扰/.test(text)){
+      setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'免打扰已在触达配置中确认。调整免打扰需发起新一轮触达。',bFlowId:id}]);
+      return true;
+    }
     const changeChannels=/(?:新增|增加|添加|取消|去掉|删除|移除)\s*(?:一个|这个)?\s*(?:App[ -]?Push|Push|企微|私聊|服务号|渠道)|(?:改为|改成|换成|换为|只用|只发|仅用|仅发)\s*(?:只|仅)?\s*(?:App[ -]?Push|Push|企微|私聊|服务号)|(?:Push|企微|私聊|服务号|渠道).{0,6}(?:取消|删除|移除|去掉)/i.test(text);
     if(active&&old.contentPack?.category&&(/通知类型|消息分类|分类/.test(text)||reachNotificationTypes.some(type=>text.includes(type)))){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'通知类型已在触达配置中确认，本次渠道共用且保持不变；更换分类请发起新一轮触达。发送时间与周期仍可通过自然语言修改。',bFlowId:id}]);return true}
     if(active&&old.contentPack&&(changeChannels||/文案|正文|标题|模板|素材|跳转|客服|发送人|城市|语音|播报|站内/.test(text)||/服务号.{0,8}(?:账号|账户).{0,6}(?:改为|改成|更换)|(?:更换|修改|调整).{0,6}服务号/.test(text))){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'本次触达城市、渠道及内容已确认，保持不变。频率、周期等推送参数可继续用自然语言修改；更换渠道或内容请发起新一轮多渠道触达。',bFlowId:id}]);return true}
