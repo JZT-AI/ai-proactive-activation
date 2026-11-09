@@ -63,13 +63,13 @@
 <text x="279.0" y="710.0" text-anchor="middle" font-size="14" fill="#374151">发送安排用自然语言改</text>
 <text x="279.0" y="730.0" text-anchor="middle" font-size="14" fill="#374151">最终确认创建</text>
 <rect x="823.0" y="798.0" width="232" height="66" rx="5" fill="white" stroke="#4c8562" stroke-width="1"/>
-<text x="939.0" y="826.0" text-anchor="middle" font-size="14" fill="#374151">按渠道分别创建任务</text>
-<text x="939.0" y="846.0" text-anchor="middle" font-size="14" fill="#374151">返回各渠道创建结果</text>
+<text x="939.0" y="826.0" text-anchor="middle" font-size="14" fill="#374151">选 N 个渠道，创建 N 条任务</text>
+<text x="939.0" y="846.0" text-anchor="middle" font-size="14" fill="#374151">每个渠道对应任务通道</text>
 <rect x="493.0" y="924.0" width="232" height="66" rx="5" fill="white" stroke="#8870b5" stroke-width="1"/>
 <text x="609.0" y="952.0" text-anchor="middle" font-size="14" fill="#374151">展示成功、失败</text>
 <text x="609.0" y="972.0" text-anchor="middle" font-size="14" fill="#374151">或结果待确认</text>
 <rect x="163.0" y="924.0" width="232" height="66" rx="5" fill="white" stroke="#596bb0" stroke-width="1"/>
-<text x="279.0" y="952.0" text-anchor="middle" font-size="14" fill="#374151">失败仅重试该渠道</text>
+<text x="279.0" y="952.0" text-anchor="middle" font-size="14" fill="#374151">明确失败后可重试</text>
 <text x="279.0" y="972.0" text-anchor="middle" font-size="14" fill="#374151">未知结果先核查</text>
 <rect x="163.0" y="294.0" width="232" height="66" rx="5" fill="white" stroke="#596bb0" stroke-width="1"/>
 <text x="279.0" y="322.0" text-anchor="middle" font-size="14" fill="#374151">模式不符或引用无效</text>
