@@ -7877,7 +7877,17 @@ function ReachDemoNote(){return <div className="reach-demo"><Bot size={14}/><spa
 // 渠道标识只负责展示，不改变渠道键或既有能力。
 // Keep persisted channel keys stable; use the generic channel name in the interface.
 function notificationChannelName(channel:string){return ['有客App站内信','App站内消息','系统通知'].includes(channel)?'站内信':channel}
-function NotificationChannel({channel}:any){const push=channel==='App Push',wecom=['B端企微','企微客服','企微群','企微私聊'].includes(channel),service=['服务号','服务号模板消息通知'].includes(channel),system=['站内信','有客App站内信','App站内消息','系统通知'].includes(channel);const Icon=push?Smartphone:wecom?(channel==='企微群'?Users:MessageCircle):service?Radio:Bell;return <span className={'notification-channel '+(push?'push':wecom?'wecom':service?'service':'system')}><span className="notification-channel-icon"><Icon size={14} strokeWidth={1.8}/></span><span>{notificationChannelName(channel)}</span></span>}
+function NotificationChannel({channel,appName}:{channel:string;appName?:string}){
+ const push=channel==='App Push';
+ const wecom=['B端企微','企微客服','企微群','企微私聊'].includes(channel);
+ const service=['服务号','服务号模板消息通知'].includes(channel);
+ const Icon=push?Smartphone:wecom?(channel==='企微群'?Users:MessageCircle):service?Radio:Bell;
+ return <span className={'notification-channel '+(push?'push':wecom?'wecom':service?'service':'system')}>
+  <span className="notification-channel-icon"><Icon size={14} strokeWidth={1.8}/></span>
+  <span>{notificationChannelName(channel)}</span>
+  {appName&&<small className="notification-channel-app"><span aria-hidden="true">·</span> {appName}</small>}
+ </span>;
+}
 function ReachChannelPicker({value,onChange,cancelled=false,disabled=false}:any){return <div className="reach-channels">{reachChannels.map(c=><label key={c} className={(cancelled&&c.startsWith('App')?'unavailable':'')}><input type="checkbox" checked={value.includes(c)} disabled={disabled||(cancelled&&c.startsWith('App'))} onChange={()=>onChange(value.includes(c)?value.filter(x=>x!==c):[...value,c])}/><NotificationChannel channel={c}/>{cancelled&&c.startsWith('App')&&<small>注销不可用</small>}</label>)}</div>}
 function reachCreateTask(d:any,source='手动触达',planId=''){
  const id='DEMO-T-'+Date.now();
@@ -7886,6 +7896,7 @@ function reachCreateTask(d:any,source='手动触达',planId=''){
 }
 function ReachPreview({title,body,link,channel}:any){return <div className="reach-preview"><div className="reach-kicker"><NotificationChannel channel={channel}/><span>内容预览</span></div><strong>{title||'消息标题'}</strong><p>{body||'消息正文'}</p>{link&&<span className="reach-link">{channel==='服务号'?'查看详情（模板映射待接入）':link}</span>}</div>}
 
+const autoAppChannels=['App Push','站内信'];
 const autoSpecs:any[] = [
  {
   "sceneKey": "1",
@@ -8003,11 +8014,19 @@ const autoSpecs:any[] = [
 ];
 // 自动化任务仅注册展示信息及业务启停状态，业务执行由原系统负责。
 function autoInit(){
- if(reachState.automationCatalogVersion===4)return;
+ if(reachState.automationCatalogVersion===5)return;
  const existing=reachState.plans||[];
- const plans=autoSpecs.map((s:any)=>{const id='AUTO-SCENE-'+s.sceneKey;const old=existing.find((p:any)=>p.id===id&&p.city==='西安');return {id,moduleId:'message-notification',name:s.name,channels:[...s.channels],messageCategory:s.messageCategory,city:'西安',enabled:old?old.enabled:true}});
+ const plans=autoSpecs.map((spec:any)=>{
+  const id='AUTO-SCENE-'+spec.sceneKey;
+  const old=existing.find((plan:any)=>plan.id===id&&plan.city==='西安');
+  // 本期演示清单中的 App Push 和站内信均面向有客App。
+  const channelApps=Object.fromEntries(spec.channels
+   .filter((channel:string)=>autoAppChannels.includes(notificationChannelName(channel)))
+   .map((channel:string)=>[channel,'有客App']));
+  return {id,moduleId:'message-notification',name:spec.name,channels:[...spec.channels],channelApps,messageCategory:spec.messageCategory,city:'西安',enabled:old?.enabled??true};
+ });
  reachState.plans=[...plans,...existing.filter((p:any)=>!plans.some((next:any)=>next.id===p.id&&next.city===p.city))];
- reachState.automationCatalogVersion=4;
+ reachState.automationCatalogVersion=5;
  try{localStorage.setItem(reachStorageKey,JSON.stringify(reachState))}catch{}
 }
 autoInit();
@@ -8116,7 +8135,10 @@ function AutomationWorkspace(){
  {notice&&<div className="au-notice" role="status"><CheckCircle2 size={15}/>{notice}<button aria-label="关闭提示" onClick={()=>setNotice('')}><X size={15}/></button></div>}
  <div className="au-category-bar"><h2 className="au-category-heading" data-testid="automation-category">消息通知</h2><ReachButton onClick={()=>setShowSentInApp(true)}><Mail size={15}/>已发站内信</ReachButton></div>
  <section className="au-list-panel"><div className="au-toolbar"><div className="au-tabs">{['全部','已开启','已关闭'].map(f=><button className={f===filter?'active':''} onClick={()=>setFilter(f)} key={f}>{f}<span>{plans.filter((p:any)=>f==='全部'||(f==='已开启')===p.enabled).length}</span></button>)}</div><div className="au-actions"><select aria-label="通知类型" value={notificationType} onChange={e=>setNotificationType(e.target.value)}>{['全部通知类型',...reachNotificationTypes].map(c=><option key={c}>{c}</option>)}</select><label className="au-search"><Search size={16}/><input placeholder="搜索任务" aria-label="搜索自动化任务" value={query} onChange={e=>setQuery(e.target.value)}/></label></div></div>
- <div className="au-table-frame"><table className="au-table au-plan-table"><thead><tr><th>任务名称</th><th>触达渠道</th><th>通知类型</th><th>状态</th></tr></thead><tbody>{visiblePlans.map((p:any)=><tr key={p.id}><td><span className="au-task-name">{p.name}</span></td><td><div className="au-chips">{p.channels.map((c:string)=><NotificationChannel key={c} channel={c}/>)}</div></td><td>{p.messageCategory}</td><td><div className="au-row-controls">{isAdmin?<><button role="switch" aria-checked={p.enabled} aria-label={`${p.name}开关`} className={'automation-switch '+(p.enabled?'on':'')} onClick={()=>toggle(p)}><span/></button><span>{p.enabled?'已开启':'已关闭'}</span></>:<AutoStatus value={p.enabled?'已开启':'已关闭'}/>}</div></td></tr>)}</tbody></table>{!visiblePlans.length&&<div className="au-empty">{plans.length?'没有匹配任务，请调整搜索或筛选条件。':'当前城市暂无已注册的自动化任务。'}</div>}</div><footer className="au-list-footer">共 {visiblePlans.length} 项任务</footer></section>
+ <div className="au-table-frame"><table className="au-table au-plan-table"><thead><tr><th>任务名称</th><th>触达渠道</th><th>通知类型</th><th>状态</th></tr></thead><tbody>{visiblePlans.map((p:any)=><tr key={p.id}><td><span className="au-task-name">{p.name}</span></td><td><div className="au-chips">{p.channels.map((channel:string)=>{
+  const appName=autoAppChannels.includes(notificationChannelName(channel))?(p.channelApps?.[channel]||'应用待确认'):undefined;
+  return <NotificationChannel key={channel} channel={channel} appName={appName}/>;
+ })}</div></td><td>{p.messageCategory}</td><td><div className="au-row-controls">{isAdmin?<><button role="switch" aria-checked={p.enabled} aria-label={`${p.name}开关`} className={'automation-switch '+(p.enabled?'on':'')} onClick={()=>toggle(p)}><span/></button><span>{p.enabled?'已开启':'已关闭'}</span></>:<AutoStatus value={p.enabled?'已开启':'已关闭'}/>}</div></td></tr>)}</tbody></table>{!visiblePlans.length&&<div className="au-empty">{plans.length?'没有匹配任务，请调整搜索或筛选条件。':'当前城市暂无已注册的自动化任务。'}</div>}</div><footer className="au-list-footer">共 {visiblePlans.length} 项任务</footer></section>
  <footer className="au-prototype-footer"><span>原型演示</span>任务、身份、城市及开关均为模拟数据，不影响线上。</footer><details className="au-permission-demo"><summary>原型演示工具</summary><div><label>模拟身份<select aria-label="模拟身份" value={access.role} onChange={e=>switchContext({role:e.target.value})}><option value="member">普通成员</option><option value="admin">管理员</option></select></label><label>模拟当前城市<select aria-label="模拟当前城市" value={access.city} onChange={e=>switchContext({city:e.target.value})}><option>西安</option><option>合肥</option><option>全国</option></select></label><label>模拟任务城市权限<select aria-label="模拟任务城市权限" value={access.taskCities.includes('西安')?(access.taskCities.length===1?'xian':'multi'):'other'} onChange={e=>switchContext({taskCities:e.target.value==='xian'?['西安']:e.target.value==='other'?['合肥']:bDemoTaskCities})}><option value="multi">西安、合肥、南京</option><option value="xian">仅西安</option><option value="other">仅合肥</option></select></label><small>仅用于走查权限与城市范围；生产身份和城市由平台提供。</small></div></details>
  </div>
  {stopId&&<AutoDialog title="关闭自动化任务" onClose={()=>setStopId('')}><header className="au-dialog-header"><h2>关闭这个任务？</h2></header><div className="au-confirm-body"><p><strong>{access.city} · {plans.find((p:any)=>p.id===stopId)?.name}</strong></p><p>关闭后，对应业务系统将停止当前城市该规则的后续消息触达，其他城市和规则不受影响。已到达消息保留，重新开启不补发关闭期间的通知。</p></div><footer className="au-dialog-footer"><ReachButton onClick={()=>setStopId('')}>返回</ReachButton><ReachButton primary onClick={()=>{const p=reachState.plans.find((p:any)=>p.id===stopId&&p.city===access.city);if(!p||!permitted(p))return;applyState(p,false)}}>确认关闭</ReachButton></footer></AutoDialog>}

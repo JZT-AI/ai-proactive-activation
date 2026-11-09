@@ -73,6 +73,9 @@
 
 .au-category-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 12px}
 .au-category-bar .au-category-heading{margin:0}
+.au-lean .au-plan-table .au-chips{max-width:none;column-gap:14px}
+.au-lean .au-chips .notification-channel-app{display:inline-flex;gap:5px;margin:0;font-size:11px;font-weight:400;color:#62738a}
+.au-lean .au-chips .notification-channel-app>span{padding:0;border:0;background:none;color:#8895a7}
 .au-breadcrumb>button,.inbox-title,.inbox-action{color:#2168b1;text-align:left;cursor:pointer}
 .au-breadcrumb>button:hover,.inbox-title:hover,.inbox-action:hover{text-decoration:underline}
 .inbox-toolbar{justify-content:flex-start}
