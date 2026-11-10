@@ -8235,6 +8235,7 @@ function reachConditionsText(d:any,notice:string){const q=d.query;return audienc
 
 // 人群圈选扩展小B与多渠道内容、触达：有限规则的本地演示，真实编排、渠道及推送接口待接入。
 const bInAppChannel='有客App站内信';
+const bInAppBodyLimit=120;
 // Fixed targets for this release; IDs are demo values, not a production API contract.
 const bYoukeApp={id:'DEMO-APP-YOUKE',name:'有客App'};
 const bServiceAccount={id:'DEMO-OA-365',name:'365淘房服务号'};
@@ -8302,6 +8303,7 @@ function bContentError(pack:any){
    if(!v.title?.trim()||!v.body?.trim())return name+(c===bInAppChannel?'：请填写标题和说明':'：请填写标题和正文');
    if(c==='App Push'&&v.voiceEnabled&&!bVoiceTemplates.some(t=>t.id===v.voiceTemplateId))return 'App Push：请选择有效的语音播报模板';
    if(c===bInAppChannel){
+    if(Array.from(v.body.trim()).length>bInAppBodyLimit)return '站内信：正文最多 '+bInAppBodyLimit+' 字';
     if(!inAppMessageCategories.includes(pack.category))return '站内信：请选择有效的消息分类';
     const jumpError=bJumpError(v);
     if(jumpError)return '站内信：'+jumpError;
@@ -8336,7 +8338,7 @@ function bContentItems(pack:any,c:string){
   const template=v.voiceEnabled?bVoiceTemplates.find(t=>t.id===v.voiceTemplateId):null;
   return [{type:'App Push',title:v.title,body:v.body,voiceEnabled:!!v.voiceEnabled,voiceTemplateId:template?.id||'',voiceTemplateName:template?.name||'',voicePrompt:template?.prompt||''}];
  }
- if(c===bInAppChannel)return [{type:bInAppChannel,title:v.title,body:v.body,...(v.image?{image:v.image}:{}),...bJumpContent(v)}];
+ if(c===bInAppChannel)return [{type:bInAppChannel,title:v.title,body:v.body.trim(),...(v.image?{image:v.image}:{}),...bJumpContent(v)}];
  if(c==='企微私聊'){
   const items = [
    ...(v.body?.trim() ? [{type:'文本',body:v.body}] : []),
@@ -8438,7 +8440,7 @@ function BContentDialog({flow,onClose,onSave}:any){
   <button type="button" role="switch" aria-label="免打扰" aria-describedby={quietScopeId} aria-checked={!!pack.quietEnabled} className="bm-quiet-switch" onClick={()=>setPack((prev:any)=>({...prev,quietEnabled:!prev.quietEnabled}))}><span/></button>
  </div></div><div className="bm-channel-select" role="group" aria-label="选择及编辑渠道">{bTouchChannels.map(c=><div key={c} className={'bm-channel-option'+(active===c?' active':'')}><label><input type="checkbox" aria-label={notificationChannelName(c)} checked={pack.channels.includes(c)} onChange={()=>selectChannel(c)}/></label><button type="button" aria-label={'编辑'+notificationChannelName(c)+'内容'} aria-pressed={active===c} onClick={()=>setActive(c)}><NotificationChannel channel={c}/></button></div>)}</div><div className="bm-content-grid"><section><h3>{active==='服务号模板消息通知'?'模板配置':'消息内容'}</h3>{selected&&active!=='企微私聊'&&<div className="bm-fixed-target" data-testid="channel-fixed-target"><span>{active==='服务号模板消息通知'?'发送服务号':'发送应用'}</span><strong>{active==='服务号模板消息通知'?bServiceAccount.name:bYoukeApp.name}</strong></div>}{!selected?<div className="bm-empty"><p>尚未选择此渠道</p><ReachButton onClick={()=>selectChannel(active)}>配置此渠道</ReachButton></div>:<>
  {active==='App Push'&&<><ReachField label="Push标题"><input value={v.title} onChange={e=>setValue({title:e.target.value})} placeholder="填写通知标题"/></ReachField><ReachField label="Push正文"><textarea value={v.body} onChange={e=>setValue({body:e.target.value})} rows={5} placeholder="填写通知正文"/></ReachField><section className="bm-voice-config"><label className="bm-voice-toggle"><input type="checkbox" aria-label="语音播报" checked={!!v.voiceEnabled} onChange={e=>setValue({voiceEnabled:e.target.checked})}/><span>语音播报</span></label>{v.voiceEnabled&&<><ReachField label="语音播报模板"><select value={v.voiceTemplateId||''} onChange={e=>setValue({voiceTemplateId:e.target.value})}><option value="">请选择播报模板</option>{bVoiceTemplates.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}</select></ReachField>{bVoiceTemplates.find(t=>t.id===v.voiceTemplateId)&&<p className="bm-footnote" data-testid="voice-template-prompt">播报提示：{bVoiceTemplates.find(t=>t.id===v.voiceTemplateId)?.prompt}</p>}<p className="bm-footnote">预置播报提示为演示内容，正式模板待接入。</p></>}</section></>}
- {active===bInAppChannel&&<><ReachField label="消息分类"><select value={pack.category||''} onChange={e=>{setPack((p:any)=>({...p,category:e.target.value}));setError('')}}><option value="">请选择消息分类</option>{inAppMessageCategories.map(type=><option key={type}>{type}</option>)}</select></ReachField><ReachField label="站内信标题"><input value={v.title} onChange={e=>setValue({title:e.target.value})} placeholder="填写消息标题"/></ReachField><ReachField label="站内信说明"><textarea value={v.body} onChange={e=>setValue({body:e.target.value})} rows={5} placeholder="填写通知说明"/></ReachField>
+ {active===bInAppChannel&&<><ReachField label="消息分类"><select value={pack.category||''} onChange={e=>{setPack((p:any)=>({...p,category:e.target.value}));setError('')}}><option value="">请选择消息分类</option>{inAppMessageCategories.map(type=><option key={type}>{type}</option>)}</select></ReachField><ReachField label="站内信标题"><input value={v.title} onChange={e=>setValue({title:e.target.value})} placeholder="填写消息标题"/></ReachField><ReachField label="站内信正文" hint={Array.from(v.body.trim()).length+' / '+bInAppBodyLimit+' 字'}><textarea value={v.body} onChange={e=>setValue({body:e.target.value})} rows={5} placeholder="填写通知说明"/></ReachField>
   <ReachField label="站内信图片" hint="选填"><input type="file" accept="image/*" onChange={e=>readImage('image',e.target.files?.[0])}/></ReachField>
   {v.image&&<ReachButton onClick={()=>setValue({image:''})}>移除站内信图片</ReachButton>}
   <BJumpFields value={v} onChange={setValue}/>
