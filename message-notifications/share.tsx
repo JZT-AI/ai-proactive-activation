@@ -7902,32 +7902,29 @@ const autoSpecs:any[] = [
   "name": "新线索-首次用户",
   "channels": [
    "App Push"
-  ],
-  "messageCategory": null
+  ]
  },
  {
   "sceneKey": "2",
   "name": "历史线索激活",
   "channels": [
    "App Push"
-  ],
-  "messageCategory": null
+  ]
  },
  {
   "sceneKey": "3",
   "name": "客户新消息提醒",
   "channels": [
    "App Push"
-  ],
-  "messageCategory": null
+  ]
  },
  {
   "sceneKey": "6",
   "name": "房源上传完成",
   "channels": [
-   "App Push"
-  ],
-  "messageCategory": null
+   "App Push",
+   "App站内消息"
+  ]
  },
  {
   "sceneKey": "7",
@@ -7935,85 +7932,75 @@ const autoSpecs:any[] = [
   "channels": [
    "App Push",
    "企微客服"
-  ],
-  "messageCategory": null
+  ]
  },
  {
   "sceneKey": "8",
   "name": "入驻审核通过",
   "channels": [
    "App站内消息"
-  ],
-  "messageCategory": "审核通知"
+  ]
  },
  {
   "sceneKey": "9",
   "name": "入驻审核未通过",
   "channels": [
    "App站内消息"
-  ],
-  "messageCategory": "审核通知"
+  ]
  },
  {
   "sceneKey": "10",
   "name": "资料修改审核通过",
   "channels": [
    "App站内消息"
-  ],
-  "messageCategory": "审核通知"
+  ]
  },
  {
   "sceneKey": "11",
   "name": "资料修改审核未通过",
   "channels": [
    "App站内消息"
-  ],
-  "messageCategory": "审核通知"
+  ]
  },
  {
   "sceneKey": "12",
   "name": "有客币-入驻赠送",
   "channels": [
    "App站内消息"
-  ],
-  "messageCategory": "有客币提醒"
+  ]
  },
  {
   "sceneKey": "13",
   "name": "有客币-平台赠送",
   "channels": [
    "App站内消息"
-  ],
-  "messageCategory": "有客币提醒"
+  ]
  },
  {
   "sceneKey": "14",
   "name": "有客币-购买线索扣减",
   "channels": [
    "App站内消息"
-  ],
-  "messageCategory": "有客币提醒"
+  ]
  },
  {
   "sceneKey": "23",
   "name": "名下经纪人未及时跟进",
   "channels": [
    "企微客服"
-  ],
-  "messageCategory": null
+  ]
  },
  {
   "sceneKey": "24",
   "name": "超时未跟进提醒",
   "channels": [
    "企微群"
-  ],
-  "messageCategory": null
+  ]
  }
 ];
 // 自动化任务仅注册展示信息及业务启停状态，业务执行由原系统负责。
 function autoInit(){
- if(reachState.automationCatalogVersion===6)return;
+ if(reachState.automationCatalogVersion===7)return;
  const existing=reachState.plans||[];
  const plans=autoSpecs.map((spec:any)=>{
   const id='AUTO-SCENE-'+spec.sceneKey;
@@ -8022,10 +8009,10 @@ function autoInit(){
   const channelApps=Object.fromEntries(spec.channels
    .filter((channel:string)=>autoAppChannels.includes(notificationChannelName(channel)))
    .map((channel:string)=>[channel,'有客App']));
-  return {id,moduleId:'message-notification',name:spec.name,channels:[...spec.channels],channelApps,messageCategory:spec.messageCategory,city:'西安',enabled:old?.enabled??true};
+  return {id,moduleId:'message-notification',name:spec.name,channels:[...spec.channels],channelApps,city:'西安',enabled:old?.enabled??true};
  });
  reachState.plans=[...plans,...existing.filter((p:any)=>!plans.some((next:any)=>next.id===p.id&&next.city===p.city))];
- reachState.automationCatalogVersion=6;
+ reachState.automationCatalogVersion=7;
  try{localStorage.setItem(reachStorageKey,JSON.stringify(reachState))}catch{}
 }
 autoInit();
@@ -8118,12 +8105,12 @@ function SentInAppWorkspace({access,onBack,onAccessChange}:any){
 function AutomationWorkspace(){
  const data=useReach();const [access,setAccess]=useState(autoReadDemoContext);const isAdmin=access.role==='admin';
  const plans=data.plans.filter((p:any)=>p.moduleId==='message-notification'&&p.city===access.city);
- const [query,setQuery]=useState(''),[filter,setFilter]=useState('全部'),[messageCategoryFilter,setMessageCategoryFilter]=useState('全部消息分类');
+ const [query,setQuery]=useState(''),[filter,setFilter]=useState('全部');
  const [notice,setNotice]=useState(''),[stopId,setStopId]=useState('');
  const [showSentInApp,setShowSentInApp]=useState(false);
- const switchContext=(patch:any)=>{const ctx={...access,...patch};localStorage.setItem(autoDemoContextKey,JSON.stringify(ctx));window.dispatchEvent(new Event('b-reach-change'));setAccess(ctx);setStopId('');setNotice('');setQuery('');setFilter('全部');setMessageCategoryFilter('全部消息分类')};
+ const switchContext=(patch:any)=>{const ctx={...access,...patch};localStorage.setItem(autoDemoContextKey,JSON.stringify(ctx));window.dispatchEvent(new Event('b-reach-change'));setAccess(ctx);setStopId('');setNotice('');setQuery('');setFilter('全部')};
  const permitted=(p:any)=>{const current=autoReadDemoContext();if(current.city!==access.city||!autoCanSwitch(p,current)){setAccess(current);setStopId('');setNotice('仅管理员可调整当前城市的通知状态，身份或城市已变化，请刷新后重试。');return false}return true};
- const visiblePlans=plans.filter((p:any)=>p.name.includes(query.trim())&&(filter==='全部'||(filter==='已开启')===p.enabled)&&(messageCategoryFilter==='全部消息分类'||p.channels.some((channel:string)=>notificationChannelName(channel)==='站内信')&&p.messageCategory===messageCategoryFilter));
+ const visiblePlans=plans.filter((p:any)=>p.name.includes(query.trim())&&(filter==='全部'||(filter==='已开启')===p.enabled));
  // 本地只模拟业务系统返回生效成功；生产须以实际业务接口结果更新状态。
  const applyState=(p:any,enabled:boolean)=>{reachState.plans=reachState.plans.map((x:any)=>x.id===p.id&&x.city===access.city?{...x,enabled}:x);reachCommit();setStopId('');setNotice(access.city+'的任务已'+(enabled?'开启，业务系统将按原规则处理后续事件。':'关闭，业务系统将停止该规则的后续消息触达。'))};
  const toggle=(p:any)=>{const target=reachState.plans.find((x:any)=>x.id===p.id&&x.city===access.city);if(!target||!permitted(target))return;if(target.enabled){setStopId(target.id);return}applyState(target,true)};
@@ -8133,13 +8120,11 @@ function AutomationWorkspace(){
  <header className="au-header"><div><h1>自动化任务</h1><div className="au-access-context"><span>当前城市 <b>{access.city}</b></span><i/><span>{isAdmin?'管理员':'仅管理员可调整状态'}</span></div></div></header>
  {notice&&<div className="au-notice" role="status"><CheckCircle2 size={15}/>{notice}<button aria-label="关闭提示" onClick={()=>setNotice('')}><X size={15}/></button></div>}
  <div className="au-category-bar"><h2 className="au-category-heading" data-testid="automation-category">消息通知</h2><ReachButton onClick={()=>setShowSentInApp(true)}><Mail size={15}/>已发站内信</ReachButton></div>
- <section className="au-list-panel"><div className="au-toolbar"><div className="au-tabs">{['全部','已开启','已关闭'].map(f=><button className={f===filter?'active':''} onClick={()=>setFilter(f)} key={f}>{f}<span>{plans.filter((p:any)=>f==='全部'||(f==='已开启')===p.enabled).length}</span></button>)}</div><div className="au-actions"><select aria-label="消息分类" value={messageCategoryFilter} onChange={e=>setMessageCategoryFilter(e.target.value)}>{['全部消息分类',...inAppMessageCategories].map(c=><option key={c}>{c}</option>)}</select><label className="au-search"><Search size={16}/><input placeholder="搜索任务" aria-label="搜索自动化任务" value={query} onChange={e=>setQuery(e.target.value)}/></label></div></div>
- <div className="au-table-frame"><table className="au-table au-plan-table"><thead><tr><th>任务名称</th><th>触达渠道</th><th>消息分类</th><th>状态</th></tr></thead><tbody>{visiblePlans.map((p:any)=><tr key={p.id}><td><span className="au-task-name">{p.name}</span></td><td><div className="au-chips">{p.channels.map((channel:string)=>{
+ <section className="au-list-panel"><div className="au-toolbar"><div className="au-tabs">{['全部','已开启','已关闭'].map(f=><button className={f===filter?'active':''} onClick={()=>setFilter(f)} key={f}>{f}<span>{plans.filter((p:any)=>f==='全部'||(f==='已开启')===p.enabled).length}</span></button>)}</div><div className="au-actions"><label className="au-search"><Search size={16}/><input placeholder="搜索任务" aria-label="搜索自动化任务" value={query} onChange={e=>setQuery(e.target.value)}/></label></div></div>
+ <div className="au-table-frame"><table className="au-table au-plan-table"><thead><tr><th>任务名称</th><th>触达渠道</th><th>状态</th></tr></thead><tbody>{visiblePlans.map((p:any)=><tr key={p.id}><td><span className="au-task-name">{p.name}</span></td><td><div className="au-chips">{p.channels.map((channel:string)=>{
   const appName=autoAppChannels.includes(notificationChannelName(channel))?(p.channelApps?.[channel]||'应用待确认'):undefined;
   return <NotificationChannel key={channel} channel={channel} appName={appName}/>;
- })}</div></td><td>{p.channels.some((channel:string)=>notificationChannelName(channel)==='站内信')
-  ? inAppMessageCategories.includes(p.messageCategory)?p.messageCategory:'待归类'
-  : <span className="au-category-empty" aria-label="不适用">—</span>}</td><td><div className="au-row-controls">{isAdmin?<><button role="switch" aria-checked={p.enabled} aria-label={`${p.name}开关`} className={'automation-switch '+(p.enabled?'on':'')} onClick={()=>toggle(p)}><span/></button><span>{p.enabled?'已开启':'已关闭'}</span></>:<AutoStatus value={p.enabled?'已开启':'已关闭'}/>}</div></td></tr>)}</tbody></table>{!visiblePlans.length&&<div className="au-empty">{plans.length?'没有匹配任务，请调整搜索或筛选条件。':'当前城市暂无已注册的自动化任务。'}</div>}</div><footer className="au-list-footer">共 {visiblePlans.length} 项任务</footer></section>
+ })}</div></td><td><div className="au-row-controls">{isAdmin?<><button role="switch" aria-checked={p.enabled} aria-label={`${p.name}开关`} className={'automation-switch '+(p.enabled?'on':'')} onClick={()=>toggle(p)}><span/></button><span>{p.enabled?'已开启':'已关闭'}</span></>:<AutoStatus value={p.enabled?'已开启':'已关闭'}/>}</div></td></tr>)}</tbody></table>{!visiblePlans.length&&<div className="au-empty">{plans.length?'没有匹配任务，请调整搜索或筛选条件。':'当前城市暂无已注册的自动化任务。'}</div>}</div><footer className="au-list-footer">共 {visiblePlans.length} 项任务</footer></section>
  <footer className="au-prototype-footer"><span>原型演示</span>任务、身份、城市及开关均为模拟数据，不影响线上。</footer><details className="au-permission-demo"><summary>原型演示工具</summary><div><label>模拟身份<select aria-label="模拟身份" value={access.role} onChange={e=>switchContext({role:e.target.value})}><option value="member">普通成员</option><option value="admin">管理员</option></select></label><label>模拟当前城市<select aria-label="模拟当前城市" value={access.city} onChange={e=>switchContext({city:e.target.value})}><option>西安</option><option>合肥</option><option>全国</option></select></label><label>模拟任务城市权限<select aria-label="模拟任务城市权限" value={access.taskCities.includes('西安')?(access.taskCities.length===1?'xian':'multi'):'other'} onChange={e=>switchContext({taskCities:e.target.value==='xian'?['西安']:e.target.value==='other'?['合肥']:bDemoTaskCities})}><option value="multi">西安、合肥、南京</option><option value="xian">仅西安</option><option value="other">仅合肥</option></select></label><small>仅用于走查权限与城市范围；生产身份和城市由平台提供。</small></div></details>
  </div>
  {stopId&&<AutoDialog title="关闭自动化任务" onClose={()=>setStopId('')}><header className="au-dialog-header"><h2>关闭这个任务？</h2></header><div className="au-confirm-body"><p><strong>{access.city} · {plans.find((p:any)=>p.id===stopId)?.name}</strong></p><p>关闭后，对应业务系统将停止当前城市该规则的后续消息触达，其他城市和规则不受影响。已到达消息保留，重新开启不补发关闭期间的通知。</p></div><footer className="au-dialog-footer"><ReachButton onClick={()=>setStopId('')}>返回</ReachButton><ReachButton primary onClick={()=>{const p=reachState.plans.find((p:any)=>p.id===stopId&&p.city===access.city);if(!p||!permitted(p))return;applyState(p,false)}}>确认关闭</ReachButton></footer></AutoDialog>}

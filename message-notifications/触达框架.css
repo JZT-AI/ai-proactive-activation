@@ -61,7 +61,7 @@
 
 .bm-type-hint{font-size:11px;line-height:1.7;color:#8394a9;margin:-8px 0 18px}.bm-notification-type{display:block;font-size:11px;color:#7a68ac;margin:0 0 10px}.bm-result-id{display:flex;flex-direction:column;gap:4px;max-width:100%;min-width:0}.bm-result-id>small{font-size:10px;color:#93a0b3}
 /* Registered automation tasks: name, channels, notification type and status. */
-.au-lean .au-plan-table th:first-child{width:34%}.au-lean .au-plan-table th:nth-child(2){width:32%}.au-lean .au-plan-table th:nth-child(3){width:16%}.au-lean .au-plan-table th:nth-child(4){width:18%}.au-task-name{font-weight:500;color:#293e59}
+.au-lean .au-plan-table th:first-child{width:36%}.au-lean .au-plan-table th:nth-child(2){width:44%}.au-lean .au-plan-table th:nth-child(3){width:20%}.au-task-name{font-weight:500;color:#293e59}
 
 .au-category-heading{margin:0 0 12px;font-size:14px;line-height:1.5;font-weight:600;color:#344e6d}
 
