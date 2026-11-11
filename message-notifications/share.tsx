@@ -8161,7 +8161,7 @@ function audienceConditionsText(inclusions:string[],exclusions:string[]=[],optio
  return ['第一步：条件解析','已完成条件识别，请确认解析条件。','','✅ 纳入条件：',...inclusions.map((v,i)=>`${i+1}. ${v}`),'','🚫 排除条件（排除集合内部按“或”处理）：',...(exclusions.length?exclusions.map((v,i)=>`${i+1}. ${v}`):['本次未指定']),...(options.issue?['','暂不可执行：'+options.issue]:[]),'','请输入“确认”继续流程，或描述需要变更的条件'].join('\n');
 }
 const audiencePreviewText='第二步：预览数据与更新频率\n请确认预估人数、样本和更新频率。';
-function reachConditionsText(d:any,notice:string){const q=d.query;return audienceConditionsText(['目标对象：小B','入驻城市：'+q.city,'圈选人群：'+q.statuses.join(' 或 '),...(q.area!=='全部'?['主营区属：'+q.area]:[]),...(q.block!=='全部'?['主营板块：'+q.block]:[]),...(q.ids?['经纪人注册ID：'+q.ids+'（与其他纳入条件取交集）']:[])],q.exclusions||[],{issue:q.issue||notice});}
+function reachConditionsText(d:any,notice:string){const q=d.query;return audienceConditionsText(['入驻城市：'+q.city,'圈选人群：'+q.statuses.join(' 或 '),...(q.area!=='全部'?['主营区属：'+q.area]:[]),...(q.block!=='全部'?['主营板块：'+q.block]:[]),...(q.ids?['经纪人注册ID：'+q.ids+'（与其他纳入条件取交集）']:[])],q.exclusions||[],{issue:q.issue||notice});}
 
 // 人群圈选扩展小B与多渠道内容、触达：有限规则的本地演示，真实编排、渠道及推送接口待接入。
 const bInAppChannel='有客App站内信';
@@ -8625,16 +8625,27 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
       beginBReach(text,resolvedReferences[0],'touch');
     };
     if(/^\/(?:小B通知|通知小B|小B通知触达|多渠道触达)(?:\s|$)/i.test(text.trim())){startTouch();return true}
-    const target=reachAudienceTarget(text);
     const startsSelection=/^(?:\/人群圈选|\/小B圈选|(?:帮我|请|重新|再|新建一轮|新一轮)?\s*(?:圈选|筛选))/.test(text.trim());
-    if(startsSelection){
+    if(startsSelection||bTargetRequest.current){
+      const request=startsSelection?text:bTargetRequest.current+' '+text;
       bTargetRequest.current=null;
-      if(target==='b'){if(mode!=='圈选模式'){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'请切换到圈选模式，输入需要圈选的人群条件。'}]);return true}beginBReach(text);return true}
-      if(target==='c'){bCancelPending();return false} // C端仍由原流程处理，绝不进入小B数据分支。
-      bCancelPending();bTargetRequest.current=text;
-      setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'请说明要圈选C端用户还是小B，并补充圈选条件。'}]);return true;
+      if(/^\/(?:人群圈选|小B圈选)\s*$/.test(request.trim())){
+        bCancelPending();
+        bTargetRequest.current=request;
+        setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'请描述需要圈选的条件，例如入驻城市、充值情况或客户需求。'}]);
+        return true;
+      }
+      const target=reachAudienceTarget(request);
+      const brokerCondition=/经纪人注册\s*ID|注册(?:已|未)付费|已付费临期|有客币|主营区属|主营板块|DEMO-B-\d+/i.test(request);
+      const brokerSelection=target==='b'||/^\/小B圈选(?:\s|$)/.test(request.trim())||(!/C\s*端/i.test(request)&&brokerCondition);
+      if(brokerSelection){
+        if(mode!=='圈选模式'){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'请切换到圈选模式，输入需要圈选的人群条件。'}]);return true}
+        beginBReach(request);
+        return true;
+      }
+      bCancelPending();
+      return false;
     }
-    if(bTargetRequest.current&&target){const request=bTargetRequest.current;bTargetRequest.current=null;if(target==='b'){beginBReach(request+'，目标对象：'+text);return true}return false}
     const intent=[...referenceMatches].sort((a,b)=>b.name.length-a.name.length).reduce((value:string,a:any)=>value.split('@'+a.name).join('@人群包'),text);
     if(/小\s*b|经纪人|分销中介|中介/i.test(intent)&&/发|推送|触达|通知/.test(intent)&&reachAudienceTarget(intent)!=='c'){startTouch();return true}
     if(referenceMatches.length&&/发|推送|触达|通知/.test(intent)){

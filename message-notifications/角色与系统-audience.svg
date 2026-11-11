@@ -11,17 +11,17 @@
 <path d="M449 84H769Q774 84 774 89V138H444V89Q444 84 449 84" fill="#8870b5"/>
 <text x="609.0" y="116.0" text-anchor="middle" font-size="15" font-weight="600" fill="white">AI私域助手</text>
 <text x="64" y="205.0" text-anchor="middle" font-size="12" fill="#8993a4">发起</text>
-<text x="64" y="331.0" text-anchor="middle" font-size="12" fill="#8993a4">识别对象</text>
+<text x="64" y="331.0" text-anchor="middle" font-size="12" fill="#8993a4">解析条件</text>
 <text x="64" y="457.0" text-anchor="middle" font-size="12" fill="#8993a4">查询人群</text>
 <text x="64" y="583.0" text-anchor="middle" font-size="12" fill="#8993a4">抽样展示</text>
 <path d="M279 234 L279 264 L609 264 L609 294" fill="none" stroke="#7d8798" stroke-width="1" marker-end="url(#arrow)"/>
 <path d="M609 360 L609 390 L609 390 L609 420" fill="none" stroke="#7d8798" stroke-width="1" marker-end="url(#arrow)"/>
 <rect x="613.0" y="378.0" width="96" height="20" rx="3" fill="white"/>
-<text x="661.0" y="393.0" text-anchor="middle" font-size="12" fill="#596273">按对象选数据源</text>
+<text x="661.0" y="393.0" text-anchor="middle" font-size="12" fill="#596273">按条件确定查询范围</text>
 <path d="M609 486 L609 516 L609 516 L609 546" fill="none" stroke="#7d8798" stroke-width="1" marker-end="url(#arrow)"/>
 <path d="M493 579 L395 579" fill="none" stroke="#7d8798" stroke-width="1" marker-end="url(#arrow)"/>
 <rect x="163.0" y="168.0" width="232" height="66" rx="5" fill="white" stroke="#596bb0" stroke-width="1"/>
-<text x="279.0" y="206.0" text-anchor="middle" font-size="14" fill="#374151">描述目标人群和圈选条件</text>
+<text x="279.0" y="206.0" text-anchor="middle" font-size="14" fill="#374151">描述圈选条件</text>
 <rect x="493.0" y="294.0" width="232" height="66" rx="5" fill="white" stroke="#8870b5" stroke-width="1"/>
 <text x="609.0" y="332.0" text-anchor="middle" font-size="14" fill="#374151">按描述识别C端或小B</text>
 <rect x="493.0" y="420.0" width="232" height="66" rx="5" fill="white" stroke="#8870b5" stroke-width="1"/>
