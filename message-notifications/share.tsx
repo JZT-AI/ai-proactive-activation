@@ -8036,7 +8036,7 @@ function autoReadDemoContext(){
 }
 function autoCanSwitch(p:any,ctx:any){return ctx.role==='admin'&&p?.city===ctx.city}
 
-const sentInAppSamples=[
+const operatorInAppBatches=[
  {id:'demo-inbox-04',city:'西安',title:'本周房源核验提醒',body:'请查看名下待核验房源，并在本周五前确认房源状态。',sentAt:'2026-11-09 10:00',hidden:false},
  {id:'demo-inbox-03',city:'西安',title:'本周房源核验提醒',body:'请查看名下待核验房源，并在本周五前确认房源状态。',sentAt:'2026-11-02 10:00',hidden:false},
  {id:'demo-inbox-02',city:'西安',title:'11月平台服务安排',body:'11月平台服务时间为工作日 09:00–18:00。\n如需协助，请联系城市运营。',sentAt:'2026-11-01 14:30',hidden:true},
@@ -8050,7 +8050,7 @@ function SentInAppWorkspace({access,onBack,onAccessChange}:any){
  const [pending,setPending]=useState<{id:string;hidden:boolean}|null>(null);
  const [notice,setNotice]=useState<{text:string;error?:boolean}|null>(null);
  const isAdmin=access.role==='admin';
- const records=sentInAppSamples.filter(record=>record.city===access.city)
+ const records=operatorInAppBatches.filter(record=>record.city===access.city)
   .sort((a,b)=>b.sentAt.localeCompare(a.sentAt))
   .map(record=>({...record,hidden:data.inAppVisibility?.[record.id]??record.hidden}));
  const visible=records.filter(record=>record.title.includes(query.trim())&&(filter==='全部状态'||record.hidden===(filter==='已屏蔽')));
@@ -8071,8 +8071,8 @@ function SentInAppWorkspace({access,onBack,onAccessChange}:any){
   setPending(null);
  };
  return <div className="au-page au-lean" data-testid="sent-in-app-workspace"><div className="au-shell">
-  <nav className="au-breadcrumb" aria-label="页面路径"><Bot size={14}/><span>AI私域助手</span><ChevronRight size={12}/><button type="button" onClick={onBack}>自动化任务</button><ChevronRight size={12}/><span>已发站内信</span></nav>
-  <header className="au-header"><div><h1>已发站内信</h1><div className="au-access-context"><span>有客App</span><i/><span>当前城市 <b>{access.city}</b></span>{!isAdmin&&<><i/><span>仅管理员可调整显示状态</span></>}</div></div></header>
+  <nav className="au-breadcrumb" aria-label="页面路径"><Bot size={14}/><span>AI私域助手</span><ChevronRight size={12}/><button type="button" onClick={onBack}>自动化任务</button><ChevronRight size={12}/><span>运营站内信</span></nav>
+  <header className="au-header"><div><h1>运营站内信</h1><div className="au-access-context"><span>有客App</span><i/><span>当前城市 <b>{access.city}</b></span>{!isAdmin&&<><i/><span>仅管理员可调整显示状态</span></>}</div></div></header>
   {notice&&<div className="au-notice" role={notice.error?'alert':'status'}>{notice.error?<AlertCircle size={15}/>:<CheckCircle2 size={15}/>}<span>{notice.text}</span><button aria-label="关闭提示" onClick={()=>setNotice(null)}><X size={15}/></button></div>}
   <section className="au-list-panel">
    <div className="au-toolbar inbox-toolbar"><div className="au-actions">
@@ -8087,9 +8087,9 @@ function SentInAppWorkspace({access,onBack,onAccessChange}:any){
      <td><span className={'au-status '+(record.hidden?'':'good')}><i/>{record.hidden?'已屏蔽':'显示中'}</span></td>
      {isAdmin&&<td><button type="button" className="inbox-action" onClick={()=>setPending({id:record.id,hidden:!record.hidden})}>{record.hidden?'恢复显示':'屏蔽'}</button></td>}
     </tr>)}</tbody>
-   </table>{!visible.length&&<div className="au-empty">{records.length?'没有匹配的站内信，请调整搜索或筛选条件。':'当前城市暂无已发站内信。'}</div>}</div>
+   </table>{!visible.length&&<div className="au-empty">{records.length?'没有匹配的站内信，请调整搜索或筛选条件。':'当前城市暂无运营站内信。'}</div>}</div>
   </section>
-  <footer className="au-prototype-footer"><span>原型演示</span>站内信及显示状态为模拟数据。</footer>
+  <footer className="au-prototype-footer"><span>原型演示</span>运营发送批次和显示状态为模拟数据。</footer>
  </div>
  {detail&&<AutoDialog title="站内信内容" onClose={()=>setDetailId('')}>
   <header className="au-dialog-header"><h2>站内信内容</h2></header>
@@ -8121,7 +8121,7 @@ function AutomationWorkspace(){
  <nav className="au-breadcrumb"><Bot size={14}/><span>AI私域助手</span><ChevronRight size={12}/><span>自动化任务</span></nav>
  <header className="au-header"><div><h1>自动化任务</h1><div className="au-access-context"><span>全站生效</span><i/><span>{canToggle?'可启停':'仅查看'}</span></div></div></header>
  {notice&&<div className="au-notice" role="status"><CheckCircle2 size={15}/>{notice}<button aria-label="关闭提示" onClick={()=>setNotice('')}><X size={15}/></button></div>}
- <div className="au-category-bar"><h2 className="au-category-heading" data-testid="automation-category">消息通知</h2><ReachButton onClick={()=>setShowSentInApp(true)}><Mail size={15}/>已发站内信</ReachButton></div>
+ <div className="au-category-bar"><h2 className="au-category-heading" data-testid="automation-category">消息通知</h2><ReachButton onClick={()=>setShowSentInApp(true)}><Mail size={15}/>运营站内信</ReachButton></div>
  <section className="au-list-panel"><div className="au-toolbar"><div className="au-tabs">{['全部','已开启','已关闭'].map(f=><button className={f===filter?'active':''} onClick={()=>setFilter(f)} key={f}>{f}<span>{plans.filter((p:any)=>f==='全部'||(f==='已开启')===p.enabled).length}</span></button>)}</div><div className="au-actions"><label className="au-search"><Search size={16}/><input placeholder="搜索任务" aria-label="搜索自动化任务" value={query} onChange={e=>setQuery(e.target.value)}/></label></div></div>
  <div className="au-table-frame"><table className="au-table au-plan-table"><thead><tr><th>任务名称</th><th>触达渠道</th><th>状态</th></tr></thead><tbody>{visiblePlans.map((p:any)=><tr key={p.id}><td><span className="au-task-name">{p.name}</span></td><td><div className="au-chips">{p.channels.map((channel:string)=>{
   const appName=autoAppChannels.includes(notificationChannelName(channel))?(p.channelApps?.[channel]||'应用待确认'):undefined;
@@ -8129,7 +8129,7 @@ function AutomationWorkspace(){
  })}</div></td><td><div className="au-row-controls">{canToggle?<><button role="switch" aria-checked={p.enabled} aria-label={`${p.name}开关`} className={'automation-switch '+(p.enabled?'on':'')} onClick={()=>toggle(p)}><span/></button><span>{p.enabled?'已开启':'已关闭'}</span></>:<AutoStatus value={p.enabled?'已开启':'已关闭'}/>}</div></td></tr>)}</tbody></table>{!visiblePlans.length&&<div className="au-empty">{plans.length?'没有匹配任务，请调整搜索或筛选条件。':'暂无已注册的自动化任务。'}</div>}</div><footer className="au-list-footer">共 {visiblePlans.length} 项任务</footer></section>
  <footer className="au-prototype-footer"><span>原型演示</span>任务、身份、城市及开关均为模拟数据，不影响线上。</footer><details className="au-permission-demo"><summary>原型演示工具</summary><div><label>模拟启停权限<select aria-label="模拟启停权限" value={canToggle?'on':'off'} onChange={e=>switchContext({canToggleAutomation:e.target.value==='on'})}><option value="off">无权限</option><option value="on">有权限</option></select></label><label>模拟身份<select aria-label="模拟身份" value={access.role} onChange={e=>switchContext({role:e.target.value})}><option value="member">普通成员</option><option value="admin">管理员</option></select></label><label>模拟当前城市<select aria-label="模拟当前城市" value={access.city} onChange={e=>switchContext({city:e.target.value})}><option>西安</option><option>合肥</option><option>全国</option></select></label><label>模拟任务城市权限<select aria-label="模拟任务城市权限" value={access.taskCities.includes('西安')?(access.taskCities.length===1?'xian':'multi'):'other'} onChange={e=>switchContext({taskCities:e.target.value==='xian'?['西安']:e.target.value==='other'?['合肥']:bDemoTaskCities})}><option value="multi">西安、合肥、南京</option><option value="xian">仅西安</option><option value="other">仅合肥</option></select></label><small>仅用于走查权限与城市范围；生产身份和城市由平台提供。</small></div></details>
  </div>
- {stopId&&<AutoDialog title="关闭自动化任务" onClose={()=>setStopId('')}><header className="au-dialog-header"><h2>关闭这个任务？</h2></header><div className="au-confirm-body"><p><strong>全站 · {plans.find((p:any)=>p.id===stopId)?.name}</strong></p><p>关闭后，对应业务系统将停止该规则在全站的后续消息触达。已到达消息保留，重新开启不补发关闭期间的通知。</p></div><footer className="au-dialog-footer"><ReachButton onClick={()=>setStopId('')}>返回</ReachButton><ReachButton primary onClick={()=>{const p=reachState.plans.find((p:any)=>p.id===stopId);if(!p||!permitted())return;applyState(p,false)}}>确认关闭</ReachButton></footer></AutoDialog>}
+ {stopId&&<AutoDialog title="关闭自动化任务" onClose={()=>setStopId('')}><header className="au-dialog-header"><h2>关闭这个任务？</h2></header><div className="au-confirm-body"><p><strong>全站 · {plans.find((p:any)=>p.id===stopId)?.name}</strong></p><p>关闭后，该规则在全站的所有渠道停止新增触达。已到达消息保留，重新开启不补发关闭期间的通知。</p></div><footer className="au-dialog-footer"><ReachButton onClick={()=>setStopId('')}>返回</ReachButton><ReachButton primary onClick={()=>{const p=reachState.plans.find((p:any)=>p.id===stopId);if(!p||!permitted())return;applyState(p,false)}}>确认关闭</ReachButton></footer></AutoDialog>}
  </div>
 }
 
