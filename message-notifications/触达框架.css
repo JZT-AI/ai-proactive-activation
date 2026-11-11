@@ -107,3 +107,5 @@
 @media(prefers-reduced-motion:reduce){.bm-quiet-switch>span,.bm-quiet-switch>span::before{transition:none}}
 
 .bm-quiet-config{height:auto;min-height:40px;flex-wrap:wrap}.bm-quiet-range{display:flex;align-items:center;gap:4px;white-space:nowrap;color:#435b75;font-size:12px}.bm-quiet-range input{width:106px;padding:3px 4px;border:1px solid #d9e3ef;border-radius:4px;background:#fff;color:#334b67;font:inherit}
+
+.au-dialog.wide:has(.bm-summary-dialog){width:min(680px,calc(100vw - 32px))}.bm-summary-dialog{min-height:0;overflow-y:auto}.bm-summary-dialog .bm-card{width:100%;max-width:none;margin:0;padding:0;border:0;box-shadow:none}.bm-summary-dialog .bm-card>header{display:none}
