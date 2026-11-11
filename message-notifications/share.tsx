@@ -869,7 +869,6 @@ interface SmartInputProps {
   onBubbleToggle?: (id: string | null) => void;
   locked?: boolean;
   lockPlaceholder?: string;
-  notifyBAvailable?: boolean;
   pendingAction?: { type: 'append', text: string, id: number } | null;
 }
 
@@ -879,7 +878,7 @@ interface ContextItem {
   type: 'group';
 }
 
-function SmartInput({ mode, setMode, value, onChange, onSubmit, bubbles, onBubbleClick, activeBubbleId: propActiveBubbleId, onBubbleToggle, locked, lockPlaceholder, notifyBAvailable, pendingAction, sessionAudiences, sessionAudienceOptions, onSelectAudience }: SmartInputProps) {
+function SmartInput({ mode, setMode, value, onChange, onSubmit, bubbles, onBubbleClick, activeBubbleId: propActiveBubbleId, onBubbleToggle, locked, lockPlaceholder, pendingAction, sessionAudiences, sessionAudienceOptions, onSelectAudience }: SmartInputProps) {
   const [internalActiveBubbleId, setInternalActiveBubbleId] = useState<string | null>(null);
   const [atCategory, setAtCategory] = useState<string | null>(null);
   // Contexts removed as per request to have inline text
@@ -985,7 +984,7 @@ function SmartInput({ mode, setMode, value, onChange, onSubmit, bubbles, onBubbl
 
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      if (isAtActive || (isSlashActive && !['人群圈选','小B圈选','通知小B','小B通知触达','多渠道触达'].some(skill => activeSlashQuery?.startsWith(skill)))) return; // Existing menus retain their behavior; explicit audience and multi-channel Skill commands can be submitted.
+      if (isAtActive || (isSlashActive && !['人群圈选','小B圈选','小B通知','通知小B','多渠道触达'].some(skill => activeSlashQuery?.startsWith(skill)))) return; // Existing menus retain their behavior; explicit audience and multi-channel Skill commands can be submitted.
       if (!locked) {
         // Include contexts in submission if needed, or just handle text
         // For now, we assume contexts are handled separately or just visual
@@ -1331,7 +1330,7 @@ function SmartInput({ mode, setMode, value, onChange, onSubmit, bubbles, onBubbl
                   <MenuItem icon={<Users size={14} />} label="群聊推送" onClick={() => insertItem('群聊推送')} />
                   <MenuItem icon={<ImageIcon size={14} />} label="朋友圈推送" onClick={() => insertItem('朋友圈推送')} />
                   <MenuItem icon={<FileText size={14} />} label="内容生成" onClick={() => insertItem('内容生成')} />
-                  {notifyBAvailable&&<MenuItem icon={<Send size={14} />} label="通知小B" onClick={() => insertItem('通知小B')} />}
+                  <MenuItem icon={<Send size={14} />} label="小B通知" onClick={() => insertItem('小B通知')} />
                 </>
               )}
             </div>
@@ -8143,18 +8142,26 @@ function reachAudienceTarget(text:string):'b'|'c'|null{
  return target?(/小\s*b|经纪人|分销中介|中介/i.test(target)?'b':'c'):null;
 }
 function reachParse(text:string){
- const statuses=['注册已付费','注册未付费','体验客户','注销经纪人'].filter(s=>text.includes(s)||(s==='注册已付费'&&/已付费/.test(text))||(s==='注册未付费'&&/未付费/.test(text)));
+ const statuses=/已付费|已充值/.test(text)?['注册已付费']:/未付费|未充值/.test(text)?['注册未付费']:['注册用户'];
  const ids=(text.match(/DEMO-B-\d+/gi)||[]).join(',');
- const issue=/CDP|cdp|记忆|626|541|活跃|带看|成交|预算|到期|最近|近[一二三四五六七八九十两\d]+|过去|上周|上月|昨天|注册日期|注册时间|付费时间|入驻时间|\d{4}[-年]|南京|合肥|苏州|无锡|芜湖/.test(text)?'本轮只演示经纪人状态、城市、区域、板块、经纪人注册ID。请调整不支持的条件。':'';
- return {...bAudienceSource,city:'西安',statuses:statuses.length?statuses:['注册已付费'],area:['雁塔区','未央区','碑林区'].find(a=>text.includes(a.slice(0,2)))||'全部',block:['高新','经开','南门'].find(a=>text.includes(a))||'全部',ids,issue,cycle:/每天更新|每日更新|每天刷新|每日刷新/.test(text)?'day':'once'};
+ const pending=/临期|到期|时间范围|注册(?:日期|时间)|付费时间|充值时间|入驻时间|近[一二三四五六七八九十两\d]+|过去|上周|上月|昨天|\d{4}[-年]/.test(text);
+ const issue=pending?'时间范围和临期口径待业务补充。请先使用已明确的条件。':/CDP|记忆|活跃|带看|成交|预算|体验客户|注销经纪人/i.test(text)?'请从已提供的小B圈选条件中选择。':'';
+ const city=['西安','南京','合肥','苏州','无锡','芜湖'].find(city=>text.includes(city))||'全部';
+ return {...bAudienceSource,city,statuses,area:['雁塔区','未央区','碑林区'].find(a=>text.includes(a.slice(0,2)))||'全部',block:['高新','经开','南门'].find(a=>text.includes(a))||'全部',ids,issue,cycle:/每天更新|每日更新|每天刷新|每日刷新/.test(text)?'day':'once'};
 }
-function reachFilter(q:any){if(q.audienceType!=='b'||q.sourceChain!==bAudienceSource.sourceChain)throw new Error('小B查询来源不匹配');let rows=reachPeople.filter(p=>p.city===q.city&&q.statuses.includes(p.status)&&(q.area==='全部'||p.area===q.area)&&(q.block==='全部'||p.block===q.block));if(q.ids.trim()){const ids=q.ids.split(/[\s,，;；]+/).filter(Boolean);rows=rows.filter(p=>ids.includes(p.id));}return rows;}
+function reachFilter(q:any){
+ if(q.audienceType!=='b'||q.sourceChain!==bAudienceSource.sourceChain)throw new Error('小B查询来源不匹配');
+ const ids=q.ids.split(/[\s,，;；]+/).filter(Boolean);
+ return reachPeople.filter(p=>(q.city==='全部'||p.city===q.city)&&
+  (q.statuses.includes(p.status)||(q.statuses.includes('注册用户')&&['注册已付费','注册未付费'].includes(p.status)))&&
+  (q.area==='全部'||p.area===q.area)&&(q.block==='全部'||p.block===q.block)&&(!ids.length||ids.includes(p.id)));
+}
 function reachQueryError(q:any){if(q.audienceType!=='b'||q.sourceChain!==bAudienceSource.sourceChain)return '小B查询来源不匹配，请重新确认圈选条件';if(q.issue)return q.issue;if(q.ids){const unknown=q.ids.split(/[\s,，;；]+/).filter(Boolean).filter(id=>!reachPeople.some(p=>p.id===id));if(unknown.length)return '未匹配经纪人注册ID：'+unknown.join('、');}return '';}
 function audienceConditionsText(inclusions:string[],exclusions:string[]=[],options:any={}){
  return ['第一步：条件解析','已完成条件识别，请确认解析条件。','','✅ 纳入条件：',...inclusions.map((v,i)=>`${i+1}. ${v}`),'','🚫 排除条件（排除集合内部按“或”处理）：',...(exclusions.length?exclusions.map((v,i)=>`${i+1}. ${v}`):['本次未指定']),...(options.issue?['','暂不可执行：'+options.issue]:[]),'','请输入“确认”继续流程，或描述需要变更的条件'].join('\n');
 }
 const audiencePreviewText='第二步：预览数据与更新频率\n请确认预估人数、样本和更新频率。';
-function reachConditionsText(d:any,notice:string){const q=d.query;return audienceConditionsText(['目标对象：小B','城市：'+q.city,'经纪人状态：'+q.statuses.join(' 或 '),...(q.area!=='全部'?['区域：'+q.area]:[]),...(q.block!=='全部'?['板块：'+q.block]:[]),...(q.ids?['经纪人注册ID：'+q.ids+'（与其他纳入条件取交集）']:[])],q.exclusions||[],{issue:q.issue||notice});}
+function reachConditionsText(d:any,notice:string){const q=d.query;return audienceConditionsText(['目标对象：小B','入驻城市：'+q.city,'圈选人群：'+q.statuses.join(' 或 '),...(q.area!=='全部'?['主营区属：'+q.area]:[]),...(q.block!=='全部'?['主营板块：'+q.block]:[]),...(q.ids?['经纪人注册ID：'+q.ids+'（与其他纳入条件取交集）']:[])],q.exclusions||[],{issue:q.issue||notice});}
 
 // 人群圈选扩展小B与多渠道内容、触达：有限规则的本地演示，真实编排、渠道及推送接口待接入。
 const bInAppChannel='有客App站内信';
@@ -8170,16 +8177,27 @@ const bServiceTemplate = {
 };
 const bServiceMiniProgram = '365获客宝小程序';
 const bNotificationCity='西安';
-const bNotificationSiteNotice='通知小B本期仅在西安站开放';
 const bWecomChannel='企微私聊-光年本地（西安）';
-function bNotificationAccessError(access=autoReadDemoContext()){
- if(access.city!==bNotificationCity)return bNotificationSiteNotice;
- return access.taskCities.includes(bNotificationCity)?'':'当前账号没有西安的任务城市权限';
+const bDefaultQuietStart='22:00';
+const bDefaultQuietEnd='08:00';
+function bQuietTime(pack:any){
+ return [pack.quietStart??bDefaultQuietStart,pack.quietEnd??bDefaultQuietEnd];
 }
-function bNotificationSiteOpen(){return !bNotificationAccessError()}
+function bQuietLabel(pack:any){
+ if(!pack?.quietEnabled)return '未开启';
+ const [start,end]=bQuietTime(pack);
+ return start+' 至'+(end<start?'次日 ':' ')+end;
+}
+function bQuietError(pack:any){
+ if(!pack.quietEnabled)return '';
+ const [start,end]=bQuietTime(pack);
+ return !start||!end||start===end?'请填写不同的免打扰开始时间和结束时间':'';
+}
 const bEmptyContent = () => ({
  city: '',
  quietEnabled: true,
+ quietStart:bDefaultQuietStart,
+ quietEnd:bDefaultQuietEnd,
  channels: [],
  byChannel: {
   'App Push': {appId:bYoukeApp.id,title:'',body:'',voiceEnabled:false,voiceTemplateId:'',jumpType:'',miniPath:'',appRoute:''},
@@ -8197,7 +8215,8 @@ function bJumpType(value:any){return value.jumpType??(value.miniPath?.trim()?'mi
 function bIsAppRoute(route:string){return /^\/[\w-]+(?:\/[\w-]+)*(?:\?[^\s#\\]*)?$/.test(route)&&!/%(?![0-9a-f]{2})/i.test(route)}
 function bJumpError(value:any,wakeApp=false){
  const type=bJumpType(value);
- if(type==='appRoute'&&!bIsAppRoute(value.appRoute?.trim()||''))return '请填写有效的 App 页面路径，例如 /pages/mine/mine';
+ if(type==='appRoute'&&wakeApp&&!bIsHttps(value.jumpUrl?.trim()||''))return '请填写可唤起有客App的 HTTPS H5 URL';
+ if(type==='appRoute'&&!wakeApp&&!bIsAppRoute(value.appRoute?.trim()||''))return '请填写有效的 App 页面路径，例如 /pages/mine/mine';
  if(type==='miniProgram'&&!bIsMiniPath(value.miniPath?.trim()||''))return '请填写有效的365获客宝小程序页面路径';
  if(type==='url'&&!wakeApp)return '请选择站内信跳转方式';
  if(type==='url'&&!bIsHttps(value.jumpUrl?.trim()||''))return '请填写有效的 HTTPS 网址';
@@ -8205,7 +8224,8 @@ function bJumpError(value:any,wakeApp=false){
 }
 function bJumpContent(value:any, wakeApp=false){
  const type=bJumpType(value);
- if(type==='appRoute'&&value.appRoute?.trim())return {appRoute:value.appRoute.trim(),appRouteMode:wakeApp?'wakeApp':'inApp'};
+ if(type==='appRoute'&&wakeApp)return {link:value.jumpUrl?.trim()||'',appRouteMode:'wakeApp'};
+ if(type==='appRoute'&&value.appRoute?.trim())return {appRoute:value.appRoute.trim(),appRouteMode:'inApp'};
  if(type==='miniProgram')return {miniProgram:bServiceMiniProgram,miniPath:value.miniPath.trim()};
  if(type==='url')return {link:value.jumpUrl.trim()};
  return {};
@@ -8220,7 +8240,8 @@ function BJumpFields({value,onChange,wakeApp=false}:any){
    <option value="appRoute">{wakeApp?'唤起有客App':bYoukeApp.name}</option>
    {wakeApp&&<option value="url">指定网址</option>}
   </select></ReachField>
-  {type==='appRoute'&&<ReachField label={wakeApp?'App 页面路由':'App 页面路径'} hint={wakeApp?'打开落地页后，点击按钮唤起有客App。':undefined}><input value={value.appRoute||''} onChange={e=>onChange({appRoute:e.target.value})} placeholder={wakeApp?'/customer/detail?id=123':'/pages/mine/mine'}/></ReachField>}
+  {type==='appRoute'&&wakeApp&&<ReachField label="H5 落地页 URL"><input type="url" value={value.jumpUrl||''} onChange={e=>onChange({jumpUrl:e.target.value})} placeholder="https://..."/></ReachField>}
+  {type==='appRoute'&&!wakeApp&&<ReachField label="App 页面路径"><input value={value.appRoute||''} onChange={e=>onChange({appRoute:e.target.value})} placeholder="/pages/mine/mine"/></ReachField>}
   {type==='miniProgram'&&<ReachField label="小程序页面路径"><input value={value.miniPath||''} onChange={e=>onChange({miniPath:e.target.value})} placeholder="pages/index/index"/></ReachField>}
   {type==='url'&&wakeApp&&<ReachField label="跳转网址"><input value={value.jumpUrl||''} onChange={e=>onChange({jumpUrl:e.target.value})} placeholder="https://..."/></ReachField>}
  </>;
@@ -8290,7 +8311,7 @@ function bContentItems(pack:any,c:string){
 function bContentSummary(pack:any,c:string){
  if(!pack?.byChannel?.[c])return '尚未配置';
  return bContentItems(pack,c).map((item:any)=>[
-  item.title,item.body,item.link,
+  item.title,item.body,item.link?(item.appRouteMode==='wakeApp'?'唤起有客App · ':'')+item.link:'',
   item.appRoute ? (item.appRouteMode==='wakeApp'?'唤起有客App':bYoukeApp.name)+' · '+(item.appPageName||item.appRoute) : '',
   item.miniPath ? item.miniProgram+' · '+item.miniPath : '',
  ].filter(Boolean).join('\n')).join('\n\n');
@@ -8312,13 +8333,11 @@ function bParseTouch(text:string,base:any={}){
  const interval=text.match(/间隔\s*(?:改为|调整为|为)?\s*(\d+)\s*(?:[～~到\-]\s*(\d+))?\s*秒/);if(interval)v.interval=interval[1]+'～'+(interval[2]||interval[1]);return v;
 }
 function bScheduleLabel(d:any){if(d.sendMode==='周期发送'){const r=d.repeat;if(!r)return '周期发送 · 频率/时刻待补充';const value=r.kind==='daily'?'每天 '+r.clock:r.kind==='weekly'?'每周'+r.day+' '+r.clock:r.kind==='monthly'?'每月'+r.day+'日 '+r.clock:'每'+r.every+r.unit+(r.clock?' '+r.clock:'');return '周期发送 · '+value+'（北京时间）'}return d.sendMode==='定时发送'?'定时发送 · '+(d.sendTime?d.sendTime.replace('T',' ')+'（北京时间）':'时刻待补充'):'立即发送'}
-const bQuietHours='22:00 至次日 08:00';
 function bDefaults(f:any){const req=f.requirements||{};const channels=[...(f.contentPack?.channels||[])];return {...f,channels,city:f.contentPack?.city||'',category:channels.includes(bInAppChannel)?f.contentPack.category:undefined,sendMode:req.sendMode||'立即发送',sendTime:req.sendTime||'',repeat:req.repeat||null,scheduleIssue:req.scheduleIssue||'',sender:channels.includes('企微私聊')?'B端客服':'',interval:req.interval||'0～0',taskName:f.taskName??'小B通知'}}
 // 演示沿用推送系统的城市通道，发送身份固定为B端客服。
 function bCityConfigError(d:any){
  const access=autoReadDemoContext();
- const accessError=bNotificationAccessError(access);
- if(accessError)return accessError;
+ if(!access.taskCities.includes(bNotificationCity))return '当前账号没有西安任务权限，暂无可用任务城市';
  if(!d.city)return '请选择任务城市';
  if(!access.taskCities.includes(d.city))return '当前账号没有该任务城市的权限';
  return d.city===bNotificationCity?'':'该任务城市暂未开放，仅西安可用';
@@ -8326,15 +8345,15 @@ function bCityConfigError(d:any){
 function bSenderLabel(d:any,c:string){return c==='企微私聊'?'西安 B 端客服':c==='服务号模板消息通知'?d.contentPack.byChannel[c].account:bYoukeApp.name}
 function bChannelLabel(d:any,c:string){if(c==='企微私聊')return bWecomChannel;return notificationChannelName(c)+' · '+d.city+'（演示）'}
 function bBlacklistLabel(c:string){return c==='企微私聊'?'小B适用黑名单规则待接入确认':'本渠道过滤规则待接入确认'}
-function bConfigError(d:any){if(!d.audience)return '请先引用或创建人群包';if(!d.audience.count)return '当前人群为0人，不能创建推送任务';if(!d.channels?.length)return '请至少选择一个发送渠道';const cityError=bCityConfigError(d);if(cityError)return cityError;if(d.channels.some((c:string)=>!d.contentPack?.channels.includes(c)))return '所选渠道缺少已确认内容，请先补齐内容';if(d.channels.includes('App Push')&&d.audience.people?.some((p:any)=>p.status==='注销经纪人'))return '当前人群包含注销经纪人，App Push不可用，请调整名单或渠道';if(d.sendMode==='周期发送'&&(!d.repeat||d.scheduleIssue))return d.scheduleIssue||'请用自然语言补齐推送频率/周期。';if(d.sendMode==='定时发送'&&(!d.sendTime||new Date(d.sendTime+'+08:00').getTime()<=Date.now()))return '请用自然语言补齐有效的未来定时时间（北京时间）';return bContentError({city:d.city,channels:d.channels,category:d.category,byChannel:d.contentPack.byChannel})}
-function bChannelConfiguration(d:any,c:string){const v=d.contentPack.byChannel[c];const content=bContentItems(d.contentPack,c).map(({voiceTemplateName,voicePrompt,appPageName,...item}:any)=>item);return {name:d.taskName.trim(),audienceId:d.audience.id,city:d.city,channel:c===bInAppChannel?'应用内发送':c,...(c===bInAppChannel?{category:d.category}:{}),sendMode:d.sendMode,sendTime:d.sendTime||'',repeat:structuredClone(d.repeat||null),...(d.contentPack.quietEnabled?{quietHours:bQuietHours}:{}),interval:c==='企微私聊'?d.interval:null,sender:bSenderLabel(d,c),channelLabel:bChannelLabel(d,c),content,...(c==='App Push'||c===bInAppChannel?{appId:v.appId}:{}),...(c==='服务号模板消息通知'?{accountId:v.accountId,account:v.account,templateId:bServiceTemplate.id,templateFields:Object.fromEntries(bServiceTemplate.fields.map(field=>[field,v.fields[field]]))}:{})};}
+function bConfigError(d:any){if(!d.audience)return '请先引用或创建人群包';if(!d.audience.count)return '当前人群为0人，不能创建推送任务';if(!d.channels?.length)return '请至少选择一个发送渠道';const cityError=bCityConfigError(d);if(cityError)return cityError;if(d.channels.some((c:string)=>!d.contentPack?.channels.includes(c)))return '所选渠道缺少已确认内容，请先补齐内容';if(d.channels.includes('App Push')&&d.audience.people?.some((p:any)=>p.status==='注销经纪人'))return '当前人群包含注销经纪人，App Push不可用，请调整名单或渠道';if(d.sendMode==='周期发送'&&(!d.repeat||d.scheduleIssue))return d.scheduleIssue||'请用自然语言补齐推送频率/周期。';if(d.sendMode==='定时发送'&&(!d.sendTime||new Date(d.sendTime+'+08:00').getTime()<=Date.now()))return '请用自然语言补齐有效的未来定时时间（北京时间）';return bQuietError(d.contentPack)||bContentError({city:d.city,channels:d.channels,category:d.category,byChannel:d.contentPack.byChannel})}
+function bChannelConfiguration(d:any,c:string){const v=d.contentPack.byChannel[c];const content=bContentItems(d.contentPack,c).map(({voiceTemplateName,voicePrompt,appPageName,...item}:any)=>item);return {name:d.taskName.trim(),audienceId:d.audience.id,audienceType:'AI人群包',creator:'当前运营（演示）',city:d.city,channel:c===bInAppChannel?'应用内发送':c,...(c===bInAppChannel?{category:d.category}:{}),sendMode:d.sendMode,sendTime:d.sendTime||'',repeat:structuredClone(d.repeat||null),...(d.contentPack.quietEnabled?{quietHours:bQuietLabel(d.contentPack),quietStart:bQuietTime(d.contentPack)[0],quietEnd:bQuietTime(d.contentPack)[1]}:{}),interval:c==='企微私聊'?d.interval:null,sender:bSenderLabel(d,c),channelLabel:bChannelLabel(d,c),content,...(c==='App Push'||c===bInAppChannel?{appId:v.appId}:{}),...(c==='服务号模板消息通知'?{accountId:v.accountId,account:v.account,templateId:bServiceTemplate.id,templateFields:Object.fromEntries(bServiceTemplate.fields.map(field=>[field,v.fields[field]]))}:{})};}
 function bCreateSingleTask(d:any,c:string){const key=d.operationKey+'|'+c;const existing=reachState.tasks.find((t:any)=>t.creationKey===key);if(existing)return existing;const items=bContentItems(d.contentPack,c);const sender=bSenderLabel(d,c);const t={id:'DEMO-T-'+Date.now()+'-'+Math.floor(Math.random()*10000),executionSystem:'推送系统',creationKey:key,name:d.taskName.trim(),source:'手动触达',created:reachNow(),status:'待执行',audience:structuredClone(d.audience),channels:[c],city:d.city,...(c===bInAppChannel?{category:d.category}:{}),sendMode:d.sendMode,sendTime:d.sendTime,repeat:structuredClone(d.repeat||null),scheduleText:bScheduleLabel(d),sender,channelLabel:bChannelLabel(d,c),blacklistText:bBlacklistLabel(c),interval:c==='企微私聊'?d.interval:'不适用',title:items[0]?.title||'',body:items[0]?.body||'',link:items[0]?.link||'',contents:structuredClone(items),pushConfigSnapshot:bChannelConfiguration(d,c),results:null};reachState.tasks.unshift(t);reachState.logs.unshift({time:reachNow(),action:'创建推送任务',name:t.name});return t}
 function BAgentPlan({flowId}:any){
  useReach();const f=reachState.flows[flowId];if(!f)return null;
  const rows:any[]=f.goal==='audience'?[{id:'audience',text:f.audience?'人群圈选 · 人群包已创建':'人群圈选 · 确认条件并建包',status:f.audience?'done':f.stage==='query'?'loading':'wait'}]:[];
  if(f.goal==='touch'){
   const done=f.createResults?.filter((r:any)=>r.state==='success').length||0;
-  const text=f.stage==='done'?`通知小B · ${done}/${f.channels.length} 个任务创建成功`:f.stage==='creating'?'通知小B · 正在分别创建任务':f.stage==='summary'?'通知小B · 等待核对并确认创建':f.stage==='content'?'通知小B · 等待配置渠道内容':'通知小B · 等待人群就绪';
+  const text=f.stage==='done'?`小B通知 · ${done}/${f.channels.length} 个任务创建成功`:f.stage==='creating'?'小B通知 · 正在分别创建任务':f.stage==='summary'?'小B通知 · 等待核对并确认创建':f.stage==='content'?'小B通知 · 等待配置渠道内容':'小B通知 · 等待人群就绪';
   rows.push({id:'touch',text,status:f.stage==='done'?'done':f.stage==='creating'?'loading':'wait'});
  }
  return <div className="b-agent-plan" data-testid="b-agent-plan"><TaskPlan tasks={rows}/></div>
@@ -8364,12 +8383,16 @@ function BContentDialog({flow,onClose,onSave}:any){
  const cityError=bCityConfigError(pack);
  const quietScopeId=React.useId();
 
- return <AutoDialog title="多渠道触达配置" onClose={closeDraft} wide><div className="bm-dialog"><header className="bm-dialog-head"><div><h2>多渠道触达配置</h2><p>勾选渠道，点击渠道名称切换编辑。切换时保留已填内容。</p></div><button aria-label="关闭内容配置" onClick={closeDraft}><X size={18}/></button></header><div className="bm-dialog-body"><div className="bm-city-config"><ReachField label="任务城市" hint="本期仅西安可用"><select value={pack.city} onChange={e=>{setPack((prev:any)=>({...prev,city:e.target.value}));setError('')}}><option value="">请选择任务城市</option>{taskCities.map((city:string)=><option key={city} value={city} disabled={city!==bNotificationCity}>{city}{city===bNotificationCity?'':'（暂未开放）'}</option>)}</select></ReachField>
+ return <AutoDialog title="小B通知配置" onClose={closeDraft} wide><div className="bm-dialog"><header className="bm-dialog-head"><div><h2>小B通知配置</h2><p>勾选渠道，点击渠道名称切换编辑。切换时保留已填内容。</p></div><button aria-label="关闭内容配置" onClick={closeDraft}><X size={18}/></button></header><div className="bm-dialog-body"><div className="bm-city-config"><ReachField label="任务城市" hint="本期仅西安可用"><select value={pack.city} onChange={e=>{setPack((prev:any)=>({...prev,city:e.target.value}));setError('')}}><option value="">请选择任务城市</option>{taskCities.map((city:string)=><option key={city} value={city} disabled={city!==bNotificationCity}>{city}{city===bNotificationCity?'':'（暂未开放）'}</option>)}</select></ReachField>
  <div className="bm-quiet-config">
   <span className="bm-quiet-icon" aria-hidden="true"><Moon size={14}/></span>
   <strong className="bm-quiet-label">免打扰</strong>
   <span id={quietScopeId} className="sr-only">所有所选渠道共用</span>
-  <span className="bm-quiet-time">{pack.quietEnabled?bQuietHours:'已关闭'}</span>
+  {pack.quietEnabled?<div className="bm-quiet-range">
+   <input type="time" aria-label="免打扰开始时间" value={bQuietTime(pack)[0]} onChange={e=>{const value=e.target.value;setPack((p:any)=>({...p,quietStart:value}));setError('')}}/>
+   <span>{bQuietTime(pack)[1]<bQuietTime(pack)[0]?'至次日':'至'}</span>
+   <input type="time" aria-label="免打扰结束时间" value={bQuietTime(pack)[1]} onChange={e=>{const value=e.target.value;setPack((p:any)=>({...p,quietEnd:value}));setError('')}}/>
+  </div>:<span className="bm-quiet-time">已关闭</span>}
   <button type="button" role="switch" aria-label="免打扰" aria-describedby={quietScopeId} aria-checked={!!pack.quietEnabled} className="bm-quiet-switch" onClick={()=>setPack((prev:any)=>({...prev,quietEnabled:!prev.quietEnabled}))}><span/></button>
  </div></div><div className="bm-channel-select" role="group" aria-label="选择及编辑渠道">{bTouchChannels.map(c=><div key={c} className={'bm-channel-option'+(active===c?' active':'')}><label><input type="checkbox" aria-label={notificationChannelName(c)} checked={pack.channels.includes(c)} onChange={()=>selectChannel(c)}/></label><button type="button" aria-label={'编辑'+notificationChannelName(c)+'内容'} aria-pressed={active===c} onClick={()=>setActive(c)}><NotificationChannel channel={c}/></button></div>)}</div><div className="bm-content-grid"><section><h3>{active==='服务号模板消息通知'?'模板配置':'消息内容'}</h3>{selected&&active!=='企微私聊'&&<div className="bm-fixed-target" data-testid="channel-fixed-target"><span>{active==='服务号模板消息通知'?'发送服务号':'发送应用'}</span><strong>{active==='服务号模板消息通知'?bServiceAccount.name:bYoukeApp.name}</strong></div>}{!selected?<div className="bm-empty"><p>尚未选择此渠道</p><ReachButton onClick={()=>selectChannel(active)}>配置此渠道</ReachButton></div>:<>
  {active==='App Push'&&<><ReachField label="Push标题"><input value={v.title} onChange={e=>setValue({title:e.target.value})} placeholder="填写通知标题"/></ReachField><ReachField label="Push正文"><textarea value={v.body} onChange={e=>setValue({body:e.target.value})} rows={5} placeholder="填写通知正文"/></ReachField><section className="bm-voice-config"><label className="bm-voice-toggle"><input type="checkbox" aria-label="语音播报" checked={!!v.voiceEnabled} onChange={e=>setValue({voiceEnabled:e.target.checked})}/><span>语音播报</span></label>{v.voiceEnabled&&<><ReachField label="语音播报模板"><select value={v.voiceTemplateId||''} onChange={e=>setValue({voiceTemplateId:e.target.value})}><option value="">请选择播报模板</option>{bVoiceTemplates.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}</select></ReachField>{bVoiceTemplates.find(t=>t.id===v.voiceTemplateId)&&<p className="bm-footnote" data-testid="voice-template-prompt">播报提示：{bVoiceTemplates.find(t=>t.id===v.voiceTemplateId)?.prompt}</p>}<p className="bm-footnote">预置播报提示为演示内容，正式模板待接入。</p></>}</section><BJumpFields value={v} onChange={setValue}/></>}
@@ -8406,14 +8429,14 @@ function BContentDialog({flow,onClose,onSave}:any){
  {active==='服务号模板消息通知'&&<>
   <div className="bm-fixed-target"><span>模板名称</span><strong>{bServiceTemplate.name}</strong></div>
   <p className="bm-footnote">仅填写服务进度等通知内容，禁止填写营销推广内容。</p>
-  {bServiceTemplate.fields.map(field=><ReachField label={field} key={field}><input value={v.fields?.[field]||''} onChange={e=>setValue({fields:{...v.fields,[field]:e.target.value}})} placeholder={'请输入'+field}/></ReachField>)}
+  {bServiceTemplate.fields.map(field=><ReachField label={field} key={field}><input value={v.fields?.[field]||''} onChange={e=>setValue({fields:{...v.fields,[field]:e.target.value}})} placeholder="请输入内容"/></ReachField>)}
   <BJumpFields value={v} onChange={setValue} wakeApp/>
  </>}
- </>}</section></div></div>{error&&<div className="bm-error" role="alert">{error}</div>}<footer className="bm-dialog-footer"><span>已选 {pack.channels.length} 个渠道</span><div><ReachButton onClick={closeDraft}>取消</ReachButton><ReachButton primary onClick={()=>{const e=cityError||bContentError(pack);if(e){setError(e);if(!cityError){const channel=bTouchChannels.find(c=>e.startsWith(c)||c==='服务号模板消息通知'&&e.startsWith('服务号'));if(channel)setActive(channel)}return}onSave(pack)}}>确认配置</ReachButton></div></footer></div></AutoDialog>
+ </>}</section></div></div>{error&&<div className="bm-error" role="alert">{error}</div>}<footer className="bm-dialog-footer"><span>已选 {pack.channels.length} 个渠道</span><div><ReachButton onClick={closeDraft}>取消</ReachButton><ReachButton primary onClick={()=>{const e=cityError||bQuietError(pack)||bContentError(pack);if(e){setError(e);if(!cityError){const channel=bTouchChannels.find(c=>e.startsWith(c)||c==='服务号模板消息通知'&&e.startsWith('服务号'));if(channel)setActive(channel)}return}onSave(pack)}}>确认配置</ReachButton></div></footer></div></AutoDialog>
 }
-function BConversationCard({data,onAction,onOpenTask,executionMode}:any){const state=useReach();const live=state.flows[data.flowId];const f=data.confirmed?data.snapshot:live;const [audience,setAudience]=useState('');if(!f)return null;const completed=data.confirmed;const blocked=completed||!executionMode||!bNotificationSiteOpen();const confirmChannels=f.channels;return <div className={'b-conversation-card bm-card'+(data.stage==='summary'?' bm-task-confirm':'')} data-testid={'b-'+data.stage+'-card'}><header><span className="b-card-icon">{data.stage==='summary'?<Send size={16}/>:<Bot size={16}/>}</span><strong>{{dependency:'补齐前置依赖',content:'触达配置',config:'多渠道触达配置',summary:'任务信息确认',result:'任务创建结果'}[data.stage]}</strong>{completed&&<small>已确认</small>}</header>{!executionMode&&!completed&&<p className="bm-footnote">请切换到执行模式继续多渠道触达。</p>}
+function BConversationCard({data,onAction,onOpenTask,executionMode}:any){const state=useReach();const live=state.flows[data.flowId];const f=data.confirmed?data.snapshot:live;const [audience,setAudience]=useState('');if(!f)return null;const completed=data.confirmed;const blocked=completed||!executionMode;const confirmChannels=f.channels;return <div className={'b-conversation-card bm-card'+(data.stage==='summary'?' bm-task-confirm':'')} data-testid={'b-'+data.stage+'-card'}><header><span className="b-card-icon">{data.stage==='summary'?<Send size={16}/>:<Bot size={16}/>}</span><strong>{{dependency:'补齐前置依赖',content:'触达配置',config:'小B通知配置',summary:'任务信息确认',result:'任务创建结果'}[data.stage]}</strong>{completed&&<small>已确认</small>}</header>{!executionMode&&!completed&&<p className="bm-footnote">请切换到执行模式继续多渠道触达。</p>}
  {data.stage==='dependency'&&<p>请在执行模式中 @人群包，并输入触达要求；尚无人群包时，请先在圈选模式创建。</p>}
- {data.stage==='content'&&<><p>{completed?f.contentPack.city+' · '+f.contentPack.channels.length+'个渠道配置已确认':'选择任务城市与渠道，填写各渠道内容。'}</p>{completed?<div className="bm-confirmed-channels">{f.contentPack.channels.map((c:string)=><NotificationChannel key={c} channel={c}/>)}</div>:<div className="bm-card-actions"><ReachButton primary disabled={blocked} onClick={()=>onAction('content')}>配置多渠道触达</ReachButton></div>}</>}
+ {data.stage==='content'&&<><p>{completed?f.contentPack.city+' · '+f.contentPack.channels.length+'个渠道配置已确认':'选择任务城市与渠道，填写各渠道内容。'}</p>{completed?<div className="bm-confirmed-channels">{f.contentPack.channels.map((c:string)=><NotificationChannel key={c} channel={c}/>)}</div>:<div className="bm-card-actions"><ReachButton primary disabled={blocked} onClick={()=>onAction('content')}>配置小B通知</ReachButton></div>}</>}
 
  {data.stage==='summary'&&<>
  <label className="bm-task-name">
@@ -8423,7 +8446,7 @@ function BConversationCard({data,onAction,onOpenTask,executionMode}:any){const s
    {validateConfirmCardName(f.taskName||'')&&<small className="bm-name-error" role="alert">{validateConfirmCardName(f.taskName||'')}</small>}
   </>}
  </label>
- <div className="bm-confirm-grid bm-confirm-common">{[['接收对象',f.audience?.name+'（'+f.audience?.count+'人）'],['任务城市',f.city],['推送时间',bScheduleLabel(f)],['免打扰时段',f.contentPack?.quietEnabled?bQuietHours:'未开启']].map(([k,v])=><div key={k}><span>{k}</span><strong>{v}</strong></div>)}</div>
+ <div className="bm-confirm-grid bm-confirm-common">{[['接收对象',f.audience?.name+'（'+f.audience?.count+'人）'],['任务城市',f.city],['推送时间',bScheduleLabel(f)],['免打扰时段',bQuietLabel(f.contentPack)]].map(([k,v])=><div key={k}><span>{k}</span><strong>{v}</strong></div>)}</div>
  {confirmChannels.map((c:string)=><section className="bm-summary-item" key={c}><div className="bm-confirm-channel"><NotificationChannel channel={c}/></div>
 
  <div className="bm-confirm-grid">{(c==='企微私聊'?[['发送客服',bSenderLabel(f,c)],['通道',bChannelLabel(f,c)],['推送间隔',f.interval+' 秒'],['黑名单',bBlacklistLabel(c)]]:[[c==='服务号模板消息通知'?'发送服务号':'发送应用',bSenderLabel(f,c)]]).map(([k,v])=><div key={k}><span>{k}</span><strong>{v}</strong></div>)}</div>
@@ -8448,7 +8471,7 @@ function PushTaskDetailView({task,children}:any){
  <section data-testid="push-basic-info"><h3 className="text-lg font-bold text-blue-600 mb-4">基本信息</h3><div className="grid grid-cols-1 lg:grid-cols-2 gap-y-4 gap-x-12 text-sm">{basic.map(([k,v])=>row(k,v))}</div></section>
  <section data-testid="push-recipients"><h3 className="text-lg font-bold text-blue-600 mb-4">收件人</h3><div className="space-y-4 text-sm">{row(task.recipientMode==='event'?'对象来源:':'人群包类型:',task.audienceType)}<div className="flex flex-wrap items-center gap-x-4 gap-y-3">{row(task.recipientMode==='event'?'接收对象:':'人群包名称:',task.audienceName)}<div className="flex"><span className="text-zinc-500 mr-2">{task.recipientMode==='event'?'对象数:':'人数:'}</span><span className="text-zinc-900 dark:text-zinc-100">{task.audienceCountText||<>{task.audienceCount}{task.recipientMode==='event'?'个':'人'}</>}</span></div><div className="flex"><span className="text-zinc-500 mr-2">更新时间:</span><span className="text-zinc-900 dark:text-zinc-100">{task.audienceUpdated||'-'}</span></div></div>{task.recipientMode==='event'?row('对象规则:',task.recipientRule):<>{row('黑名单:',task.blacklist)}{row('白名单:',task.whitelist)}</>}</div></section>
  <section data-testid="push-senders"><h3 className="text-lg font-bold text-blue-600 mb-4">{task.senderTitle||'发送人'}</h3><div className="text-sm">{row((task.senderTitle||'发送人')+':',task.senders)}</div></section>
- <section data-testid="push-content"><h3 className="text-lg font-bold text-blue-600 mb-4">推送内容</h3><div className="space-y-6 text-sm bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-lg border border-zinc-200 dark:border-zinc-800">{(task.contents||[]).map((item:any,i:number)=><React.Fragment key={i}>{i>0&&<div className="h-px bg-zinc-200 dark:bg-zinc-800"/>}<div className="grid grid-cols-[1fr_auto] gap-4"><div className="space-y-2 min-w-0">{row(`信息${i+1}类型:`,notificationChannelName(item.type))}{item.delay!=null&&row(`发送延时:`,item.delay+'秒',`delay-${i}`)}{item.title&&row(`信息${i+1}标题:`,item.title)}{row(`信息${i+1}内容:`,item.body)}{item.appRoute&&row(item.appRouteMode==='wakeApp'?'唤起有客App:':'有客App页面:',item.appPageName||item.appRoute)}{item.link&&row('跳转地址:',item.link)}{item.miniPath&&<>{row('跳转小程序:',item.miniProgram)}{row('小程序路径:',item.miniPath)}</>}{item.type==='App Push'&&typeof item.voiceEnabled==='boolean'&&<>{row('语音播报:',item.voiceEnabled?'已开启':'未开启')}{item.voiceEnabled&&<>{row('播报模板:',item.voiceTemplateName||'未提供')}{row('播报提示:',item.voicePrompt||'未提供')}</>}</>}{item.image&&<img className="max-w-[200px] rounded-lg" src={item.image} alt={`信息${i+1}图片`}/>}</div></div></React.Fragment>)}</div></section>
+ <section data-testid="push-content"><h3 className="text-lg font-bold text-blue-600 mb-4">推送内容</h3><div className="space-y-6 text-sm bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-lg border border-zinc-200 dark:border-zinc-800">{(task.contents||[]).map((item:any,i:number)=><React.Fragment key={i}>{i>0&&<div className="h-px bg-zinc-200 dark:bg-zinc-800"/>}<div className="grid grid-cols-[1fr_auto] gap-4"><div className="space-y-2 min-w-0">{row(`信息${i+1}类型:`,notificationChannelName(item.type))}{item.delay!=null&&row(`发送延时:`,item.delay+'秒',`delay-${i}`)}{item.title&&row(`信息${i+1}标题:`,item.title)}{row(`信息${i+1}内容:`,item.body)}{item.appRoute&&row(item.appRouteMode==='wakeApp'?'唤起有客App:':'有客App页面:',item.appPageName||item.appRoute)}{item.link&&row(item.appRouteMode==='wakeApp'?'H5 落地页 URL:':'跳转地址:',item.link)}{item.miniPath&&<>{row('跳转小程序:',item.miniProgram)}{row('小程序路径:',item.miniPath)}</>}{item.type==='App Push'&&typeof item.voiceEnabled==='boolean'&&<>{row('语音播报:',item.voiceEnabled?'已开启':'未开启')}{item.voiceEnabled&&<>{row('播报模板:',item.voiceTemplateName||'未提供')}{row('播报提示:',item.voicePrompt||'未提供')}</>}</>}{item.image&&<img className="max-w-[200px] rounded-lg" src={item.image} alt={`信息${i+1}图片`}/>}</div></div></React.Fragment>)}</div></section>
  {children}
  </div></div>
 }
@@ -8470,23 +8493,26 @@ function ReachTaskDetail({taskId}:any){
 // One package/detail presentation; target-specific adapters preserve the actual identity and data source.
 function canonicalAudienceRoute(route:string){return route==='[AI] 合肥100w学区房'?'[人群包]i1':route.replace(/^\[小B人群\]/,'[人群包]')}
 // Simulated values for optional header information; not a production report contract.
-const bMemberInfoDemo:any={'DEMO-B-001':{role:'经纪人（示例）',roleId:'DEMO-BR-001',payment:'已付费',mainTrade:'二手房',secondaryTrades:['新房分销','商业','法拍'],priceBudgets:['150万-300万','300万-500万'],mainDistricts:['西咸新区（西安）','雁塔区','长安区','高陵区','鄠邑区','新城区','碑林区','未央区'],mainBlocks:['曲江','长安','城南','紫薇田园都市','高新三期']},'DEMO-B-002':{role:'经纪人（示例）',roleId:'DEMO-BR-002',payment:'已付费'},'DEMO-B-003':{role:'经纪人（示例）',roleId:'DEMO-BR-003',payment:'未付费'},'DEMO-B-004':{role:'经纪人（示例）',roleId:'DEMO-BR-004',payment:'体验中'},'DEMO-B-005':{role:'经纪人（示例）',roleId:'DEMO-BR-005',payment:''},'DEMO-B-006':{role:'经纪人（示例）',roleId:'DEMO-BR-006',payment:'已付费'}};
-function audienceMember(name:string,person?:any){return person?{id:person.id,name:person.name,profile:[],source:'operations',bInfo:bMemberInfoDemo[person.id]||null}:{id:audiencePreviewData[name]?.id||'',name,profile:audiencePreviewData[name]?.profile||[],source:'customer'};}
+function audienceMember(name:string,person?:any){
+ if(!person)return {id:audiencePreviewData[name]?.id||'',name,profile:audiencePreviewData[name]?.profile||[],source:'customer'};
+ const recharge=person.status==='注册已付费'?'已充值有客币':person.status==='注册未付费'?'未充值有客币':'';
+ return {id:person.userId||person.id.replace(/^DEMO-B-/,'DEMO-U-'),name,profile:[],source:'operations',bInfo:{recharge,registrationId:person.id,city:person.city,area:person.area,block:person.block}};
+}
 function AudienceMemberDrawer({members,memberId,onClose}:any){
  const [index,setIndex]=useState(()=>Math.max(0,members.findIndex((m:any)=>(m.id||m.name)===memberId)));const [tab,setTab]=useState('记忆');const closeRef=useRef(onClose);closeRef.current=onClose;
  useEffect(()=>{const handle=(e:KeyboardEvent)=>{if(e.key==='Escape')closeRef.current()};window.addEventListener('keydown',handle);return()=>window.removeEventListener('keydown',handle)},[]);
- const member=members[index];if(!member)return null;const tabs=['记忆','档案','行为'];const bFields=member.bInfo?[['小B角色',member.bInfo.role],['小B角色ID',member.bInfo.roleId],['付费情况',member.bInfo.payment]].filter(([,value])=>!!value):[];const brokerFields:any[]=member.bInfo?[['主营交易类型',member.bInfo.mainTrade],['副营交易类型',member.bInfo.secondaryTrades],['价格预算',member.bInfo.priceBudgets],['主营区属',member.bInfo.mainDistricts,true],['主营板块',member.bInfo.mainBlocks,true]].filter(([,value])=>Array.isArray(value)?value.length>0:!!value):[];
+ const member=members[index];if(!member)return null;const tabs=['记忆','档案','行为'];const bFields=member.bInfo?[['充值情况',member.bInfo.recharge],['经纪人注册ID',member.bInfo.registrationId],['入驻城市',member.bInfo.city],['主营区属',member.bInfo.area],['主营板块',member.bInfo.block]].filter(([,value])=>!!value):[];
  return <div className="absolute inset-0 z-[80] flex justify-end" data-testid="audience-member-overlay"><button className="absolute inset-0 bg-black/40" aria-label="关闭用户详情遮罩" onClick={onClose}/><aside role="dialog" aria-modal="true" aria-label="用户详情" className="relative w-full max-w-[380px] h-full bg-white dark:bg-zinc-900 border-l border-zinc-200 dark:border-zinc-800 shadow-xl flex flex-col">
  <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between gap-2"><h3 className="font-medium text-zinc-900 dark:text-zinc-100">用户详情</h3><div className="flex items-center gap-1"><button title="上一位用户" aria-label="上一位用户" disabled={index===0} onClick={()=>setIndex(i=>i-1)} className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30"><ChevronLeft size={16}/></button><span className="text-xs text-zinc-500">{index+1} / {members.length}</span><button title="下一位用户" aria-label="下一位用户" disabled={index===members.length-1} onClick={()=>setIndex(i=>i+1)} className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30"><ChevronRight size={16}/></button><button aria-label="关闭用户详情" onClick={onClose} className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500"><X size={16}/></button></div></div>
  <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4"><div className="flex items-center gap-3"><div className="w-11 h-11 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center font-semibold text-indigo-600 dark:text-indigo-300">{member.name.slice(0,1)}</div><div className="min-w-0"><div className="font-bold text-lg text-zinc-900 dark:text-zinc-100 break-words">{member.name}</div><div className="text-xs text-zinc-500 break-all">用户ID：{member.id||'—'}</div></div></div>
- {(bFields.length>0||brokerFields.length>0)&&<section data-testid="audience-b-info" aria-label="B端信息" className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50 px-3 py-3"><dl className="grid grid-cols-2 gap-3">{bFields.map(([label,value])=><div key={label} className="min-w-0"><dt className="text-xs text-zinc-500">{label}</dt><dd className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mt-1 break-words">{value}</dd></div>)}</dl>{brokerFields.length>0&&<dl data-testid="broker-business-fields" className="mt-3 border-t border-zinc-200 dark:border-zinc-700">{brokerFields.map(([label,value,tags])=><div key={label} className="grid grid-cols-[84px_minmax(0,1fr)] items-center gap-3 py-3 border-b border-zinc-200 dark:border-zinc-700 last:border-0"><dt className="text-xs text-zinc-500">{label}</dt><dd className="min-w-0 text-right text-sm font-medium text-zinc-900 dark:text-zinc-100">{tags?<div className="flex flex-wrap justify-end gap-1.5">{value.map((v:string)=><span key={v} className="inline-block rounded-lg bg-zinc-100 dark:bg-zinc-700 px-2 py-1 text-xs break-words max-w-full">{v}</span>)}</div>:<span className="break-words">{Array.isArray(value)?value.join('、'):value}</span>}</dd></div>)}</dl>}<p className="mt-3 text-[11px] text-zinc-400">示例数据 · 字段来源与口径待接入</p></section>}
+ {bFields.length>0&&<section data-testid="audience-b-info" aria-label="B端信息" className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50 px-3 py-3"><dl className="grid grid-cols-2 gap-3">{bFields.map(([label,value])=><div key={label} className="min-w-0"><dt className="text-xs text-zinc-500">{label}</dt><dd className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mt-1 break-words">{value}</dd></div>)}</dl></section>}
  <div role="tablist" aria-label="用户信息" className="flex p-1 bg-zinc-100 dark:bg-zinc-800/80 rounded-lg">{tabs.map(t=><button key={t} role="tab" aria-selected={tab===t} onClick={()=>setTab(t)} className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-all ${tab===t?'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm':'text-zinc-500 dark:text-zinc-400'}`}>{t}</button>)}</div>
  <div role="tabpanel">{tab==='记忆'&&(member.source==='customer'?<AudiencePreviewMemoryPanel userName={member.name}/>:<div className="py-10 text-center text-sm text-zinc-500">暂无可展示的用户记忆</div>)}{tab==='档案'&&<div className="flex flex-col">{member.profile.length?member.profile.map(([label,value]:any)=><div key={label} className="flex flex-col py-3 border-b border-zinc-100 dark:border-zinc-800/50 last:border-0"><div className="text-sm text-zinc-500">{label}</div><div className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mt-1 break-words">{value||'—'}</div></div>):<div className="py-10 text-center text-sm text-zinc-500">暂无可展示的用户档案</div>}</div>}{tab==='行为'&&(member.source==='customer'?<AudiencePreviewBehaviorPanel userName={member.name}/>:<div className="py-10 text-center text-sm text-zinc-500">暂无可展示的用户行为</div>)}</div></div></aside></div>;
 }
 function AudiencePackageDetail({audienceId,displayName}:any){
  const state=useReach();const [memberId,setMemberId]=useState<string|null>(null);const stored=audienceId?state.audiences.find((a:any)=>a.id===audienceId):null;const resource=initialAudienceResources.find(a=>a.id===audienceId)||(!audienceId?initialAudienceResources[0]:null);
  if(!stored&&!resource)return <div className="p-6 text-sm text-zinc-500">未找到该人群包</div>;
- const q=stored?.query;const members=stored?stored.people.map((p:any)=>audienceMember(p.name,p)):['橙子','家和万事兴','贝壳张建','桃燃','用户7892'].map(name=>audienceMember(name));const conditions=stored?['城市：'+q.city,'经纪人状态：'+q.statuses.join(' 或 '),...(q.area!=='全部'?['区域：'+q.area]:[]),...(q.block!=='全部'?['板块：'+q.block]:[]),...(q.ids?['注册ID：'+q.ids]:[]),...(q.start||q.end?['注册日期：'+(q.start||'不限')+' 至 '+(q.end||'不限')]:[])].join(' / '):resource.configSnapshot.join(' / ');
+ const q=stored?.query;const members=stored?stored.people.map((p:any)=>audienceMember(p.name,p)):['橙子','家和万事兴','贝壳张建','桃燃','用户7892'].map(name=>audienceMember(name));const conditions=stored?['入驻城市：'+q.city,'圈选人群：'+q.statuses.join(' 或 '),...(q.area!=='全部'?['主营区属：'+q.area]:[]),...(q.block!=='全部'?['主营板块：'+q.block]:[]),...(q.ids?['注册ID：'+q.ids]:[]),...(q.start||q.end?['注册日期：'+(q.start||'不限')+' 至 '+(q.end||'不限')]:[])].join(' / '):resource.configSnapshot.join(' / ');
  const name=displayName||stored?.name||resource.name;const count=stored?.count??resource.audienceCount;const cycle=stored?.cycle==='day'?'每日更新':stored?.cycle==='hour'?'每小时更新':'一次性';
  return <div className="w-full h-full bg-white dark:bg-zinc-950 flex flex-col relative overflow-hidden" data-testid="audience-package-detail"><div className="flex items-start gap-3 border-b border-zinc-200 dark:border-zinc-800 p-4 shrink-0"><div className="w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0"><Users size={20}/></div><div className="min-w-0"><h2 className="text-xl font-bold text-zinc-800 dark:text-zinc-200 break-words">{name}</h2><div className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-zinc-500 mt-1"><span>预估人数: {count.toLocaleString()} 人</span><span>圈选条件: {conditions}</span><span>更新周期: {cycle}</span><span>创建人: {stored?'当前运营（演示）':'张三'}</span><span>创建时间: {stored?.created||resource.createdAt}</span></div></div></div>
  <div className="flex-1 overflow-auto p-4"><div className="border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-x-auto"><table className="w-full text-sm text-left"><thead className="bg-zinc-50 dark:bg-zinc-900/50 text-zinc-500 border-b border-zinc-200 dark:border-zinc-800"><tr><th className="px-4 py-3 font-medium">用户昵称</th><th className="px-4 py-3 font-medium">用户ID</th><th className="px-4 py-3 font-medium">操作</th></tr></thead><tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">{members.map((member:any)=><tr key={member.id||member.name} className="hover:bg-zinc-50 dark:hover:bg-zinc-900/20"><td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">{member.name}</td><td className="px-4 py-3 text-zinc-500 font-mono">{member.id||'—'}</td><td className="px-4 py-3"><button className="text-indigo-600 dark:text-indigo-400 hover:underline" onClick={()=>setMemberId(member.id||member.name)}>用户详情</button></td></tr>)}</tbody></table>{!members.length&&<div className="p-10 text-center text-sm text-zinc-500">暂无用户</div>}</div></div>
@@ -8502,8 +8528,7 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
   const openReachTask = (t:any) => {onOpenTab('[小B任务]'+t.id,t.name);onClose();};
   const [audienceMemberPreview,setAudienceMemberPreview]=useState<any>(null);
   const [bModal,setBModal]=useState<any>(null);
-  const notifyBAvailable=bNotificationSiteOpen();
-  const bConfigPending=notifyBAvailable&&messages.some(m=>m.card?.type==='b_step'&&m.card.stage==='content'&&!m.card.confirmed&&!m.card.invalidated&&reachState.flows[m.card.flowId]?.stage==='content');
+  const bConfigPending=messages.some(m=>m.card?.type==='b_step'&&m.card.stage==='content'&&!m.card.confirmed&&!m.card.invalidated&&reachState.flows[m.card.flowId]?.stage==='content');
   const bTargetRequest=useRef<string|null>(null);
   const bInputAudienceIds=useRef<string[]>([]);
   const bSetDraft=(flowId:string,patch:any)=>{reachState.flows[flowId]={...reachState.flows[flowId],...patch};reachCommit();return reachState.flows[flowId]};
@@ -8587,7 +8612,7 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
       bMessage(id,'result','');
     },400);
   };
-  const bAction=(msg:any,action:string,value?:any)=>{const id=msg.card.flowId,f=reachState.flows[id];if(!f||f.stage==='cancelled'||msg.card.invalidated)return;if(mode!=='执行模式'&&action!=='query'){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'通知小B仅在执行模式可用，请先切换到执行模式。'}]);return}if(action==='audience'||action==='query'){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'请先在圈选模式创建人群包，再切换执行模式，@人群包并输入触达要求。'}]);return}else if(action==='content'){if(f.contentPack){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'本次任务城市、免打扰、渠道和内容已确认。',bFlowId:id}]);return}setBModal({kind:'content',flowId:id})}else if(action==='name'){bSetDraft(id,{taskName:value,error:bConfigError(f)})}else if(action==='demo'){bSetDraft(id,{demoResult:value})}else if(action==='create'){bCreate(id)}};
+  const bAction=(msg:any,action:string,value?:any)=>{const id=msg.card.flowId,f=reachState.flows[id];if(!f||f.stage==='cancelled'||msg.card.invalidated)return;if(mode!=='执行模式'&&action!=='query'){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'小B通知仅在执行模式可用，请先切换到执行模式。'}]);return}if(action==='audience'||action==='query'){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'请先在圈选模式创建人群包，再切换执行模式，@人群包并输入触达要求。'}]);return}else if(action==='content'){if(f.contentPack){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'本次任务城市、免打扰、渠道和内容已确认。',bFlowId:id}]);return}setBModal({kind:'content',flowId:id})}else if(action==='name'){bSetDraft(id,{taskName:value,error:bConfigError(f)})}else if(action==='demo'){bSetDraft(id,{demoResult:value})}else if(action==='create'){bCreate(id)}};
   const bTaskCreated=(msg:any,name:string)=>{const f=reachState.flows[msg.card.bFlowId];if(f?.channels)bCreate(f.id)};
   const handleBIntent=(text:string,referenceIds:string[]=[])=>{
     if(/交付群|群聊|朋友圈|主动激活|(?:使用|引用|用).{0,12}(?:工作流|内容包)/.test(text))return false;
@@ -8595,16 +8620,11 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
     const selectedReferences=referenceMatches.filter((a:any)=>referenceIds.includes(a.id));
     const resolvedReferences=referenceMatches.filter((a:any)=>!selectedReferences.some((chosen:any)=>chosen.name===a.name)||referenceIds.includes(a.id));
     const startTouch=()=>{
-      const accessError=bNotificationAccessError();
-      if(accessError){
-        setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:accessError+'。'}]);
-        return;
-      }
       if(mode!=='执行模式'){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'请切换到执行模式，@人群包并输入触达要求。'}]);return}
       if(resolvedReferences.length!==1){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:resolvedReferences.length>1?'本次触达请只 @一个人群包，并输入触达要求；同名人群包请从引用列表选择。':'请先 @需要触达的人群包，并输入触达要求；不会自动使用刚创建或历史人群包。'}]);return}
       beginBReach(text,resolvedReferences[0],'touch');
     };
-    if(/^\/(?:通知小B|小B通知触达|多渠道触达)(?:\s|$)/i.test(text.trim())){startTouch();return true}
+    if(/^\/(?:小B通知|通知小B|小B通知触达|多渠道触达)(?:\s|$)/i.test(text.trim())){startTouch();return true}
     const target=reachAudienceTarget(text);
     const startsSelection=/^(?:\/人群圈选|\/小B圈选|(?:帮我|请|重新|再|新建一轮|新一轮)?\s*(?:圈选|筛选))/.test(text.trim());
     if(startsSelection){
@@ -8623,7 +8643,7 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
     const last=[...messages].reverse().find((m:any)=>m.bFlowId||m.card?.flowId||m.bPlanFlowId);const id=last?.bFlowId||last?.card?.flowId||(last as any)?.bPlanFlowId;const old=reachState.flows[id];
     if(old?.stage==='conditions'&&/^(确认|确认条件|确认查询|确认生成|好的|没问题|可以)[。！!\s]*$/.test(text.trim())){bQuery(id);return true}
     const active=old&&!['done','creating','cancelled'].includes(old.stage);
-    if(mode!=='执行模式'&&((active&&old.goal==='touch'&&!['conditions','query','preview'].includes(old.stage))||(active&&old.stage==='audience_done'&&/发送|推送|触达|多渠道内容/.test(text))||/多渠道触达|多渠道内容|(?:发送|推送|触达).*(?:小\s*[bB]|经纪人)|(?:小\s*[bB]|经纪人).*(?:发送|推送|触达)/.test(text))){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'通知小B仅在执行模式可用，请先切换到执行模式。'}]);return true}
+    if(mode!=='执行模式'&&((active&&old.goal==='touch'&&!['conditions','query','preview'].includes(old.stage))||(active&&old.stage==='audience_done'&&/发送|推送|触达|多渠道内容/.test(text))||/多渠道触达|多渠道内容|(?:发送|推送|触达).*(?:小\s*[bB]|经纪人)|(?:小\s*[bB]|经纪人).*(?:发送|推送|触达)/.test(text))){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'小B通知仅在执行模式可用，请先切换到执行模式。'}]);return true}
     if(active&&old.stage==='summary'&&/免打扰/.test(text)){
       setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'免打扰已在触达配置中确认。调整免打扰需发起新一轮触达。',bFlowId:id}]);
       return true;
@@ -8632,8 +8652,8 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
     if(active&&old.contentPack?.channels?.includes(bInAppChannel)&&/消息分类|通知类型/.test(text)){
       setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'站内信的消息分类已确认。调整分类请发起新一轮触达。',bFlowId:id}]);return true
     }
-    if(active&&old.contentPack&&(changeChannels||/文案|正文|标题|模板|素材|跳转|客服|发送人|城市|语音|播报|站内/.test(text)||/服务号.{0,8}(?:账号|账户).{0,6}(?:改为|改成|更换)|(?:更换|修改|调整).{0,6}服务号/.test(text))){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'本次触达城市、渠道及内容已确认，保持不变。频率、周期等推送参数可继续用自然语言修改；更换渠道或内容请发起新一轮多渠道触达。',bFlowId:id}]);return true}
-    if(active&&old.goal==='audience'&&['conditions','preview'].includes(old.stage)&&/调整|改为|改成|增加|排除|区域|板块|注册ID/.test(text)&&/付费|体验|注销|区域|板块|雁塔|未央|碑林|注册ID|DEMO-B-|圈选/.test(text)){const parsed=reachParse(text);const q={...old.query,issue:parsed.issue};if(/付费|体验|注销/.test(text))q.statuses=parsed.statuses;if(/雁塔|未央|碑林/.test(text))q.area=parsed.area;if(/高新|经开|南门/.test(text))q.block=parsed.block;if(/DEMO-B-/.test(text))q.ids=parsed.ids;bInvalidate(id);bSetDraft(id,{query:q,audience:null,configured:false,stage:'conditions'});bMessage(id,'conditions','');return true}
+    if(active&&old.contentPack&&(changeChannels||/文案|正文|标题|模板|素材|跳转|客服|发送人|城市|语音|播报|站内/.test(text)||/服务号.{0,8}(?:账号|账户).{0,6}(?:改为|改成|更换)|(?:更换|修改|调整).{0,6}服务号/.test(text))){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'本次触达城市、渠道及内容已确认，保持不变。频率、周期等推送参数可继续用自然语言修改；更换渠道或内容请发起新一轮小B通知。',bFlowId:id}]);return true}
+    if(active&&old.goal==='audience'&&['conditions','preview'].includes(old.stage)&&/调整|改为|改成|增加|排除|区域|区属|板块|注册ID/.test(text)&&/付费|充值|注册用户|体验|注销|城市|西安|南京|合肥|区域|区属|板块|雁塔|未央|碑林|注册ID|DEMO-B-|圈选|临期|到期|时间/.test(text)){const parsed=reachParse(text);const q={...old.query,issue:parsed.issue};if(/付费|充值|注册用户|体验|注销/.test(text))q.statuses=parsed.statuses;if(parsed.city!=='全部')q.city=parsed.city;if(/雁塔|未央|碑林/.test(text))q.area=parsed.area;if(/高新|经开|南门/.test(text))q.block=parsed.block;if(/DEMO-B-/.test(text))q.ids=parsed.ids;bInvalidate(id);bSetDraft(id,{query:q,audience:null,configured:false,stage:'conditions'});bMessage(id,'conditions','');return true}
     if(active&&['content','summary'].includes(old.stage)&&/推送|触达|发送|定时|立即|即时|每天|每日|每周|每星期|每月|每隔|周期|频率|时|点|间隔|城市|客服/i.test(text)){
       const requirements=bParseTouch(text,old.requirements);
       if(old.stage==='summary'){
@@ -9918,7 +9938,6 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
           }}
           activeBubbleId={activeBubbleId}
           onBubbleToggle={setActiveBubbleId}
-          notifyBAvailable={notifyBAvailable}
           locked={inputLocked || bConfigPending}
           lockPlaceholder={bConfigPending ? "请先完成触达配置" : undefined}
           pendingAction={pendingAction}
@@ -9926,7 +9945,7 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
       </div>
       )}
 
-      {notifyBAvailable&&bModal?.kind==='content'&&<BContentDialog key={bModal.flowId+'content'} flow={reachState.flows[bModal.flowId]} onClose={bCloseContent} onSave={bSaveContent}/>}
+      {bModal?.kind==='content'&&<BContentDialog key={bModal.flowId+'content'} flow={reachState.flows[bModal.flowId]} onClose={bCloseContent} onSave={bSaveContent}/>}
 
       {audienceMemberPreview&&<AudienceMemberDrawer key={audienceMemberPreview.memberId} members={audienceMemberPreview.members} memberId={audienceMemberPreview.memberId} onClose={()=>setAudienceMemberPreview(null)}/>}
 

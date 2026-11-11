@@ -1,7 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1130" height="1114" viewBox="0 0 1130 1114" role="img" aria-label="引用人群包后多渠道触达系统角色泳道图" style="font-family:PingFang SC,Microsoft YaHei,Arial,sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" width="1130" height="1114" viewBox="0 0 1130 1114" role="img" aria-label="引用人群包后小B通知系统角色泳道图" style="font-family:PingFang SC,Microsoft YaHei,Arial,sans-serif">
 <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M1 1L9 5L1 9" fill="none" stroke="#7d8798" stroke-width="1.1"/></marker></defs>
 <rect width="1130" height="1114" fill="white"/>
-<text x="32" y="35" font-size="21" font-weight="650" fill="#20324a">引用人群包后多渠道触达｜系统角色泳道</text>
+<text x="32" y="35" font-size="21" font-weight="650" fill="#20324a">引用人群包后小B通知｜系统角色泳道</text>
 <text x="32" y="59" font-size="12" fill="#8993a4">按列区分角色与系统，从上向下阅读；左侧为业务阶段。</text>
 <text x="64" y="116.0" text-anchor="middle" font-size="12" fill="#8993a4">阶段</text>
 <rect x="114" y="84" width="330" height="936" rx="5" fill="white" stroke="#dce1e9"/>
@@ -45,7 +45,7 @@
 <text x="444.0" y="320.0" text-anchor="middle" font-size="12" fill="#596273">不满足</text>
 <rect x="163.0" y="168.0" width="232" height="66" rx="5" fill="white" stroke="#596bb0" stroke-width="1"/>
 <text x="279.0" y="196.0" text-anchor="middle" font-size="14" fill="#374151">@有效人群包</text>
-<text x="279.0" y="216.0" text-anchor="middle" font-size="14" fill="#374151">在西安站发起通知</text>
+<text x="279.0" y="216.0" text-anchor="middle" font-size="14" fill="#374151">发起小B通知</text>
 <rect x="493.0" y="294.0" width="232" height="66" rx="5" fill="white" stroke="#8870b5" stroke-width="1"/>
 <text x="609.0" y="322.0" text-anchor="middle" font-size="14" fill="#374151">校验站点、模式与引用</text>
 <text x="609.0" y="342.0" text-anchor="middle" font-size="14" fill="#374151">解析本条发送安排</text>
