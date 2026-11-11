@@ -9,7 +9,7 @@
 <text x="279.0" y="116.0" text-anchor="middle" font-size="15" font-weight="600" fill="white">用户</text>
 <rect x="444" y="84" width="330" height="1062" rx="5" fill="white" stroke="#dce1e9"/>
 <path d="M449 84H769Q774 84 774 89V138H444V89Q444 84 449 84" fill="#8870b5"/>
-<text x="609.0" y="116.0" text-anchor="middle" font-size="15" font-weight="600" fill="white">当前城市管理员</text>
+<text x="609.0" y="116.0" text-anchor="middle" font-size="15" font-weight="600" fill="white">有启停权限的角色</text>
 <rect x="774" y="84" width="330" height="1062" rx="5" fill="white" stroke="#dce1e9"/>
 <path d="M779 84H1099Q1104 84 1104 89V138H774V89Q774 84 779 84" fill="#4c8562"/>
 <text x="939.0" y="116.0" text-anchor="middle" font-size="15" font-weight="600" fill="white">AI私域助手</text>
@@ -32,7 +32,7 @@
 <text x="609.0" y="384.0" text-anchor="middle" font-size="12" fill="#596273">任务列表</text>
 <path d="M279 486 L279 516 L609 516 L609 546" fill="none" stroke="#7d8798" stroke-width="1" marker-end="url(#arrow)"/>
 <rect x="408.0" y="495.0" width="72" height="20" rx="3" fill="white"/>
-<text x="444.0" y="510.0" text-anchor="middle" font-size="12" fill="#596273">管理员操作</text>
+<text x="444.0" y="510.0" text-anchor="middle" font-size="12" fill="#596273">启停操作</text>
 <path d="M609 612 L609 642 L939 642 L939 672" fill="none" stroke="#7d8798" stroke-width="1" marker-end="url(#arrow)"/>
 <rect x="744.0" y="621.0" width="60" height="20" rx="3" fill="white"/>
 <text x="774.0" y="636.0" text-anchor="middle" font-size="12" fill="#596273">确认操作</text>
@@ -49,19 +49,19 @@
 <text x="1269.0" y="196.0" text-anchor="middle" font-size="14" fill="#374151">注册已有规则</text>
 <text x="1269.0" y="216.0" text-anchor="middle" font-size="14" fill="#374151">提供名称、渠道与分类</text>
 <rect x="823.0" y="294.0" width="232" height="66" rx="5" fill="white" stroke="#4c8562" stroke-width="1"/>
-<text x="939.0" y="322.0" text-anchor="middle" font-size="14" fill="#374151">读取当前城市</text>
+<text x="939.0" y="322.0" text-anchor="middle" font-size="14" fill="#374151">读取全站状态</text>
 <text x="939.0" y="342.0" text-anchor="middle" font-size="14" fill="#374151">已注册任务及实际状态</text>
 <rect x="163.0" y="420.0" width="232" height="66" rx="5" fill="white" stroke="#596bb0" stroke-width="1"/>
 <text x="279.0" y="448.0" text-anchor="middle" font-size="14" fill="#374151">查看、搜索或筛选</text>
 <text x="279.0" y="468.0" text-anchor="middle" font-size="14" fill="#374151">普通成员仅查看</text>
 <rect x="493.0" y="546.0" width="232" height="66" rx="5" fill="white" stroke="#8870b5" stroke-width="1"/>
-<text x="609.0" y="574.0" text-anchor="middle" font-size="14" fill="#374151">管理员开启 / 关闭</text>
-<text x="609.0" y="594.0" text-anchor="middle" font-size="14" fill="#374151">关闭时确认城市与任务</text>
+<text x="609.0" y="574.0" text-anchor="middle" font-size="14" fill="#374151">授权用户开启 / 关闭</text>
+<text x="609.0" y="594.0" text-anchor="middle" font-size="14" fill="#374151">关闭时确认全站范围</text>
 <rect x="823.0" y="672.0" width="232" height="66" rx="5" fill="white" stroke="#4c8562" stroke-width="1"/>
-<text x="939.0" y="700.0" text-anchor="middle" font-size="14" fill="#374151">校验当前权限及城市</text>
+<text x="939.0" y="700.0" text-anchor="middle" font-size="14" fill="#374151">校验启停按钮权限</text>
 <text x="939.0" y="720.0" text-anchor="middle" font-size="14" fill="#374151">请求原业务系统启停</text>
 <rect x="1153.0" y="798.0" width="232" height="66" rx="5" fill="white" stroke="#617f99" stroke-width="1"/>
-<text x="1269.0" y="826.0" text-anchor="middle" font-size="14" fill="#374151">按当前城市应用开关</text>
+<text x="1269.0" y="826.0" text-anchor="middle" font-size="14" fill="#374151">按全站应用开关</text>
 <text x="1269.0" y="846.0" text-anchor="middle" font-size="14" fill="#374151">返回实际生效结果</text>
 <rect x="823.0" y="924.0" width="232" height="66" rx="5" fill="white" stroke="#4c8562" stroke-width="1"/>
 <text x="939.0" y="942.0" text-anchor="middle" font-size="14" fill="#374151">确认生效：更新状态</text>
@@ -70,6 +70,6 @@
 <rect x="1153.0" y="1050.0" width="232" height="66" rx="5" fill="white" stroke="#617f99" stroke-width="1"/>
 <text x="1269.0" y="1068.0" text-anchor="middle" font-size="14" fill="#374151">开启：处理后续事件</text>
 <text x="1269.0" y="1088.0" text-anchor="middle" font-size="14" fill="#374151">关闭：停止该规则</text>
-<text x="1269.0" y="1108.0" text-anchor="middle" font-size="14" fill="#374151">在当前城市新增触达</text>
-<text x="32" y="1176" font-size="12" fill="#8993a4">普通成员无启停入口；业务系统未确认生效时不虚报状态。开关不影响其他城市和规则，重新开启不补发关闭期间消息。</text>
+<text x="1269.0" y="1108.0" text-anchor="middle" font-size="14" fill="#374151">在全站新增触达</text>
+<text x="32" y="1176" font-size="12" fill="#8993a4">无按钮权限时仅查看；业务系统未确认生效时不虚报状态。每条任务的开关全站生效，重新开启不补发关闭期间消息。</text>
 </svg>
