@@ -8070,8 +8070,8 @@ function SentInAppWorkspace({access,onBack,onAccessChange}:any){
   setPending(null);
  };
  return <div className="au-page au-lean" data-testid="sent-in-app-workspace"><div className="au-shell">
-  <nav className="au-breadcrumb" aria-label="页面路径"><Bot size={14}/><span>AI私域助手</span><ChevronRight size={12}/><button type="button" onClick={onBack}>自动化任务</button><ChevronRight size={12}/><span>运营站内信</span></nav>
-  <header className="au-header"><div><h1>运营站内信</h1><div className="au-access-context"><span>有客App</span><i/><span>当前城市 <b>{access.city}</b></span>{!isAdmin&&<><i/><span>仅管理员可调整显示状态</span></>}</div></div></header>
+  <nav className="au-breadcrumb" aria-label="页面路径"><Bot size={14}/><span>AI私域助手</span><ChevronRight size={12}/><button type="button" onClick={onBack}>自动化任务</button><ChevronRight size={12}/><span>站内信管理</span></nav>
+  <header className="au-header"><div><h1>站内信管理</h1><div className="au-access-context"><span>有客App</span><i/><span>当前城市 <b>{access.city}</b></span>{!isAdmin&&<><i/><span>仅管理员可调整显示状态</span></>}</div></div></header>
   {notice&&<div className="au-notice" role={notice.error?'alert':'status'}>{notice.error?<AlertCircle size={15}/>:<CheckCircle2 size={15}/>}<span>{notice.text}</span><button aria-label="关闭提示" onClick={()=>setNotice(null)}><X size={15}/></button></div>}
   <section className="au-list-panel">
    <div className="au-toolbar inbox-toolbar"><div className="au-actions">
@@ -8086,7 +8086,7 @@ function SentInAppWorkspace({access,onBack,onAccessChange}:any){
      <td><span className={'au-status '+(record.hidden?'':'good')}><i/>{record.hidden?'已屏蔽':'显示中'}</span></td>
      {isAdmin&&<td><button type="button" className="inbox-action" onClick={()=>setPending({id:record.id,hidden:!record.hidden})}>{record.hidden?'恢复显示':'屏蔽'}</button></td>}
     </tr>)}</tbody>
-   </table>{!visible.length&&<div className="au-empty">{records.length?'没有匹配的站内信，请调整搜索或筛选条件。':'当前城市暂无运营站内信。'}</div>}</div>
+   </table>{!visible.length&&<div className="au-empty">{records.length?'没有匹配的站内信，请调整搜索或筛选条件。':'当前城市暂无站内信发送记录。'}</div>}</div>
   </section>
   <footer className="au-prototype-footer"><span>原型演示</span>运营发送批次和显示状态为模拟数据。</footer>
  </div>
@@ -8120,7 +8120,7 @@ function AutomationWorkspace(){
  <nav className="au-breadcrumb"><Bot size={14}/><span>AI私域助手</span><ChevronRight size={12}/><span>自动化任务</span></nav>
  <header className="au-header"><div><h1>自动化任务</h1><div className="au-access-context"><span>全站生效</span><i/><span>{canToggle?'可启停':'仅查看'}</span></div></div></header>
  {notice&&<div className="au-notice" role="status"><CheckCircle2 size={15}/>{notice}<button aria-label="关闭提示" onClick={()=>setNotice('')}><X size={15}/></button></div>}
- <div className="au-category-bar"><h2 className="au-category-heading" data-testid="automation-category">消息通知</h2><ReachButton onClick={()=>setShowSentInApp(true)}><Mail size={15}/>运营站内信</ReachButton></div>
+ <div className="au-category-bar"><h2 className="au-category-heading" data-testid="automation-category">消息通知</h2><ReachButton onClick={()=>setShowSentInApp(true)}><Mail size={15}/>站内信管理</ReachButton></div>
  <section className="au-list-panel"><div className="au-toolbar"><div className="au-tabs">{['全部','已开启','已关闭'].map(f=><button className={f===filter?'active':''} onClick={()=>setFilter(f)} key={f}>{f}<span>{plans.filter((p:any)=>f==='全部'||(f==='已开启')===p.enabled).length}</span></button>)}</div><div className="au-actions"><label className="au-search"><Search size={16}/><input placeholder="搜索任务" aria-label="搜索自动化任务" value={query} onChange={e=>setQuery(e.target.value)}/></label></div></div>
  <div className="au-table-frame"><table className="au-table au-plan-table"><thead><tr><th>任务名称</th><th>触达渠道</th><th>状态</th></tr></thead><tbody>{visiblePlans.map((p:any)=><tr key={p.id}><td><span className="au-task-name">{p.name}</span></td><td><div className="au-chips">{p.channels.map((channel:string)=>{
   const appName=autoAppChannels.includes(notificationChannelName(channel))?(p.channelApps?.[channel]||'应用待确认'):undefined;
@@ -8142,18 +8142,39 @@ function reachAudienceTarget(text:string):'b'|'c'|null{
  return target?(/小\s*b|经纪人|分销中介|中介/i.test(target)?'b':'c'):null;
 }
 function reachParse(text:string){
- const statuses=/已付费|已充值/.test(text)?['注册已付费']:/未付费|未充值/.test(text)?['注册未付费']:['注册用户'];
+ const statuses=['注册用户'];
  const ids=(text.match(/DEMO-B-\d+/gi)||[]).join(',');
- const pending=/临期|到期|时间范围|注册(?:日期|时间)|付费时间|充值时间|入驻时间|近[一二三四五六七八九十两\d]+|过去|上周|上月|昨天|\d{4}[-年]/.test(text);
- const issue=pending?'时间范围和临期口径待业务补充。请先使用已明确的条件。':/CDP|记忆|活跃|带看|成交|预算|体验客户|注销经纪人/i.test(text)?'请从已提供的小B圈选条件中选择。':'';
+ const balanceMatch=text.match(/(?:付费有客币余额数?|充值实付余额|实付余额)\s*(大于等于|小于等于|不少于|不超过|大于|小于|等于|为|>=|<=|≥|≤|>|<|=)?\s*(\d+(?:\.\d+)?)/);
+ const operators:Record<string,string>={大于等于:'≥',不少于:'≥','>=':'≥',小于等于:'≤',不超过:'≤','<=':'≤',大于:'>',小于:'<',等于:'=',为:'='};
+ const operator=balanceMatch?.[1]||'=';
+ const balance=balanceMatch?{operator:operators[operator]||operator,value:Number(balanceMatch[2])}:null;
+ const expiry=/赠送/.test(text)&&/到期|临期/.test(text);
+ const expiryDays=expiry?Number(text.match(/(\d+)\s*[天日](?:之)?内/)?.[1]||0):0;
+ const unsupportedTime=/时间范围|注册(?:日期|时间)|付费时间|充值时间|入驻时间|过去|上周|上月|昨天|\d{4}[-年]/.test(text);
+ let issue='';
+ if(/余额|已付费|未付费|已充值|未充值/.test(text)&&!balance)issue='请明确付费有客币余额数的筛选条件，例如大于 0 或等于 0。';
+ else if(/到期|临期/.test(text)&&!expiryDays)issue='请说明赠送币的到期范围，例如未来 7 天内。';
+ else if(unsupportedTime||/CDP|记忆|活跃|带看|成交|预算|体验客户|注销经纪人/i.test(text))issue='请从已提供的小B圈选条件中选择。';
  const city=['西安','南京','合肥','苏州','无锡','芜湖'].find(city=>text.includes(city))||'全部';
- return {...bAudienceSource,city,statuses,area:['雁塔区','未央区','碑林区'].find(a=>text.includes(a.slice(0,2)))||'全部',block:['高新','经开','南门'].find(a=>text.includes(a))||'全部',ids,issue,cycle:/每天更新|每日更新|每天刷新|每日刷新/.test(text)?'day':'once'};
+ return {...bAudienceSource,city,statuses,balance,expiryDays,area:['雁塔区','未央区','碑林区'].find(a=>text.includes(a.slice(0,2)))||'全部',block:['高新','经开','南门'].find(a=>text.includes(a))||'全部',ids,issue,cycle:/每天更新|每日更新|每天刷新|每日刷新/.test(text)?'day':'once'};
 }
 function reachFilter(q:any){
  if(q.audienceType!=='b'||q.sourceChain!==bAudienceSource.sourceChain)throw new Error('小B查询来源不匹配');
  const ids=q.ids.split(/[\s,，;；]+/).filter(Boolean);
+ const compare:Record<string,(actual:number,expected:number)=>boolean>={
+  '=':(a,b)=>a===b,'>':(a,b)=>a>b,'<':(a,b)=>a<b,'≥':(a,b)=>a>=b,'≤':(a,b)=>a<=b,
+ };
+ // The fixed clock keeps the preview reproducible with the prototype's sample dates.
+ const demoNow=Date.parse('2026-11-13T10:00:00+08:00');
+ const matchesExpiry=(value?:string)=>{
+  if(!q.expiryDays)return true;
+  if(!value)return false;
+  const time=Date.parse(value.replace(' ','T')+'+08:00');
+  return time>=demoNow&&time<=demoNow+q.expiryDays*86400000;
+ };
  return reachPeople.filter(p=>(q.city==='全部'||p.city===q.city)&&
   (q.statuses.includes(p.status)||(q.statuses.includes('注册用户')&&['注册已付费','注册未付费'].includes(p.status)))&&
+  (!q.balance||(typeof p.paidBalance==='number'&&compare[q.balance.operator]?.(p.paidBalance,q.balance.value)))&&matchesExpiry(p.giftExpiry)&&
   (q.area==='全部'||p.area===q.area)&&(q.block==='全部'||p.block===q.block)&&(!ids.length||ids.includes(p.id)));
 }
 function reachQueryError(q:any){if(q.audienceType!=='b'||q.sourceChain!==bAudienceSource.sourceChain)return '小B查询来源不匹配，请重新确认圈选条件';if(q.issue)return q.issue;if(q.ids){const unknown=q.ids.split(/[\s,，;；]+/).filter(Boolean).filter(id=>!reachPeople.some(p=>p.id===id));if(unknown.length)return '未匹配经纪人注册ID：'+unknown.join('、');}return '';}
@@ -8161,7 +8182,16 @@ function audienceConditionsText(inclusions:string[],exclusions:string[]=[],optio
  return ['第一步：条件解析','已完成条件识别，请确认解析条件。','','✅ 纳入条件：',...inclusions.map((v,i)=>`${i+1}. ${v}`),'','🚫 排除条件（排除集合内部按“或”处理）：',...(exclusions.length?exclusions.map((v,i)=>`${i+1}. ${v}`):['本次未指定']),...(options.issue?['','暂不可执行：'+options.issue]:[]),'','请输入“确认”继续流程，或描述需要变更的条件'].join('\n');
 }
 const audiencePreviewText='第二步：预览数据与更新频率\n请确认预估人数、样本和更新频率。';
-function reachConditionsText(d:any,notice:string){const q=d.query;return audienceConditionsText(['入驻城市：'+q.city,'圈选人群：'+q.statuses.join(' 或 '),...(q.area!=='全部'?['主营区属：'+q.area]:[]),...(q.block!=='全部'?['主营板块：'+q.block]:[]),...(q.ids?['经纪人注册ID：'+q.ids+'（与其他纳入条件取交集）']:[])],q.exclusions||[],{issue:q.issue||notice});}
+function reachConditionLabels(q:any){
+ return [
+  '入驻城市：'+q.city,'圈选人群：'+q.statuses.join(' 或 '),
+  ...(q.balance?['付费有客币余额数：'+q.balance.operator+' '+q.balance.value+' 有客币']:[]),
+  ...(q.expiryDays?['最近赠送币到期时间：未来 '+q.expiryDays+' 天内']:[]),
+  ...(q.area!=='全部'?['主营区属：'+q.area]:[]),...(q.block!=='全部'?['主营板块：'+q.block]:[]),
+  ...(q.ids?['经纪人注册ID：'+q.ids]:[]),
+ ];
+}
+function reachConditionsText(d:any,notice:string){const q=d.query;return audienceConditionsText(reachConditionLabels(q),q.exclusions||[],{issue:q.issue||notice});}
 
 // 人群圈选扩展小B与多渠道内容、触达：有限规则的本地演示，真实编排、渠道及推送接口待接入。
 const bInAppChannel='有客App站内信';
@@ -8525,8 +8555,8 @@ function AudienceMemberDrawer({members,memberId,onClose}:any){
  const tabs=['记忆','档案','行为'];
  const info=member.bInfo;
  const bFields=info?[
-  ['充值实付余额',typeof info.paidBalance==='number'?`${info.paidBalance} 有客币`:null],
-  ['最近赠送有客币到期时间',info.giftExpiry],
+  ['付费有客币余额数',typeof info.paidBalance==='number'?`${info.paidBalance} 有客币`:null],
+  ['最近赠送币到期时间',info.giftExpiry],
   ['经纪人注册ID',info.registrationId],
   ['入驻城市',info.city],
   ['主营区属',info.area],
@@ -8542,7 +8572,7 @@ function AudienceMemberDrawer({members,memberId,onClose}:any){
 function AudiencePackageDetail({audienceId,displayName}:any){
  const state=useReach();const [memberId,setMemberId]=useState<string|null>(null);const stored=audienceId?state.audiences.find((a:any)=>a.id===audienceId):null;const resource=initialAudienceResources.find(a=>a.id===audienceId)||(!audienceId?initialAudienceResources[0]:null);
  if(!stored&&!resource)return <div className="p-6 text-sm text-zinc-500">未找到该人群包</div>;
- const q=stored?.query;const members=stored?stored.people.map((p:any)=>audienceMember(p.name,p)):['橙子','家和万事兴','贝壳张建','桃燃','用户7892'].map(name=>audienceMember(name));const conditions=stored?['入驻城市：'+q.city,'圈选人群：'+q.statuses.join(' 或 '),...(q.area!=='全部'?['主营区属：'+q.area]:[]),...(q.block!=='全部'?['主营板块：'+q.block]:[]),...(q.ids?['注册ID：'+q.ids]:[]),...(q.start||q.end?['注册日期：'+(q.start||'不限')+' 至 '+(q.end||'不限')]:[])].join(' / '):resource.configSnapshot.join(' / ');
+ const q=stored?.query;const members=stored?stored.people.map((p:any)=>audienceMember(p.name,p)):['橙子','家和万事兴','贝壳张建','桃燃','用户7892'].map(name=>audienceMember(name));const conditions=stored?[...reachConditionLabels(q),...(q.start||q.end?['注册日期：'+(q.start||'不限')+' 至 '+(q.end||'不限')]:[])].join(' / '):resource.configSnapshot.join(' / ');
  const name=displayName||stored?.name||resource.name;const count=stored?.count??resource.audienceCount;const cycle=stored?.cycle==='day'?'每日更新':stored?.cycle==='hour'?'每小时更新':'一次性';
  return <div className="w-full h-full bg-white dark:bg-zinc-950 flex flex-col relative overflow-hidden" data-testid="audience-package-detail"><div className="flex items-start gap-3 border-b border-zinc-200 dark:border-zinc-800 p-4 shrink-0"><div className="w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0"><Users size={20}/></div><div className="min-w-0"><h2 className="text-xl font-bold text-zinc-800 dark:text-zinc-200 break-words">{name}</h2><div className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-zinc-500 mt-1"><span>预估人数: {count.toLocaleString()} 人</span><span>圈选条件: {conditions}</span><span>更新周期: {cycle}</span><span>创建人: {stored?'当前运营（演示）':'张三'}</span><span>创建时间: {stored?.created||resource.createdAt}</span></div></div></div>
  <div className="flex-1 overflow-auto p-4"><div className="border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-x-auto"><table className="w-full text-sm text-left"><thead className="bg-zinc-50 dark:bg-zinc-900/50 text-zinc-500 border-b border-zinc-200 dark:border-zinc-800"><tr><th className="px-4 py-3 font-medium">用户昵称</th><th className="px-4 py-3 font-medium">用户ID</th><th className="px-4 py-3 font-medium">操作</th></tr></thead><tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">{members.map((member:any)=><tr key={member.id||member.name} className="hover:bg-zinc-50 dark:hover:bg-zinc-900/20"><td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">{member.name}</td><td className="px-4 py-3 text-zinc-500 font-mono">{member.id||'—'}</td><td className="px-4 py-3"><button className="text-indigo-600 dark:text-indigo-400 hover:underline" onClick={()=>setMemberId(member.id||member.name)}>用户详情</button></td></tr>)}</tbody></table>{!members.length&&<div className="p-10 text-center text-sm text-zinc-500">暂无用户</div>}</div></div>
@@ -8663,7 +8693,7 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
       if(/^\/(?:人群圈选|小B圈选)\s*$/.test(request.trim())){
         bCancelPending();
         bTargetRequest.current=request;
-        setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'请描述需要圈选的条件，例如入驻城市、充值情况或客户需求。'}]);
+        setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'请描述需要圈选的条件，例如入驻城市、付费有客币余额或客户需求。'}]);
         return true;
       }
       const target=reachAudienceTarget(request);
@@ -8695,7 +8725,17 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
       setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'站内信的消息分类已确认。调整分类请发起新一轮触达。',bFlowId:id}]);return true
     }
     if(active&&old.contentPack&&(changeChannels||/文案|正文|标题|模板|素材|跳转|客服|发送人|城市|语音|播报|站内/.test(text)||/服务号.{0,8}(?:账号|账户).{0,6}(?:改为|改成|更换)|(?:更换|修改|调整).{0,6}服务号/.test(text))){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'本次触达城市、渠道及内容已确认，保持不变。频率、周期等推送参数可继续用自然语言修改；更换渠道或内容请发起新一轮小B通知。',bFlowId:id}]);return true}
-    if(active&&old.goal==='audience'&&['conditions','preview'].includes(old.stage)&&/调整|改为|改成|增加|排除|区域|区属|板块|注册ID/.test(text)&&/付费|充值|注册用户|体验|注销|城市|西安|南京|合肥|区域|区属|板块|雁塔|未央|碑林|注册ID|DEMO-B-|圈选|临期|到期|时间/.test(text)){const parsed=reachParse(text);const q={...old.query,issue:parsed.issue};if(/付费|充值|注册用户|体验|注销/.test(text))q.statuses=parsed.statuses;if(parsed.city!=='全部')q.city=parsed.city;if(/雁塔|未央|碑林/.test(text))q.area=parsed.area;if(/高新|经开|南门/.test(text))q.block=parsed.block;if(/DEMO-B-/.test(text))q.ids=parsed.ids;bInvalidate(id);bSetDraft(id,{query:q,audience:null,configured:false,stage:'conditions'});bMessage(id,'conditions','');return true}
+    if(active&&old.goal==='audience'&&['conditions','preview'].includes(old.stage)&&/调整|改为|改成|增加|排除|区域|区属|板块|注册ID|余额|到期/.test(text)&&/余额|付费|充值|注册用户|体验|注销|城市|西安|南京|合肥|区域|区属|板块|雁塔|未央|碑林|注册ID|DEMO-B-|圈选|临期|到期|时间/.test(text)&&!/^(?:\/人群圈选\s*)?(?:圈选|筛选|找出)/.test(text)){
+      const parsed=reachParse(text);
+      const q={...old.query,issue:parsed.issue};
+      if(/余额|付费|充值/.test(text)){q.balance=parsed.balance;q.statuses=parsed.statuses;}
+      if(/赠送|到期|临期/.test(text))q.expiryDays=parsed.expiryDays;
+      if(parsed.city!=='全部')q.city=parsed.city;
+      if(/雁塔|未央|碑林/.test(text))q.area=parsed.area;
+      if(/高新|经开|南门/.test(text))q.block=parsed.block;
+      if(/DEMO-B-/.test(text))q.ids=parsed.ids;
+      bInvalidate(id);bSetDraft(id,{query:q,audience:null,configured:false,stage:'conditions'});bMessage(id,'conditions','');return true;
+    }
     if(active&&['content','summary'].includes(old.stage)&&/推送|触达|发送|定时|立即|即时|每天|每日|每周|每星期|每月|每隔|周期|频率|时|点|城市|客服/i.test(text)){
       const requirements=bParseTouch(text,old.requirements);
       if(old.stage==='summary'){
@@ -8713,7 +8753,7 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
 
   useEffect(()=>{
     const syncReachResources=()=>{
-      setAudienceResources(prev=>[...reachState.audiences.map((a:any)=>makeAudienceResource({id:a.id,name:a.name,tabName:'[人群包]'+a.id},{audienceCount:a.count,createdAt:a.created,updatedAt:a.created,updatedOrder:Number(a.id.split('-').pop()),configSnapshot:['对象：小B','城市：'+a.query.city,'经纪人状态：'+a.query.statuses.join(' 或 '),'区域：'+a.query.area,'板块：'+a.query.block],relatedTaskCount:reachState.tasks.filter(t=>t.audience.id===a.id).length,type:'AI人群包'})),...prev.filter(a=>!a.id.startsWith('DEMO-A-'))]);
+      setAudienceResources(prev=>[...reachState.audiences.map((a:any)=>makeAudienceResource({id:a.id,name:a.name,tabName:'[人群包]'+a.id},{audienceCount:a.count,createdAt:a.created,updatedAt:a.created,updatedOrder:Number(a.id.split('-').pop()),configSnapshot:reachConditionLabels(a.query),relatedTaskCount:reachState.tasks.filter(t=>t.audience.id===a.id).length,type:'AI人群包'})),...prev.filter(a=>!a.id.startsWith('DEMO-A-'))]);
       setPushTaskResources(prev=>[...reachState.tasks.filter((t:any)=>!t.pushBinding&&t.source!=='SOP').map((t:any)=>makePushTaskResource({id:t.id,name:t.name,tabName:'[小B任务]'+t.id},{status:t.status,pushType:t.channels.map(notificationChannelName).join('、'),relatedAudienceName:reachState.audiences.find(a=>a.id===t.audience.id)?.name||t.audience.name,estimatedReach:t.audience.count,pushTime:t.sendMode==='周期发送'?bScheduleLabel(t):t.sendMode==='定时发送'?t.sendTime.replace('T',' '):t.sendMode,createdAt:t.created,updatedOrder:Number(t.id.split('-').pop())})),...prev.filter(t=>!t.id.startsWith('DEMO-T-')&&!t.id.startsWith('DEMO-INAPP-')&&!reachState.tasks.some((x:any)=>x.id===t.id&&(x.pushBinding||x.source==='SOP')))]);
     };
     syncReachResources();window.addEventListener('b-reach-change',syncReachResources);return()=>window.removeEventListener('b-reach-change',syncReachResources);
