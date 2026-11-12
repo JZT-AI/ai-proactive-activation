@@ -7941,12 +7941,12 @@ function useReach(){const [,refresh]=useState(0);useEffect(()=>{const f=()=>refr
 const reachChannels=['App消息流','App Push','B端企微','服务号'];
 const inAppMessageCategories=['客户跟进提醒','房源维护通知','有客币提醒','审核通知','平台公告'];
 const reachPeople=[
- {id:'DEMO-B-001',name:'张顾问',city:'西安',status:'注册已付费',area:'雁塔区',block:'高新',date:'2026-10-18'},
- {id:'DEMO-B-002',name:'李顾问',city:'西安',status:'注册已付费',area:'未央区',block:'经开',date:'2026-10-22'},
- {id:'DEMO-B-003',name:'王顾问',city:'西安',status:'注册未付费',area:'雁塔区',block:'高新',date:'2026-10-25'},
+ {id:'DEMO-B-001',name:'张顾问',city:'西安',status:'注册已付费',area:'雁塔区',block:'高新',date:'2026-10-18',paidBalance:120,giftExpiry:'2026-11-18 18:00'},
+ {id:'DEMO-B-002',name:'李顾问',city:'西安',status:'注册已付费',area:'未央区',block:'经开',date:'2026-10-22',paidBalance:50},
+ {id:'DEMO-B-003',name:'王顾问',city:'西安',status:'注册未付费',area:'雁塔区',block:'高新',date:'2026-10-25',paidBalance:0,giftExpiry:'2026-11-25 18:00'},
  {id:'DEMO-B-004',name:'陈顾问',city:'西安',status:'体验客户',area:'碑林区',block:'南门',date:'2026-10-28'},
  {id:'DEMO-B-005',name:'赵顾问',city:'西安',status:'注销经纪人',area:'雁塔区',block:'高新',date:'2026-09-01'},
- {id:'DEMO-B-006',name:'刘顾问',city:'西安',status:'注册已付费',area:'雁塔区',block:'高新',date:'2026-10-30'}
+ {id:'DEMO-B-006',name:'刘顾问',city:'西安',status:'注册已付费',area:'雁塔区',block:'高新',date:'2026-10-30',paidBalance:30}
 ];
 function ReachButton({children,onClick,primary=false,disabled=false,...rest}:any){return <button type="button" onClick={onClick} disabled={disabled} className={'reach-btn '+(primary?'primary':'')} {...rest}>{children}</button>}
 function ReachField({label,children,hint}:any){const id=React.useId();const control=React.isValidElement(children)?React.cloneElement(children as any,{id,'aria-label':label}):children;return <label className="reach-field" htmlFor={id}><span>{label}</span>{control}{hint&&<small>{hint}</small>}</label>}
@@ -8587,13 +8587,30 @@ function canonicalAudienceRoute(route:string){return route==='[AI] 合肥100w学
 // Simulated values for optional header information; not a production report contract.
 function audienceMember(name:string,person?:any){
  if(!person)return {id:audiencePreviewData[name]?.id||'',name,profile:audiencePreviewData[name]?.profile||[],source:'customer'};
- const recharge=person.status==='注册已付费'?'已充值有客币':person.status==='注册未付费'?'未充值有客币':'';
- return {id:person.userId||person.id.replace(/^DEMO-B-/,'DEMO-U-'),name,profile:[],source:'operations',bInfo:{recharge,registrationId:person.id,city:person.city,area:person.area,block:person.block}};
+ const sample=reachPeople.find(row=>row.id===person.id);
+ return {
+  id:person.userId||person.id.replace(/^DEMO-B-/,'DEMO-U-'),name,profile:[],source:'operations',
+  bInfo:{
+   paidBalance:person.paidBalance??sample?.paidBalance,
+   giftExpiry:person.giftExpiry??sample?.giftExpiry,
+   registrationId:person.id,city:person.city,area:person.area,block:person.block,
+  },
+ };
 }
 function AudienceMemberDrawer({members,memberId,onClose}:any){
  const [index,setIndex]=useState(()=>Math.max(0,members.findIndex((m:any)=>(m.id||m.name)===memberId)));const [tab,setTab]=useState('记忆');const closeRef=useRef(onClose);closeRef.current=onClose;
  useEffect(()=>{const handle=(e:KeyboardEvent)=>{if(e.key==='Escape')closeRef.current()};window.addEventListener('keydown',handle);return()=>window.removeEventListener('keydown',handle)},[]);
- const member=members[index];if(!member)return null;const tabs=['记忆','档案','行为'];const bFields=member.bInfo?[['充值情况',member.bInfo.recharge],['经纪人注册ID',member.bInfo.registrationId],['入驻城市',member.bInfo.city],['主营区属',member.bInfo.area],['主营板块',member.bInfo.block]].filter(([,value])=>!!value):[];
+ const member=members[index];if(!member)return null;
+ const tabs=['记忆','档案','行为'];
+ const info=member.bInfo;
+ const bFields=info?[
+  ['充值实付余额',typeof info.paidBalance==='number'?`${info.paidBalance} 有客币`:null],
+  ['最近赠送有客币到期时间',info.giftExpiry],
+  ['经纪人注册ID',info.registrationId],
+  ['入驻城市',info.city],
+  ['主营区属',info.area],
+  ['主营板块',info.block],
+ ].filter(([,value])=>!!value):[];
  return <div className="absolute inset-0 z-[80] flex justify-end" data-testid="audience-member-overlay"><button className="absolute inset-0 bg-black/40" aria-label="关闭用户详情遮罩" onClick={onClose}/><aside role="dialog" aria-modal="true" aria-label="用户详情" className="relative w-full max-w-[380px] h-full bg-white dark:bg-zinc-900 border-l border-zinc-200 dark:border-zinc-800 shadow-xl flex flex-col">
  <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between gap-2"><h3 className="font-medium text-zinc-900 dark:text-zinc-100">用户详情</h3><div className="flex items-center gap-1"><button title="上一位用户" aria-label="上一位用户" disabled={index===0} onClick={()=>setIndex(i=>i-1)} className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30"><ChevronLeft size={16}/></button><span className="text-xs text-zinc-500">{index+1} / {members.length}</span><button title="下一位用户" aria-label="下一位用户" disabled={index===members.length-1} onClick={()=>setIndex(i=>i+1)} className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30"><ChevronRight size={16}/></button><button aria-label="关闭用户详情" onClick={onClose} className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500"><X size={16}/></button></div></div>
  <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4"><div className="flex items-center gap-3"><div className="w-11 h-11 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center font-semibold text-indigo-600 dark:text-indigo-300">{member.name.slice(0,1)}</div><div className="min-w-0"><div className="font-bold text-lg text-zinc-900 dark:text-zinc-100 break-words">{member.name}</div><div className="text-xs text-zinc-500 break-all">用户ID：{member.id||'—'}</div></div></div>
