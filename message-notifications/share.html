@@ -8228,11 +8228,12 @@ function reachAudienceTarget(text:string):'b'|'c'|null{
  const matches=[...clause.matchAll(names)];const target=direct?.[1]||matches.at(-1)?.[0];
  return target?(/小\s*b|经纪人|分销中介|中介/i.test(target)?'b':'c'):null;
 }
+const giftBalanceCondition=/赠送(?:有客币|币)?(?:可用)?余额/;
+const giftBalanceQueryHint='请改用付费有客币可用余额或最近赠送币到期时间圈选。';
 function reachParse(text:string){
  const statuses=['注册用户'];
  const ids=(text.match(/DEMO-B-\d+/gi)||[]).join(',');
  const paidMatch=text.match(/(?:付费有客币(?:可用)?余额数?|充值实付余额|实付余额)\s*(大于等于|小于等于|不少于|不超过|大于|小于|等于|为|>=|<=|≥|≤|>|<|=)?\s*(\d+(?:\.\d+)?)/);
- const giftMatch=text.match(/赠送有客币(?:可用)?余额数?\s*(大于等于|小于等于|不少于|不超过|大于|小于|等于|为|>=|<=|≥|≤|>|<|=)?\s*(\d+(?:\.\d+)?)/);
  const operators:Record<string,string>={大于等于:'≥',不少于:'≥','>=':'≥',小于等于:'≤',不超过:'≤','<=':'≤',大于:'>',小于:'<',等于:'=',为:'='};
  const parseBalance=(match:RegExpMatchArray|null)=>{
   if(!match)return null;
@@ -8241,17 +8242,16 @@ function reachParse(text:string){
  };
  const legacyPaid=text.match(/(?:注册)?(已付费|未付费)\s*(?:的\s*)?(?:小\s*b|经纪人)(?=$|[，。；\s])/i)?.[1];
  const balance=parseBalance(paidMatch)||(legacyPaid?{operator:legacyPaid==='已付费'?'>':'=',value:0}:null);
- const giftBalance=parseBalance(giftMatch);
  const expiry=/赠送/.test(text)&&/到期|临期/.test(text);
  const expiryDays=expiry?Number(text.match(/(\d+)\s*[天日](?:之)?内/)?.[1]||0):0;
  const unsupportedTime=/时间范围|注册(?:日期|时间)|付费时间|充值时间|入驻时间|过去|上周|上月|昨天|\d{4}[-年]/.test(text);
  let issue='';
- if(/赠送有客币(?:可用)?余额/.test(text)&&!giftBalance)issue='请明确赠送有客币可用余额的筛选条件，例如大于 0 或等于 0。';
- else if((/付费有客币(?:可用)?余额|实付余额|已付费|未付费|已充值|未充值/.test(text)||(/余额/.test(text)&&!giftBalance))&&!balance)issue='请明确付费有客币可用余额的筛选条件，例如大于 0 或等于 0。';
+ if(giftBalanceCondition.test(text))issue=giftBalanceQueryHint;
+ else if(/余额|已付费|未付费|已充值|未充值/.test(text)&&!balance)issue='请明确付费有客币可用余额的筛选条件，例如大于 0 或等于 0。';
  else if(/到期|临期/.test(text)&&!expiryDays)issue='请说明赠送币的到期范围，例如未来 7 天内。';
  else if(unsupportedTime||/CDP|记忆|活跃|带看|成交|预算|体验客户|注销经纪人/i.test(text))issue='请从已提供的小B圈选条件中选择。';
  const city=['西安','南京','合肥','苏州','无锡','芜湖'].find(city=>text.includes(city))||'全部';
- return {...bAudienceSource,city,statuses,balance,giftBalance,expiryDays,area:['雁塔区','未央区','碑林区'].find(a=>text.includes(a.slice(0,2)))||'全部',block:['高新','经开','南门'].find(a=>text.includes(a))||'全部',ids,issue,cycle:/每天更新|每日更新|每天刷新|每日刷新/.test(text)?'day':'once'};
+ return {...bAudienceSource,city,statuses,balance,expiryDays,area:['雁塔区','未央区','碑林区'].find(a=>text.includes(a.slice(0,2)))||'全部',block:['高新','经开','南门'].find(a=>text.includes(a))||'全部',ids,issue,cycle:/每天更新|每日更新|每天刷新|每日刷新/.test(text)?'day':'once'};
 }
 function reachFilter(q:any){
  if(q.audienceType!=='b'||q.sourceChain!==bAudienceSource.sourceChain)throw new Error('小B查询来源不匹配');
@@ -8270,10 +8270,10 @@ function reachFilter(q:any){
  };
  return reachPeople.filter(p=>(q.city==='全部'||p.city===q.city)&&
   (q.statuses.includes(p.status)||(q.statuses.includes('注册用户')&&['注册已付费','注册未付费'].includes(p.status)))&&
-  matchesBalance(p.paidBalance,q.balance)&&matchesBalance(p.giftBalance,q.giftBalance)&&matchesExpiry(p.giftExpiry)&&
+  matchesBalance(p.paidBalance,q.balance)&&matchesExpiry(p.giftExpiry)&&
   (q.area==='全部'||p.area===q.area)&&(q.block==='全部'||p.block===q.block)&&(!ids.length||ids.includes(p.id)));
 }
-function reachQueryError(q:any){if(q.audienceType!=='b'||q.sourceChain!==bAudienceSource.sourceChain)return '小B查询来源不匹配，请重新确认圈选条件';if(q.issue)return q.issue;if(q.ids){const unknown=q.ids.split(/[\s,，;；]+/).filter(Boolean).filter(id=>!reachPeople.some(p=>p.id===id));if(unknown.length)return '未匹配经纪人注册ID：'+unknown.join('、');}return '';}
+function reachQueryError(q:any){if(q.audienceType!=='b'||q.sourceChain!==bAudienceSource.sourceChain)return '小B查询来源不匹配，请重新确认圈选条件';if(q.issue)return q.issue;if(q.giftBalance)return giftBalanceQueryHint;if(q.ids){const unknown=q.ids.split(/[\s,，;；]+/).filter(Boolean).filter(id=>!reachPeople.some(p=>p.id===id));if(unknown.length)return '未匹配经纪人注册ID：'+unknown.join('、');}return '';}
 function audienceConditionsText(inclusions:string[],exclusions:string[]=[]){
  return [
   '第一步：条件解析','已完成条件识别，请确认解析条件。','','✅ 纳入条件：',
@@ -8287,7 +8287,6 @@ function reachConditionLabels(q:any){
  return [
   '入驻城市：'+q.city,'圈选人群：'+q.statuses.join(' 或 '),
   ...(q.balance?['付费有客币可用余额：'+q.balance.operator+' '+q.balance.value+' 有客币']:[]),
-  ...(q.giftBalance?['赠送有客币可用余额：'+q.giftBalance.operator+' '+q.giftBalance.value+' 有客币']:[]),
   ...(q.expiryDays?['最近赠送币到期时间：未来 '+q.expiryDays+' 天内']:[]),
   ...(q.area!=='全部'?['主营区属：'+q.area]:[]),...(q.block!=='全部'?['主营板块：'+q.block]:[]),
   ...(q.ids?['经纪人注册ID：'+q.ids]:[]),
@@ -8856,10 +8855,9 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
     if(active&&old.goal==='audience'&&['conditions','preview'].includes(old.stage)&&/调整|改为|改成|增加|排除|区域|区属|板块|注册ID|余额|到期/.test(text)&&/余额|付费|充值|注册用户|体验|注销|城市|西安|南京|合肥|区域|区属|板块|雁塔|未央|碑林|注册ID|DEMO-B-|圈选|临期|到期|时间/.test(text)&&!/^(?:\/人群圈选\s*)?(?:圈选|筛选|找出)/.test(text)){
       const parsed=reachParse(text);
       const q={...old.query,issue:parsed.issue};
-      const giftBalanceMentioned=/赠送有客币(?:可用)?余额/.test(text);
-      if(giftBalanceMentioned)q.giftBalance=parsed.giftBalance;
-      if(/付费|充值|实付/.test(text)||(!giftBalanceMentioned&&/余额/.test(text))){q.balance=parsed.balance;q.statuses=parsed.statuses;}
+      if(!giftBalanceCondition.test(text)&&/余额|付费|充值|实付/.test(text)){q.balance=parsed.balance;q.statuses=parsed.statuses;}
       if(/到期|临期/.test(text))q.expiryDays=parsed.expiryDays;
+      if(!parsed.issue&&(parsed.balance||parsed.expiryDays))delete q.giftBalance;
       if(parsed.city!=='全部')q.city=parsed.city;
       if(/雁塔|未央|碑林/.test(text))q.area=parsed.area;
       if(/高新|经开|南门/.test(text))q.block=parsed.block;
