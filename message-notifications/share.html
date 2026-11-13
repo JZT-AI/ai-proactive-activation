@@ -8331,7 +8331,7 @@ const bEmptyContent = () => ({
   'App Push': {appId:bYoukeApp.id,title:'',body:'',voiceEnabled:false,voiceTemplateId:'',jumpType:'',miniPath:'',appRoute:''},
   '有客App站内信': {appId:bYoukeApp.id,title:'',body:'',image:'',jumpType:'',miniPath:'',appRoute:''},
   '企微私聊': {body:'',image:'',cardTitle:'',cardLink:'',cardDescription:'',cardCover:'',miniPath:'',miniCover:''},
-  '服务号模板消息通知': {accountId:bServiceAccount.id,account:bServiceAccount.name,fields:{},jumpType:'',jumpUrl:'',miniPath:'',appRoute:''},
+  '服务号模板消息通知': {accountId:bServiceAccount.id,account:bServiceAccount.name,fields:{},jumpType:'',jumpUrl:'',miniPath:''},
  },
 });
 // Demo catalog only. Real speech IDs, supported templates and API field names await integration.
@@ -8340,38 +8340,38 @@ function BVoicePreview({value}:any){const template=bVoiceTemplates.find(t=>t.id=
 function bIsHttps(url:string){return /^https:\/\/[^\s]+$/i.test(url)&&URL.canParse(url)}
 function bIsMiniPath(path:string){return /^\/?[\w-]+(?:\/[\w-]+)*(?:\.html)?(?:\?[^\s#]*)?$/.test(path)}
 function bJumpType(value:any){return value.jumpType??(value.miniPath?.trim()?'miniProgram':'')}
-function bIsAppRoute(route:string){return /^\/[\w-]+(?:\/[\w-]+)*(?:\?[^\s#\\]*)?$/.test(route)&&!/%(?![0-9a-f]{2})/i.test(route)}
-function bJumpError(value:any,wakeApp=false){
+function bChannelJumpType(value:any,serviceAccount:boolean){
  const type=bJumpType(value);
- if(type==='appRoute'&&wakeApp&&!bIsHttps(value.jumpUrl?.trim()||''))return '请填写可唤起有客App的 HTTPS H5 URL';
- if(type==='appRoute'&&!wakeApp&&!bIsAppRoute(value.appRoute?.trim()||''))return '请填写有效的 App 页面路径，例如 /pages/mine/mine';
+ return serviceAccount&&type==='appRoute'?'url':type;
+}
+function bIsAppRoute(route:string){return /^\/[\w-]+(?:\/[\w-]+)*(?:\?[^\s#\\]*)?$/.test(route)&&!/%(?![0-9a-f]{2})/i.test(route)}
+function bJumpError(value:any,serviceAccount=false){
+ const type=bChannelJumpType(value,serviceAccount);
+ if(type==='appRoute'&&!bIsAppRoute(value.appRoute?.trim()||''))return '请填写有效的 App 页面路径，例如 /pages/mine/mine';
  if(type==='miniProgram'&&!bIsMiniPath(value.miniPath?.trim()||''))return '请填写有效的365获客宝小程序页面路径';
- if(type==='url'&&!wakeApp)return '请选择站内信跳转方式';
- if(type==='url'&&!bIsHttps(value.jumpUrl?.trim()||''))return '请填写有效的 HTTPS 网址';
+ if(type==='url'&&!serviceAccount)return '请选择跳转方式';
+ if(type==='url'&&!bIsHttps(value.jumpUrl?.trim()||''))return '请填写有效的 HTTPS H5 链接';
  return '';
 }
-function bJumpContent(value:any, wakeApp=false){
- const type=bJumpType(value);
- if(type==='appRoute'&&wakeApp)return {link:value.jumpUrl?.trim()||'',appRouteMode:'wakeApp'};
+function bJumpContent(value:any,serviceAccount=false){
+ const type=bChannelJumpType(value,serviceAccount);
  if(type==='appRoute'&&value.appRoute?.trim())return {appRoute:value.appRoute.trim(),appRouteMode:'inApp'};
- if(type==='miniProgram')return {miniProgram:bServiceMiniProgram,miniPath:value.miniPath.trim()};
- if(type==='url')return {link:value.jumpUrl.trim()};
+ if(type==='miniProgram')return {miniProgram:bServiceMiniProgram,miniPath:value.miniPath?.trim()||''};
+ if(type==='url')return {link:value.jumpUrl?.trim()||''};
  return {};
 }
-function BJumpFields({value,onChange,wakeApp=false}:any){
- const type=bJumpType(value);
+function BJumpFields({value,onChange,serviceAccount=false}:any){
+ const type=bChannelJumpType(value,serviceAccount);
  return <>
   <ReachField label="跳转方式"><select value={type} onChange={e=>onChange({jumpType:e.target.value})}>
-   {!wakeApp&&type==='url'&&<option value="url" disabled>请选择跳转方式</option>}
+   {!serviceAccount&&type==='url'&&<option value="url" disabled>请选择跳转方式</option>}
    <option value="">不跳转</option>
    <option value="miniProgram">{bServiceMiniProgram}</option>
-   <option value="appRoute">{wakeApp?'唤起有客App':bYoukeApp.name}</option>
-   {wakeApp&&<option value="url">指定网址</option>}
+   {serviceAccount?<option value="url">H5 链接</option>:<option value="appRoute">{bYoukeApp.name}</option>}
   </select></ReachField>
-  {type==='appRoute'&&wakeApp&&<ReachField label="H5 落地页 URL"><input type="url" value={value.jumpUrl||''} onChange={e=>onChange({jumpUrl:e.target.value})} placeholder="https://..."/></ReachField>}
-  {type==='appRoute'&&!wakeApp&&<ReachField label="App 页面路径"><input value={value.appRoute||''} onChange={e=>onChange({appRoute:e.target.value})} placeholder="/pages/mine/mine"/></ReachField>}
+  {type==='appRoute'&&!serviceAccount&&<ReachField label="App 页面路径"><input value={value.appRoute||''} onChange={e=>onChange({appRoute:e.target.value})} placeholder="/pages/mine/mine"/></ReachField>}
   {type==='miniProgram'&&<ReachField label="小程序页面路径"><input value={value.miniPath||''} onChange={e=>onChange({miniPath:e.target.value})} placeholder="pages/index/index"/></ReachField>}
-  {type==='url'&&wakeApp&&<ReachField label="跳转网址"><input value={value.jumpUrl||''} onChange={e=>onChange({jumpUrl:e.target.value})} placeholder="https://..."/></ReachField>}
+  {type==='url'&&serviceAccount&&<ReachField label="H5 链接" hint="需要打开有客App指定页时，填写该页面对应的有客 H5 中转链接。"><input type="url" value={value.jumpUrl||''} onChange={e=>onChange({jumpUrl:e.target.value})} placeholder="https://..."/></ReachField>}
  </>;
 }
 function bContentError(pack:any){
@@ -8439,7 +8439,7 @@ function bContentItems(pack:any,c:string){
 function bContentSummary(pack:any,c:string){
  if(!pack?.byChannel?.[c])return '尚未配置';
  return bContentItems(pack,c).map((item:any)=>[
-  item.title,item.body,item.link?(item.appRouteMode==='wakeApp'?'唤起有客App · ':'')+item.link:'',
+  item.title,item.body,item.link?(c==='服务号模板消息通知'?'H5 链接 · ':'')+item.link:'',
   item.appRoute ? (item.appRouteMode==='wakeApp'?'唤起有客App':bYoukeApp.name)+' · '+(item.appPageName||item.appRoute) : '',
   item.miniPath ? item.miniProgram+' · '+item.miniPath : '',
  ].filter(Boolean).join('\n')).join('\n\n');
@@ -8567,7 +8567,7 @@ function BContentDialog({flow,onClose,onSave}:any){
   <div className="bm-fixed-target"><span>模板名称</span><strong>{bServiceTemplate.name}</strong></div>
   <p className="bm-footnote">仅填写服务进度等通知内容，禁止填写营销推广内容。</p>
   {bServiceTemplate.fields.map(field=><ReachField label={field} key={field}><input value={v.fields?.[field]||''} onChange={e=>setValue({fields:{...v.fields,[field]:e.target.value}})} placeholder="请输入内容"/></ReachField>)}
-  <BJumpFields value={v} onChange={setValue} wakeApp/>
+  <BJumpFields value={v} onChange={setValue} serviceAccount/>
  </>}
  </>}</section></div></div>{error&&<div className="bm-error" role="alert">{error}</div>}<footer className="bm-dialog-footer"><span>已选 {pack.channels.length} 个渠道</span><div><ReachButton onClick={closeDraft}>取消</ReachButton><ReachButton primary onClick={()=>{const e=cityError||bQuietError(pack)||bContentError(pack);if(e){setError(e);if(!cityError){const channel=bTouchChannels.find(c=>e.startsWith(c)||c==='服务号模板消息通知'&&e.startsWith('服务号'));if(channel)setActive(channel)}return}onSave(pack)}}>确认配置</ReachButton></div></footer></div></AutoDialog>
 }
@@ -8612,7 +8612,7 @@ function PushTaskDetailView({task,children}:any){
  <section data-testid="push-basic-info"><h3 className="text-lg font-bold text-blue-600 mb-4">基本信息</h3><div className="grid grid-cols-1 lg:grid-cols-2 gap-y-4 gap-x-12 text-sm">{basic.map(([k,v])=>row(k,v))}</div></section>
  <section data-testid="push-recipients"><h3 className="text-lg font-bold text-blue-600 mb-4">收件人</h3><div className="space-y-4 text-sm">{row(task.recipientMode==='event'?'对象来源:':'人群包类型:',task.audienceType)}<div className="flex flex-wrap items-center gap-x-4 gap-y-3">{row(task.recipientMode==='event'?'接收对象:':'人群包名称:',task.audienceName)}<div className="flex"><span className="text-zinc-500 mr-2">{task.recipientMode==='event'?'对象数:':'人数:'}</span><span className="text-zinc-900 dark:text-zinc-100">{task.audienceCountText||<>{task.audienceCount}{task.recipientMode==='event'?'个':'人'}</>}</span></div><div className="flex"><span className="text-zinc-500 mr-2">更新时间:</span><span className="text-zinc-900 dark:text-zinc-100">{task.audienceUpdated||'-'}</span></div></div>{task.recipientMode==='event'?row('对象规则:',task.recipientRule):<>{!task.hideAudienceLists&&<>{row('黑名单:',task.blacklist)}{row('白名单:',task.whitelist)}</>}</>}</div></section>
  <section data-testid="push-senders"><h3 className="text-lg font-bold text-blue-600 mb-4">{task.senderTitle||'发送人'}</h3><div className="text-sm">{row((task.senderTitle||'发送人')+':',task.senders)}</div></section>
- <section data-testid="push-content"><h3 className="text-lg font-bold text-blue-600 mb-4">推送内容</h3><div className="space-y-6 text-sm bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-lg border border-zinc-200 dark:border-zinc-800">{(task.contents||[]).map((item:any,i:number)=><React.Fragment key={i}>{i>0&&<div className="h-px bg-zinc-200 dark:bg-zinc-800"/>}<div className="grid grid-cols-[1fr_auto] gap-4"><div className="space-y-2 min-w-0">{row(`信息${i+1}类型:`,notificationChannelName(item.type))}{item.delay!=null&&row(`发送延时:`,item.delay+'秒',`delay-${i}`)}{item.title&&row(`信息${i+1}标题:`,item.title)}{row(`信息${i+1}内容:`,item.body)}{item.appRoute&&row(item.appRouteMode==='wakeApp'?'唤起有客App:':'有客App页面:',item.appPageName||item.appRoute)}{item.link&&row(item.appRouteMode==='wakeApp'?'H5 落地页 URL:':'跳转地址:',item.link)}{item.miniPath&&<>{row('跳转小程序:',item.miniProgram)}{row('小程序路径:',item.miniPath)}</>}{item.type==='App Push'&&typeof item.voiceEnabled==='boolean'&&<>{row('语音播报:',item.voiceEnabled?'已开启':'未开启')}{item.voiceEnabled&&<>{row('播报模板:',item.voiceTemplateName||'未提供')}{row('播报提示:',item.voicePrompt||'未提供')}</>}</>}{item.image&&<img className="max-w-[200px] rounded-lg" src={item.image} alt={`信息${i+1}图片`}/>}</div></div></React.Fragment>)}</div></section>
+ <section data-testid="push-content"><h3 className="text-lg font-bold text-blue-600 mb-4">推送内容</h3><div className="space-y-6 text-sm bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-lg border border-zinc-200 dark:border-zinc-800">{(task.contents||[]).map((item:any,i:number)=><React.Fragment key={i}>{i>0&&<div className="h-px bg-zinc-200 dark:bg-zinc-800"/>}<div className="grid grid-cols-[1fr_auto] gap-4"><div className="space-y-2 min-w-0">{row(`信息${i+1}类型:`,notificationChannelName(item.type))}{item.delay!=null&&row(`发送延时:`,item.delay+'秒',`delay-${i}`)}{item.title&&row(`信息${i+1}标题:`,item.title)}{row(`信息${i+1}内容:`,item.body)}{item.appRoute&&row(item.appRouteMode==='wakeApp'?'唤起有客App:':'有客App页面:',item.appPageName||item.appRoute)}{item.link&&row(item.type==='服务号模板消息'?'H5 链接:':'跳转地址:',item.link)}{item.miniPath&&<>{row('跳转小程序:',item.miniProgram)}{row('小程序路径:',item.miniPath)}</>}{item.type==='App Push'&&typeof item.voiceEnabled==='boolean'&&<>{row('语音播报:',item.voiceEnabled?'已开启':'未开启')}{item.voiceEnabled&&<>{row('播报模板:',item.voiceTemplateName||'未提供')}{row('播报提示:',item.voicePrompt||'未提供')}</>}</>}{item.image&&<img className="max-w-[200px] rounded-lg" src={item.image} alt={`信息${i+1}图片`}/>}</div></div></React.Fragment>)}</div></section>
  {children}
  </div></div>
 }

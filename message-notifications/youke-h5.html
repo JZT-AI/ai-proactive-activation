@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>打开有客App</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100svh; display: grid; place-items: center; background: #fffaf7; color: #241c17; font: 16px/1.5 system-ui, sans-serif; }
+    main { width: min(100%, 420px); padding: 32px 24px; text-align: center; }
+    h1 { font-size: 26px; margin: 0; }
+    p { color: #695f58; margin: 10px 0 24px; }
+    a { display: block; min-height: 48px; padding: 12px 20px; border-radius: 12px; color: #fff; background: #b94216; font-weight: 650; text-decoration: none; }
+    a[hidden] { display: none; }
+    a:focus-visible { outline: 3px solid #8b2c0e; outline-offset: 3px; }
+    small { display: block; margin-top: 14px; color: #695f58; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>有客App</h1>
+    <p id="target">正在读取目标页面</p>
+    <a id="open" hidden>打开有客App</a>
+    <small>原型演示，按钮打开对应的 App 原型页面。</small>
+  </main>
+  <script>
+    const pages = new Map([['wallet', '有客币'], ['messageManagement', '消息']]);
+    const target = new URLSearchParams(location.search).get('target');
+    const name = pages.get(target);
+    const description = document.getElementById('target');
+    const button = document.getElementById('open');
+    if (name) {
+      const destination = new URL('https://jzt-ai.github.io/365-youke-message-management-prototype/prototype.html');
+      destination.searchParams.set('screen', target);
+      description.textContent = '在有客App中查看「' + name + '」';
+      button.href = destination.href;
+      button.hidden = false;
+    } else {
+      description.textContent = '此链接未关联可打开的页面。';
+    }
+  </script>
+</body>
+</html>
