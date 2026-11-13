@@ -7941,9 +7941,9 @@ function useReach(){const [,refresh]=useState(0);useEffect(()=>{const f=()=>refr
 const reachChannels=['App消息流','App Push','B端企微','服务号'];
 const inAppMessageCategories=['客户跟进提醒','房源维护通知','有客币提醒','审核通知','平台公告'];
 const reachPeople=[
- {id:'DEMO-B-001',name:'张顾问',city:'西安',status:'注册已付费',area:'雁塔区',block:'高新',date:'2026-10-18',paidBalance:120,giftExpiry:'2026-11-18 18:00'},
- {id:'DEMO-B-002',name:'李顾问',city:'西安',status:'注册已付费',area:'未央区',block:'经开',date:'2026-10-22',paidBalance:50},
- {id:'DEMO-B-003',name:'王顾问',city:'西安',status:'注册未付费',area:'雁塔区',block:'高新',date:'2026-10-25',paidBalance:0,giftExpiry:'2026-11-25 18:00'},
+ {id:'DEMO-B-001',name:'张顾问',city:'西安',status:'注册已付费',area:'雁塔区',block:'高新',date:'2026-10-18',paidBalance:120,giftBalance:50,giftExpiry:'2026-11-18 18:00'},
+ {id:'DEMO-B-002',name:'李顾问',city:'西安',status:'注册已付费',area:'未央区',block:'经开',date:'2026-10-22',paidBalance:50,giftBalance:0},
+ {id:'DEMO-B-003',name:'王顾问',city:'西安',status:'注册未付费',area:'雁塔区',block:'高新',date:'2026-10-25',paidBalance:0,giftBalance:30,giftExpiry:'2026-11-25 18:00'},
  {id:'DEMO-B-004',name:'陈顾问',city:'西安',status:'体验客户',area:'碑林区',block:'南门',date:'2026-10-28'},
  {id:'DEMO-B-005',name:'赵顾问',city:'西安',status:'注销经纪人',area:'雁塔区',block:'高新',date:'2026-09-01'},
  {id:'DEMO-B-006',name:'刘顾问',city:'西安',status:'注册已付费',area:'雁塔区',block:'高新',date:'2026-10-30',paidBalance:30}
@@ -8622,6 +8622,7 @@ function audienceMember(name:string,person?:any){
   id:person.userId||person.id.replace(/^DEMO-B-/,'DEMO-U-'),name,profile:[],source:'operations',
   bInfo:{
    paidBalance:person.paidBalance??sample?.paidBalance,
+   giftBalance:person.giftBalance??sample?.giftBalance,
    giftExpiry:person.giftExpiry??sample?.giftExpiry,
    registrationId:person.id,city:person.city,area:person.area,block:person.block,
   },
@@ -8635,6 +8636,7 @@ function AudienceMemberDrawer({members,memberId,onClose}:any){
  const info=member.bInfo;
  const bFields=info?[
   ['付费有客币余额数',typeof info.paidBalance==='number'?`${info.paidBalance} 有客币`:null],
+  ['赠送有客币余额数',typeof info.giftBalance==='number'?`${info.giftBalance} 有客币`:null],
   ['最近赠送币到期时间',info.giftExpiry],
   ['经纪人注册ID',info.registrationId],
   ['入驻城市',info.city],
