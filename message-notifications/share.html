@@ -310,7 +310,7 @@ interface TaskItem {
 type CardData =
   | { type: 'b_step'; flowId: string; stage: string; snapshot: any; confirmed?: boolean; invalidated?: boolean }
   | { type: 'proactive_choice'; draft: any; audiences: any[]; pushContext?: any; confirmed?: boolean }
-  | { type: 'audience'; name: string; count: number; updateCycle: 'hour' | 'day' | 'once'; samples: string[]; confirmed?: boolean; nameError?: string; audienceType?: 'b'; bFlowId?: string; invalidated?: boolean }
+  | { type: 'audience'; name: string; count: number; updateCycle: 'hour' | 'day' | 'once'; samples: string[]; sampleIds?: string[]; confirmed?: boolean; nameError?: string; audienceType?: 'b'; bFlowId?: string; invalidated?: boolean }
   | { type: 'group_package'; name: string; count: number; updateCycle: 'hour' | 'day' | 'once'; samples: string[]; confirmed?: boolean }
   | { type: 'config'; senders: string[]; blacklists: string[]; confirmed?: boolean; proactive?: any }
   | { type: 'content_preview'; title: string; content: string; confirmed?: boolean; proactive?: any }
@@ -531,7 +531,7 @@ function ConfirmCardNameField({
   );
 }
 
-function AudienceCard({ data, onUserClick, onConfirm, onNameChange }: { data: Extract<CardData, { type: 'audience' }>, onUserClick: (name: string, list?: string[]) => void, onConfirm: (name: string) => void, onNameChange: (name: string) => void }) {
+function AudienceCard({ data, onUserClick, onConfirm, onNameChange }: { data: Extract<CardData, { type: 'audience' }>, onUserClick: (index: number) => void, onConfirm: (name: string) => void, onNameChange: (name: string) => void }) {
   const editableName = data.name;
   const nameError = data.nameError || '';
   const cycleMap = { 'hour': '每小时更新', 'day': '每日更新', 'once': '一次性' };
@@ -572,7 +572,7 @@ function AudienceCard({ data, onUserClick, onConfirm, onNameChange }: { data: Ex
             {data.samples.map((sample, i) => (
               <button
                 key={i}
-                onClick={() => onUserClick(sample, data.samples)}
+                onClick={() => onUserClick(i)}
                 className="px-3 py-1.5 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-full text-xs text-zinc-700 dark:text-zinc-300 hover:border-indigo-300 dark:hover:border-indigo-700 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
               >
                 {sample}
@@ -7949,12 +7949,13 @@ const reachChannels=['App消息流','App Push','B端企微','服务号'];
 const inAppMessageCategories=['客户跟进提醒','房源维护通知','有客币提醒','审核通知','平台公告'];
 const reachPeople=[
  {id:'DEMO-B-001',name:'张顾问',city:'西安',status:'注册已付费',area:'雁塔区',block:'高新',date:'2026-10-18',paidBalance:120,giftBalance:50,giftExpiry:'2026-11-18 18:00'},
+ {id:'DEMO-B-007',userId:'DEMO-U-001',name:'张顾问',city:'南京',status:'注册未付费',area:'建邺区',block:'河西',date:'2026-10-28',paidBalance:0,giftBalance:80},
  {id:'DEMO-B-002',name:'李顾问',city:'西安',status:'注册已付费',area:'未央区',block:'经开',date:'2026-10-22',paidBalance:50,giftBalance:0},
  {id:'DEMO-B-003',name:'王顾问',city:'西安',status:'注册未付费',area:'雁塔区',block:'高新',date:'2026-10-25',paidBalance:0,giftBalance:30,giftExpiry:'2026-11-25 18:00'},
  {id:'DEMO-B-004',name:'陈顾问',city:'西安',status:'体验客户',area:'碑林区',block:'南门',date:'2026-10-28'},
  {id:'DEMO-B-005',name:'赵顾问',city:'西安',status:'注销经纪人',area:'雁塔区',block:'高新',date:'2026-09-01'},
- {id:'DEMO-B-006',name:'刘顾问',city:'西安',status:'注册已付费',area:'雁塔区',block:'高新',date:'2026-10-30',paidBalance:30}
-];
+ {id:'DEMO-B-006',name:'刘顾问',city:'西安',status:'注册已付费',area:'雁塔区',block:'高新',date:'2026-10-30',paidBalance:30},
+].map(person=>({...person,roleId:person.id.replace('DEMO-B-','DEMO-ROLE-')}));
 function ReachButton({children,onClick,primary=false,disabled=false,...rest}:any){return <button type="button" onClick={onClick} disabled={disabled} className={'reach-btn '+(primary?'primary':'')} {...rest}>{children}</button>}
 function ReachField({label,children,hint}:any){const id=React.useId();const control=React.isValidElement(children)?React.cloneElement(children as any,{id,'aria-label':label}):children;return <label className="reach-field" htmlFor={id}><span>{label}</span>{control}{hint&&<small>{hint}</small>}</label>}
 function ReachBadge({children,green=false}:any){return <span className={'reach-badge '+(green?'green':'')}>{children}</span>}
@@ -8519,7 +8520,7 @@ function BContentDialog({flow,onClose,onSave}:any){
  const cityError=bCityConfigError(pack);
  const quietScopeId=React.useId();
 
- return <AutoDialog title="小B通知配置" onClose={closeDraft} wide><div className="bm-dialog"><header className="bm-dialog-head"><div><h2>小B通知配置</h2><p>勾选渠道，点击渠道名称切换编辑。切换时保留已填内容。</p></div><button aria-label="关闭内容配置" onClick={closeDraft}><X size={18}/></button></header><div className="bm-dialog-body"><div className="bm-city-config"><ReachField label="任务城市" hint="本期仅西安可用"><select value={pack.city} onChange={e=>{setPack((prev:any)=>({...prev,city:e.target.value}));setError('')}}><option value="">请选择任务城市</option>{taskCities.map((city:string)=><option key={city} value={city} disabled={city!==bNotificationCity}>{city}{city===bNotificationCity?'':'（暂未开放）'}</option>)}</select></ReachField>
+ return <AutoDialog title="通知配置" onClose={closeDraft} wide><div className="bm-dialog"><header className="bm-dialog-head"><div><h2>通知配置</h2><p>勾选渠道，点击渠道名称切换编辑。切换时保留已填内容。</p></div><button aria-label="关闭通知配置" onClick={closeDraft}><X size={18}/></button></header><div className="bm-dialog-body"><div className="bm-city-config"><ReachField label="任务城市" hint="本期仅西安可用"><select value={pack.city} onChange={e=>{setPack((prev:any)=>({...prev,city:e.target.value}));setError('')}}><option value="">请选择任务城市</option>{taskCities.map((city:string)=><option key={city} value={city} disabled={city!==bNotificationCity}>{city}{city===bNotificationCity?'':'（暂未开放）'}</option>)}</select></ReachField>
  <div className="bm-quiet-config">
   <span className="bm-quiet-icon" aria-hidden="true"><Moon size={14}/></span>
   <strong className="bm-quiet-label">免打扰</strong>
@@ -8570,7 +8571,7 @@ function BContentDialog({flow,onClose,onSave}:any){
  </>}
  </>}</section></div></div>{error&&<div className="bm-error" role="alert">{error}</div>}<footer className="bm-dialog-footer"><span>已选 {pack.channels.length} 个渠道</span><div><ReachButton onClick={closeDraft}>取消</ReachButton><ReachButton primary onClick={()=>{const e=cityError||bQuietError(pack)||bContentError(pack);if(e){setError(e);if(!cityError){const channel=bTouchChannels.find(c=>e.startsWith(c)||c==='服务号模板消息通知'&&e.startsWith('服务号'));if(channel)setActive(channel)}return}onSave(pack)}}>确认配置</ReachButton></div></footer></div></AutoDialog>
 }
-function BConversationCard({data,onAction,onOpenTask,executionMode,inConfirmDialog=false}:any){const state=useReach();const live=state.flows[data.flowId];const f=data.confirmed?data.snapshot:live;const [audience,setAudience]=useState('');if(!f)return null;const completed=data.confirmed;const blocked=completed||!executionMode;const confirmChannels=f.channels;return <div className={'b-conversation-card bm-card'+(data.stage==='summary'?' bm-task-confirm':'')} data-testid={'b-'+data.stage+'-card'}><header><span className="b-card-icon">{data.stage==='summary'?<Send size={16}/>:<Bot size={16}/>}</span><strong>{{dependency:'补齐前置依赖',content:'触达配置',config:'小B通知配置',summary:'任务信息确认',result:'任务创建结果'}[data.stage]}</strong>{completed&&<small>已确认</small>}</header>{!executionMode&&!completed&&<p className="bm-footnote">请切换到执行模式继续多渠道触达。</p>}
+function BConversationCard({data,onAction,onOpenTask,executionMode,inConfirmDialog=false}:any){const state=useReach();const live=state.flows[data.flowId];const f=data.confirmed?data.snapshot:live;const [audience,setAudience]=useState('');if(!f)return null;const completed=data.confirmed;const blocked=completed||!executionMode;const confirmChannels=f.channels;return <div className={'b-conversation-card bm-card'+(data.stage==='summary'?' bm-task-confirm':'')} data-testid={'b-'+data.stage+'-card'}><header><span className="b-card-icon">{data.stage==='summary'?<Send size={16}/>:<Bot size={16}/>}</span><strong>{{dependency:'补齐前置依赖',content:'通知配置',config:'通知配置',summary:'任务信息确认',result:'任务创建结果'}[data.stage]}</strong>{completed&&<small>已确认</small>}</header>{!executionMode&&!completed&&<p className="bm-footnote">请切换到执行模式继续多渠道触达。</p>}
  {data.stage==='dependency'&&<p>请在执行模式中 @人群包，并输入触达要求；尚无人群包时，请先在圈选模式创建。</p>}
  {data.stage==='content'&&<><p>{completed?f.contentPack.city+' · '+f.contentPack.channels.length+'个渠道配置已确认':'选择任务城市与渠道，填写各渠道内容。'}</p>{completed?<div className="bm-confirmed-channels">{f.contentPack.channels.map((c:string)=><NotificationChannel key={c} channel={c}/>)}</div>:<div className="bm-card-actions"><ReachButton primary disabled={blocked} onClick={()=>onAction('content')}>配置小B通知</ReachButton></div>}</>}
 
@@ -8638,43 +8639,62 @@ function audienceMember(name:string,person?:any){
  const sample=reachPeople.find(row=>row.id===person.id);
  return {
   id:person.userId||person.id.replace(/^DEMO-B-/,'DEMO-U-'),name,profile:[],source:'operations',
+  roleId:person.roleId??sample?.roleId,
   bInfo:{
    paidBalance:person.paidBalance??sample?.paidBalance,
    giftBalance:person.giftBalance??sample?.giftBalance,
    giftExpiry:person.giftExpiry??sample?.giftExpiry,
-   registrationId:person.id,city:person.city,area:person.area,block:person.block,
+   city:person.city,area:person.area,block:person.block,
   },
  };
 }
+function groupAudienceMembers(people:any[]){
+ const users=new Map<string,any>();
+ for(const person of people){
+  const role=audienceMember(person.name,person);
+  const user=users.get(role.id);
+  if(user)user.roles.push(role);
+  else users.set(role.id,{...role,roles:[role]});
+ }
+ return [...users.values()];
+}
+function audienceMemberKey(member:any){return member.id||member.name;}
 function AudienceMemberDrawer({members,memberId,onClose}:any){
- const [index,setIndex]=useState(()=>Math.max(0,members.findIndex((m:any)=>(m.id||m.name)===memberId)));const [tab,setTab]=useState('记忆');const closeRef=useRef(onClose);closeRef.current=onClose;
+ const [index,setIndex]=useState(()=>Math.max(0,members.findIndex((m:any)=>audienceMemberKey(m)===memberId)));const [tab,setTab]=useState('记忆');const closeRef=useRef(onClose);closeRef.current=onClose;
+ const [roleSelection,setRoleSelection]=useState<{userId:string;roleId:string}|null>(null);
  useEffect(()=>{const handle=(e:KeyboardEvent)=>{if(e.key==='Escape')closeRef.current()};window.addEventListener('keydown',handle);return()=>window.removeEventListener('keydown',handle)},[]);
  const member=members[index];if(!member)return null;
  const tabs=['记忆','档案','行为'];
- const info=member.bInfo;
+ const roles=member.roles||[];
+ const role=(roleSelection?.userId===member.id&&roles.find((item:any)=>item.roleId===roleSelection?.roleId))||roles[0]||member;
+ const info=role.bInfo;
  const bFields=info?[
+  ['入驻城市',roles.length>1?null:info.city],
+  ['角色ID',role.roleId],
   ['付费有客币余额数',typeof info.paidBalance==='number'?`${info.paidBalance} 有客币`:null],
   ['赠送有客币余额数',typeof info.giftBalance==='number'?`${info.giftBalance} 有客币`:null],
   ['最近赠送币到期时间',info.giftExpiry],
-  ['经纪人注册ID',info.registrationId],
-  ['入驻城市',info.city],
   ['主营区属',info.area],
   ['主营板块',info.block],
  ].filter(([,value])=>!!value):[];
  return <div className="absolute inset-0 z-[80] flex justify-end" data-testid="audience-member-overlay"><button className="absolute inset-0 bg-black/40" aria-label="关闭用户详情遮罩" onClick={onClose}/><aside role="dialog" aria-modal="true" aria-label="用户详情" className="relative w-full max-w-[380px] h-full bg-white dark:bg-zinc-900 border-l border-zinc-200 dark:border-zinc-800 shadow-xl flex flex-col">
  <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between gap-2"><h3 className="font-medium text-zinc-900 dark:text-zinc-100">用户详情</h3><div className="flex items-center gap-1"><button title="上一位用户" aria-label="上一位用户" disabled={index===0} onClick={()=>setIndex(i=>i-1)} className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30"><ChevronLeft size={16}/></button><span className="text-xs text-zinc-500">{index+1} / {members.length}</span><button title="下一位用户" aria-label="下一位用户" disabled={index===members.length-1} onClick={()=>setIndex(i=>i+1)} className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30"><ChevronRight size={16}/></button><button aria-label="关闭用户详情" onClick={onClose} className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500"><X size={16}/></button></div></div>
  <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4"><div className="flex items-center gap-3"><div className="w-11 h-11 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center font-semibold text-indigo-600 dark:text-indigo-300">{member.name.slice(0,1)}</div><div className="min-w-0"><div className="font-bold text-lg text-zinc-900 dark:text-zinc-100 break-words">{member.name}</div><div className="text-xs text-zinc-500 break-all">用户ID：{member.id||'—'}</div></div></div>
- {bFields.length>0&&<section data-testid="audience-b-info" aria-label="B端信息" className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50 px-3 py-3"><dl className="grid grid-cols-2 gap-3">{bFields.map(([label,value])=><div key={label} className="min-w-0"><dt className="text-xs text-zinc-500">{label}</dt><dd className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mt-1 break-words">{value}</dd></div>)}</dl></section>}
+ {bFields.length>0&&<section data-testid="audience-b-info" aria-label="B端信息" className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50 px-3 py-3"><h4 className="mb-3 text-xs font-semibold text-zinc-700 dark:text-zinc-200">安家顾问</h4>
+ {roles.length>1&&<div className="mb-3 flex flex-wrap gap-2" role="group" aria-label="入驻城市">
+  {roles.map((item:any)=><button key={item.roleId} type="button" aria-pressed={item.roleId===role.roleId} onClick={()=>setRoleSelection({userId:member.id,roleId:item.roleId})} className={`rounded-md border px-3 py-1.5 text-xs font-medium ${item.roleId===role.roleId?'border-indigo-200 bg-indigo-50 text-indigo-700':'border-zinc-200 bg-white text-zinc-600'}`}>{item.bInfo.city}</button>)}
+ </div>}
+ <dl className="grid grid-cols-2 gap-3">{bFields.map(([label,value])=><div key={label} className="min-w-0"><dt className="text-xs text-zinc-500">{label}</dt><dd className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mt-1 break-words">{value}</dd></div>)}</dl></section>}
  <div role="tablist" aria-label="用户信息" className="flex p-1 bg-zinc-100 dark:bg-zinc-800/80 rounded-lg">{tabs.map(t=><button key={t} role="tab" aria-selected={tab===t} onClick={()=>setTab(t)} className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-all ${tab===t?'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm':'text-zinc-500 dark:text-zinc-400'}`}>{t}</button>)}</div>
  <div role="tabpanel">{tab==='记忆'&&(member.source==='customer'?<AudiencePreviewMemoryPanel userName={member.name}/>:<div className="py-10 text-center text-sm text-zinc-500">暂无可展示的用户记忆</div>)}{tab==='档案'&&<div className="flex flex-col">{member.profile.length?member.profile.map(([label,value]:any)=><div key={label} className="flex flex-col py-3 border-b border-zinc-100 dark:border-zinc-800/50 last:border-0"><div className="text-sm text-zinc-500">{label}</div><div className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mt-1 break-words">{value||'—'}</div></div>):<div className="py-10 text-center text-sm text-zinc-500">暂无可展示的用户档案</div>}</div>}{tab==='行为'&&(member.source==='customer'?<AudiencePreviewBehaviorPanel userName={member.name}/>:<div className="py-10 text-center text-sm text-zinc-500">暂无可展示的用户行为</div>)}</div></div></aside></div>;
 }
 function AudiencePackageDetail({audienceId,displayName}:any){
  const state=useReach();const [memberId,setMemberId]=useState<string|null>(null);const stored=audienceId?state.audiences.find((a:any)=>a.id===audienceId):null;const resource=initialAudienceResources.find(a=>a.id===audienceId)||(!audienceId?initialAudienceResources[0]:null);
  if(!stored&&!resource)return <div className="p-6 text-sm text-zinc-500">未找到该人群包</div>;
- const q=stored?.query;const members=stored?stored.people.map((p:any)=>audienceMember(p.name,p)):['橙子','家和万事兴','贝壳张建','桃燃','用户7892'].map(name=>audienceMember(name));const conditions=stored?[...reachConditionLabels(q),...(q.start||q.end?['注册日期：'+(q.start||'不限')+' 至 '+(q.end||'不限')]:[])].join(' / '):resource.configSnapshot.join(' / ');
- const name=displayName||stored?.name||resource.name;const count=stored?.count??resource.audienceCount;const cycle=stored?.cycle==='day'?'每日更新':stored?.cycle==='hour'?'每小时更新':'一次性';
+ const q=stored?.query;const members=stored?groupAudienceMembers(stored.people):['橙子','家和万事兴','贝壳张建','桃燃','用户7892'].map(name=>audienceMember(name));const conditions=stored?[...reachConditionLabels(q),...(q.start||q.end?['注册日期：'+(q.start||'不限')+' 至 '+(q.end||'不限')]:[])].join(' / '):resource.configSnapshot.join(' / ');
+ const name=displayName||stored?.name||resource.name;const count=stored?members.length:resource.audienceCount;const cycle=stored?.cycle==='day'?'每日更新':stored?.cycle==='hour'?'每小时更新':'一次性';
  return <div className="w-full h-full bg-white dark:bg-zinc-950 flex flex-col relative overflow-hidden" data-testid="audience-package-detail"><div className="flex items-start gap-3 border-b border-zinc-200 dark:border-zinc-800 p-4 shrink-0"><div className="w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0"><Users size={20}/></div><div className="min-w-0"><h2 className="text-xl font-bold text-zinc-800 dark:text-zinc-200 break-words">{name}</h2><div className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-zinc-500 mt-1"><span>预估人数: {count.toLocaleString()} 人</span><span>圈选条件: {conditions}</span><span>更新周期: {cycle}</span><span>创建人: {stored?'当前运营（演示）':'张三'}</span><span>创建时间: {stored?.created||resource.createdAt}</span></div></div></div>
- <div className="flex-1 overflow-auto p-4"><div className="border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-x-auto"><table className="w-full text-sm text-left"><thead className="bg-zinc-50 dark:bg-zinc-900/50 text-zinc-500 border-b border-zinc-200 dark:border-zinc-800"><tr><th className="px-4 py-3 font-medium">用户昵称</th><th className="px-4 py-3 font-medium">用户ID</th><th className="px-4 py-3 font-medium">操作</th></tr></thead><tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">{members.map((member:any)=><tr key={member.id||member.name} className="hover:bg-zinc-50 dark:hover:bg-zinc-900/20"><td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">{member.name}</td><td className="px-4 py-3 text-zinc-500 font-mono">{member.id||'—'}</td><td className="px-4 py-3"><button className="text-indigo-600 dark:text-indigo-400 hover:underline" onClick={()=>setMemberId(member.id||member.name)}>用户详情</button></td></tr>)}</tbody></table>{!members.length&&<div className="p-10 text-center text-sm text-zinc-500">暂无用户</div>}</div></div>
+ <div className="flex-1 overflow-auto p-4"><div className="border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-x-auto"><table className="w-full text-sm text-left"><thead className="bg-zinc-50 dark:bg-zinc-900/50 text-zinc-500 border-b border-zinc-200 dark:border-zinc-800"><tr><th className="px-4 py-3 font-medium">用户昵称</th><th className="px-4 py-3 font-medium">用户ID</th><th className="px-4 py-3 font-medium">操作</th></tr></thead><tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">{members.map((member:any)=><tr key={audienceMemberKey(member)} className="hover:bg-zinc-50 dark:hover:bg-zinc-900/20"><td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">{member.name}</td><td className="px-4 py-3 text-zinc-500 font-mono">{member.id||'—'}</td><td className="px-4 py-3"><button className="text-indigo-600 dark:text-indigo-400 hover:underline" onClick={()=>setMemberId(audienceMemberKey(member))}>用户详情</button></td></tr>)}</tbody></table>{!members.length&&<div className="p-10 text-center text-sm text-zinc-500">暂无用户</div>}</div></div>
  {memberId!==null&&<AudienceMemberDrawer key={memberId} members={members} memberId={memberId} onClose={()=>setMemberId(null)}/>}</div>;
 }
 
@@ -8718,8 +8738,8 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
     setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',bPlanFlowId:id} as any]);
     if(needsQuery)bMessage(id,'conditions','');else bAdvance(id)
   };
-  const bQuery=(id:string)=>{if(mode!=='圈选模式'){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'请切换到圈选模式，确认圈选条件。'}]);return}const current=reachState.flows[id];const error=reachQueryError(current.query);if(error){bMessage(id,'conditions',error);return}bSetDraft(id,{stage:'query'});setInputLocked(true);setTimeout(()=>{const d=reachState.flows[id];if(d.stage!=='query')return;const rows=reachFilter(d.query);bSetDraft(id,{rows,stage:'preview'});setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:audiencePreviewText+(rows.length?'':'\n\n查询成功，暂无匹配小B。可修改条件后重新确认。'),bFlowId:id,card:{type:'audience',name:d.query.city+(d.query.statuses.length===1?d.query.statuses[0].replace('注册',''):'')+'小B',count:rows.length,updateCycle:d.query.cycle||'once',samples:rows.slice(0,3).map(p=>p.name),audienceType:'b',bFlowId:id} as any}]);setInputLocked(false)},350)};
-  const bPackCreated=(msg:any,name:string)=>{if(mode!=='圈选模式'){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'请先在圈选模式确认创建人群包，再切换执行模式进行触达。'}]);return}const id=msg.card.bFlowId,d=reachState.flows[id];if(msg.card.confirmed||d.stage!=='preview'||!d.rows.length)return;const a={...bAudienceSource,id:'DEMO-A-'+Date.now(),name,count:d.rows.length,people:d.rows,query:structuredClone(d.query),cycle:d.query.cycle||'once',created:reachNow()};reachState.audiences.unshift(a);bSetDraft(id,{audience:a});bConfirmMessage(msg,{name});setBubbles(prev=>[...prev,{id:a.id,type:'audience',text:'人群包(1)',items:[{id:a.id,name,tabName:'[人群包]'+a.id}]}]);setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:`人群包创建完成。`,bFlowId:id,actionButton:{label:'查看人群包详情',tabName:'[人群包]'+a.id}}]);bSetDraft(id,{goal:'audience',requirements:{},stage:'audience_done'})};
+  const bQuery=(id:string)=>{if(mode!=='圈选模式'){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'请切换到圈选模式，确认圈选条件。'}]);return}const current=reachState.flows[id];const error=reachQueryError(current.query);if(error){bMessage(id,'conditions',error);return}bSetDraft(id,{stage:'query'});setInputLocked(true);setTimeout(()=>{const d=reachState.flows[id];if(d.stage!=='query')return;const rows=reachFilter(d.query);const users=groupAudienceMembers(rows);const sampleRows=users.slice(0,3);bSetDraft(id,{rows,stage:'preview'});setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:audiencePreviewText+(rows.length?'':'\n\n查询成功，暂无匹配小B。可修改条件后重新确认。'),bFlowId:id,card:{type:'audience',name:d.query.city+(d.query.statuses.length===1?d.query.statuses[0].replace('注册',''):'')+'小B',count:users.length,updateCycle:d.query.cycle||'once',samples:sampleRows.map(p=>p.name),sampleIds:sampleRows.map(p=>p.id),audienceType:'b',bFlowId:id} as any}]);setInputLocked(false)},350)};
+  const bPackCreated=(msg:any,name:string)=>{if(mode!=='圈选模式'){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'请先在圈选模式确认创建人群包，再切换执行模式进行触达。'}]);return}const id=msg.card.bFlowId,d=reachState.flows[id];if(msg.card.confirmed||d.stage!=='preview'||!d.rows.length)return;const a={...bAudienceSource,id:'DEMO-A-'+Date.now(),name,count:msg.card.count,people:d.rows,query:structuredClone(d.query),cycle:d.query.cycle||'once',created:reachNow()};reachState.audiences.unshift(a);bSetDraft(id,{audience:a});bConfirmMessage(msg,{name});setBubbles(prev=>[...prev,{id:a.id,type:'audience',text:'人群包(1)',items:[{id:a.id,name,tabName:'[人群包]'+a.id}]}]);setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:`人群包创建完成。`,bFlowId:id,actionButton:{label:'查看人群包详情',tabName:'[人群包]'+a.id}}]);bSetDraft(id,{goal:'audience',requirements:{},stage:'audience_done'})};
   const confirmAudience = (msg:any, name:string = msg.card.name) => {
     if(msg.card?.type!=='audience'||msg.card.invalidated||msg.card.confirmed)return;
     const error=validateConfirmCardName(name);
@@ -8816,7 +8836,7 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
     const active=old&&!['done','creating','cancelled'].includes(old.stage);
     if(mode!=='执行模式'&&((active&&old.goal==='touch'&&!['conditions','query','preview'].includes(old.stage))||(active&&old.stage==='audience_done'&&/发送|推送|触达|多渠道内容/.test(text))||/多渠道触达|多渠道内容|(?:发送|推送|触达).*(?:小\s*[bB]|经纪人)|(?:小\s*[bB]|经纪人).*(?:发送|推送|触达)/.test(text))){setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'小B通知仅在执行模式可用，请先切换到执行模式。'}]);return true}
     if(active&&old.stage==='summary'&&/免打扰/.test(text)){
-      setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'免打扰已在触达配置中确认。调整免打扰需发起新一轮触达。',bFlowId:id}]);
+      setMessages(prev=>[...prev,{id:crypto.randomUUID(),role:'ai',content:'免打扰已在通知配置中确认。调整免打扰需发起新一轮触达。',bFlowId:id}]);
       return true;
     }
     const changeChannels=/(?:新增|增加|添加|取消|去掉|删除|移除)\s*(?:一个|这个)?\s*(?:App[ -]?Push|Push|企微|私聊|服务号|渠道)|(?:改为|改成|换成|换为|只用|只发|仅用|仅发)\s*(?:只|仅)?\s*(?:App[ -]?Push|Push|企微|私聊|服务号)|(?:Push|企微|私聊|服务号|渠道).{0,6}(?:取消|删除|移除|去掉)/i.test(text);
@@ -8852,7 +8872,7 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
 
   useEffect(()=>{
     const syncReachResources=()=>{
-      setAudienceResources(prev=>[...reachState.audiences.map((a:any)=>makeAudienceResource({id:a.id,name:a.name,tabName:'[人群包]'+a.id},{audienceCount:a.count,createdAt:a.created,updatedAt:a.created,updatedOrder:Number(a.id.split('-').pop()),configSnapshot:reachConditionLabels(a.query),relatedTaskCount:reachState.tasks.filter(t=>t.audience.id===a.id).length,type:'AI人群包'})),...prev.filter(a=>!a.id.startsWith('DEMO-A-'))]);
+      setAudienceResources(prev=>[...reachState.audiences.map((a:any)=>makeAudienceResource({id:a.id,name:a.name,tabName:'[人群包]'+a.id},{audienceCount:groupAudienceMembers(a.people).length,createdAt:a.created,updatedAt:a.created,updatedOrder:Number(a.id.split('-').pop()),configSnapshot:reachConditionLabels(a.query),relatedTaskCount:reachState.tasks.filter(t=>t.audience.id===a.id).length,type:'AI人群包'})),...prev.filter(a=>!a.id.startsWith('DEMO-A-'))]);
       setPushTaskResources(prev=>[...reachState.tasks.filter((t:any)=>!t.pushBinding&&t.source!=='SOP').map((t:any)=>makePushTaskResource({id:t.id,name:t.name,tabName:'[小B任务]'+t.id},{status:t.status,pushType:t.channels.map(notificationChannelName).join('、'),relatedAudienceName:reachState.audiences.find(a=>a.id===t.audience.id)?.name||t.audience.name,estimatedReach:t.audience.count,pushTime:t.sendMode==='周期发送'?bScheduleLabel(t):t.sendMode==='定时发送'?t.sendTime.replace('T',' '):t.sendMode,createdAt:t.created,updatedOrder:Number(t.id.split('-').pop())})),...prev.filter(t=>!t.id.startsWith('DEMO-T-')&&!t.id.startsWith('DEMO-INAPP-')&&!reachState.tasks.some((x:any)=>x.id===t.id&&(x.pushBinding||x.source==='SOP')))]);
     };
     syncReachResources();window.addEventListener('b-reach-change',syncReachResources);return()=>window.removeEventListener('b-reach-change',syncReachResources);
@@ -10045,7 +10065,15 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
               {msg.loading && <div className="w-12 h-9 rounded-2xl rounded-tl-sm bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center"><Loader2 size={16} className="animate-spin text-indigo-500" /></div>}
               {msg.bPlanFlowId&&<BAgentPlan flowId={msg.bPlanFlowId}/>}
               {msg.taskPlan && <TaskPlan tasks={msg.taskPlan} />}
-              {msg.card && msg.card.type === 'audience' && !msg.card.invalidated && <AudienceCard data={msg.card} onUserClick={(u,l)=>{const members=(l||msg.card.samples).map(name=>{if(msg.card.audienceType==='b'){const person=reachState.flows[msg.card.bFlowId]?.rows.find((p:any)=>p.name===name);return person?audienceMember(name,person):null}return audienceMember(name)}).filter(Boolean);const member=members.find((m:any)=>m.name===u);if(member)setAudienceMemberPreview({members,memberId:member.id||member.name})}} onNameChange={name=>setMessages(prev=>prev.map(m=>m.id===msg.id?{...m,card:{...m.card,name,nameError:''} as CardData}:m))} onConfirm={name=>confirmAudience(msg,name)}/>}
+              {msg.card && msg.card.type === 'audience' && !msg.card.invalidated && <AudienceCard data={msg.card} onUserClick={index=>{
+                const card=msg.card;
+                const users=card.audienceType==='b'?groupAudienceMembers(reachState.flows[card.bFlowId]?.rows||[]):[];
+                const members=card.samples.map((name,i)=>card.audienceType==='b'
+                  ? users.find(user=>card.sampleIds?user.id===card.sampleIds[i]:user.name===name)
+                  : audienceMember(name));
+                const member=members[index];
+                if(member)setAudienceMemberPreview({members:members.filter(Boolean),memberId:audienceMemberKey(member)});
+              }} onNameChange={name=>setMessages(prev=>prev.map(m=>m.id===msg.id?{...m,card:{...m.card,name,nameError:''} as CardData}:m))} onConfirm={name=>confirmAudience(msg,name)}/>}
             {msg.card && msg.card.type === 'group_package' && <GroupPackageCard data={msg.card} onGroupClick={(u, l) => { setIsAudienceSamplePreview(false); setSlideOverTab('群档案'); setSlideOverUser(u); setSlideOverList(l || []); }} onUserClick={(u, l) => { setIsAudienceSamplePreview(false); setSlideOverTab('记忆'); setSlideOverUser(u); setSlideOverList(l || []); }} onConfirm={(name) => setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, card: { ...m.card, name, confirmed: true } as CardData } : m))} />}
               {msg.card && msg.card.type === 'proactive_choice' && <ActivationChoiceCard data={{...msg.card,audiences:currentActivationAudiences()}} onRefresh={draft=>activationRefresh(msg,draft)} onRetry={()=>activationRetry(msg)} onConfirm={()=>activationConfirmed(msg)} onUser={name=>{setIsAudienceSamplePreview(false);setSlideOverUser(name);setSlideOverList([name]);setSlideOverTab('记忆')}}/>}
               {msg.card && msg.card.type === 'config' && <ConfigCard data={msg.card} onConfirm={config => msg.card.proactive ? activationConfigured(msg,config) : markActivationCard(msg.id)} />}
@@ -10120,7 +10148,7 @@ function Sidebar({ onClose, onOpenTab, onRenameOpenedTab, pendingAction, isBlack
           activeBubbleId={activeBubbleId}
           onBubbleToggle={setActiveBubbleId}
           locked={inputLocked || bConfigPending}
-          lockPlaceholder={bConfigPending ? "请先完成触达配置" : undefined}
+          lockPlaceholder={bConfigPending ? "请先完成通知配置" : undefined}
           pendingAction={pendingAction}
         />
       </div>
