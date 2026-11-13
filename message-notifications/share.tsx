@@ -8030,18 +8030,18 @@ function AutoDialog({title,children,onClose,wide=false}:any){const ref=useRef<an
 const autoDemoContextKey='ai-private-automation-demo-context';
 const bDemoTaskCities=['西安','合肥','南京'];
 function autoReadDemoContext(){
- const defaults={role:'member',canToggleAutomation:false,city:'西安',taskCities:bDemoTaskCities};
+ const defaults={canManageInAppVisibility:false,canToggleAutomation:false,city:'西安',taskCities:bDemoTaskCities};
  try{
   const value=JSON.parse(localStorage.getItem(autoDemoContextKey)||'null');
   return {
-   role:value?.role==='admin'?'admin':defaults.role,
+   canManageInAppVisibility:value?.canManageInAppVisibility===true,
    canToggleAutomation:value?.canToggleAutomation===true,
    city:typeof value?.city==='string'&&value.city.trim()?value.city:defaults.city,
    taskCities:Array.isArray(value?.taskCities)?value.taskCities.filter((city:any)=>typeof city==='string'):defaults.taskCities,
   };
  }catch{return defaults}
 }
-function autoCanSwitch(p:any,ctx:any){return ctx.role==='admin'&&p?.city===ctx.city}
+function canManageInAppBatch(record:any,access:any){return access.canManageInAppVisibility&&record.city===access.city}
 
 const operatorInAppBatches=[
  {id:'demo-inbox-04',city:'西安',title:'本周房源核验提醒',body:'请查看名下待核验房源，并在本周五前确认房源状态。',sentAt:'2026-11-09 10:00',hidden:false},
@@ -8056,7 +8056,7 @@ function SentInAppWorkspace({access,onBack,onAccessChange}:any){
  const [detailId,setDetailId]=useState('');
  const [pending,setPending]=useState<{id:string;hidden:boolean}|null>(null);
  const [notice,setNotice]=useState<{text:string;error?:boolean}|null>(null);
- const isAdmin=access.role==='admin';
+ const canManageVisibility=access.canManageInAppVisibility;
  const records=operatorInAppBatches.filter(record=>record.city===access.city)
   .sort((a,b)=>b.sentAt.localeCompare(a.sentAt))
   .map(record=>({...record,hidden:data.inAppVisibility?.[record.id]??record.hidden}));
@@ -8066,7 +8066,7 @@ function SentInAppWorkspace({access,onBack,onAccessChange}:any){
  const applyVisibility=()=>{
   if(!target||!pending)return;
   const current=autoReadDemoContext();
-  if(!autoCanSwitch(target,current)){
+  if(!canManageInAppBatch(target,current)){
    onAccessChange(current);
    setNotice({text:'权限或工作城市已变化，操作未生效。',error:true});
    setPending(null);
@@ -8079,7 +8079,7 @@ function SentInAppWorkspace({access,onBack,onAccessChange}:any){
  };
  return <div className="au-page au-lean" data-testid="sent-in-app-workspace"><div className="au-shell">
   <nav className="au-breadcrumb" aria-label="页面路径"><Bot size={14}/><span>AI私域助手</span><ChevronRight size={12}/><button type="button" onClick={onBack}>自动化任务</button><ChevronRight size={12}/><span>站内信管理</span></nav>
-  <header className="au-header"><div><h1>站内信管理</h1><div className="au-access-context"><span>有客App</span><i/><span>当前城市 <b>{access.city}</b></span>{!isAdmin&&<><i/><span>仅管理员可调整显示状态</span></>}</div></div></header>
+  <header className="au-header"><div><h1>站内信管理</h1><div className="au-access-context"><span>有客App</span><i/><span>当前城市 <b>{access.city}</b></span>{!canManageVisibility&&<><i/><span>仅查看</span></>}</div></div></header>
   {notice&&<div className="au-notice" role={notice.error?'alert':'status'}>{notice.error?<AlertCircle size={15}/>:<CheckCircle2 size={15}/>}<span>{notice.text}</span><button aria-label="关闭提示" onClick={()=>setNotice(null)}><X size={15}/></button></div>}
   <section className="au-list-panel">
    <div className="au-toolbar inbox-toolbar"><div className="au-actions">
@@ -8087,12 +8087,12 @@ function SentInAppWorkspace({access,onBack,onAccessChange}:any){
     <select aria-label="显示状态" value={filter} onChange={e=>setFilter(e.target.value)}>{['全部状态','显示中','已屏蔽'].map(value=><option key={value}>{value}</option>)}</select>
    </div></div>
    <div className="au-table-frame"><table className="au-table inbox-table">
-    <thead><tr><th>标题</th><th>发送时间</th><th>显示状态</th>{isAdmin&&<th>操作</th>}</tr></thead>
+    <thead><tr><th>标题</th><th>发送时间</th><th>显示状态</th>{canManageVisibility&&<th>操作</th>}</tr></thead>
     <tbody>{visible.map(record=><tr key={record.id}>
      <td><button type="button" className="inbox-title" onClick={()=>setDetailId(record.id)}>{record.title}</button></td>
      <td><time dateTime={record.sentAt.replace(' ','T')+'+08:00'}>{record.sentAt}</time></td>
      <td><span className={'au-status '+(record.hidden?'':'good')}><i/>{record.hidden?'已屏蔽':'显示中'}</span></td>
-     {isAdmin&&<td><button type="button" className="inbox-action" onClick={()=>setPending({id:record.id,hidden:!record.hidden})}>{record.hidden?'恢复显示':'屏蔽'}</button></td>}
+     {canManageVisibility&&<td><button type="button" className="inbox-action" onClick={()=>setPending({id:record.id,hidden:!record.hidden})}>{record.hidden?'恢复显示':'屏蔽'}</button></td>}
     </tr>)}</tbody>
    </table>{!visible.length&&<div className="au-empty">{records.length?'没有匹配的站内信，请调整搜索或筛选条件。':'当前城市暂无站内信发送记录。'}</div>}</div>
   </section>
@@ -8134,7 +8134,7 @@ function AutomationWorkspace(){
   const appName=autoAppChannels.includes(notificationChannelName(channel))?(p.channelApps?.[channel]||'应用待确认'):undefined;
   return <NotificationChannel key={channel} channel={channel} appName={appName}/>;
  })}</div></td><td><div className="au-row-controls">{canToggle?<><button role="switch" aria-checked={p.enabled} aria-label={`${p.name}开关`} className={'automation-switch '+(p.enabled?'on':'')} onClick={()=>toggle(p)}><span/></button><span>{p.enabled?'已开启':'已关闭'}</span></>:<AutoStatus value={p.enabled?'已开启':'已关闭'}/>}</div></td></tr>)}</tbody></table>{!visiblePlans.length&&<div className="au-empty">{plans.length?'没有匹配任务，请调整搜索或筛选条件。':'暂无已注册的自动化任务。'}</div>}</div><footer className="au-list-footer">共 {visiblePlans.length} 项任务</footer></section>
- <footer className="au-prototype-footer"><span>原型演示</span>任务、身份、城市及开关均为模拟数据，不影响线上。</footer><details className="au-permission-demo"><summary>原型演示工具</summary><div><label>模拟启停权限<select aria-label="模拟启停权限" value={canToggle?'on':'off'} onChange={e=>switchContext({canToggleAutomation:e.target.value==='on'})}><option value="off">无权限</option><option value="on">有权限</option></select></label><label>模拟身份<select aria-label="模拟身份" value={access.role} onChange={e=>switchContext({role:e.target.value})}><option value="member">普通成员</option><option value="admin">管理员</option></select></label><label>模拟当前城市<select aria-label="模拟当前城市" value={access.city} onChange={e=>switchContext({city:e.target.value})}><option>西安</option><option>合肥</option><option>全国</option></select></label><label>模拟任务城市权限<select aria-label="模拟任务城市权限" value={access.taskCities.includes('西安')?(access.taskCities.length===1?'xian':'multi'):'other'} onChange={e=>switchContext({taskCities:e.target.value==='xian'?['西安']:e.target.value==='other'?['合肥']:bDemoTaskCities})}><option value="multi">西安、合肥、南京</option><option value="xian">仅西安</option><option value="other">仅合肥</option></select></label><small>仅用于走查权限与城市范围；生产身份和城市由平台提供。</small></div></details>
+ <footer className="au-prototype-footer"><span>原型演示</span>任务、权限、城市及开关均为模拟数据，不影响线上。</footer><details className="au-permission-demo"><summary>原型演示工具</summary><div><label>模拟启停权限<select aria-label="模拟启停权限" value={canToggle?'on':'off'} onChange={e=>switchContext({canToggleAutomation:e.target.value==='on'})}><option value="off">无权限</option><option value="on">有权限</option></select></label><label>模拟站内信显示权限<select aria-label="模拟站内信显示权限" value={access.canManageInAppVisibility?'on':'off'} onChange={e=>switchContext({canManageInAppVisibility:e.target.value==='on'})}><option value="off">无权限</option><option value="on">有权限</option></select></label><label>模拟当前城市<select aria-label="模拟当前城市" value={access.city} onChange={e=>switchContext({city:e.target.value})}><option>西安</option><option>合肥</option><option>全国</option></select></label><label>模拟任务城市权限<select aria-label="模拟任务城市权限" value={access.taskCities.includes('西安')?(access.taskCities.length===1?'xian':'multi'):'other'} onChange={e=>switchContext({taskCities:e.target.value==='xian'?['西安']:e.target.value==='other'?['合肥']:bDemoTaskCities})}><option value="multi">西安、合肥、南京</option><option value="xian">仅西安</option><option value="other">仅合肥</option></select></label><small>仅用于走查权限与城市范围；生产权限和城市由平台提供。</small></div></details>
  </div>
  {stopId&&<AutoDialog title="关闭自动化任务" onClose={()=>setStopId('')}><header className="au-dialog-header"><h2>关闭这个任务？</h2></header><div className="au-confirm-body"><p><strong>全站 · {plans.find((p:any)=>p.id===stopId)?.name}</strong></p><p>关闭后，该规则在全站的所有渠道停止新增触达。已到达消息保留，重新开启不补发关闭期间的通知。</p></div><footer className="au-dialog-footer"><ReachButton onClick={()=>setStopId('')}>返回</ReachButton><ReachButton primary onClick={()=>{const p=reachState.plans.find((p:any)=>p.id===stopId);if(!p||!permitted())return;applyState(p,false)}}>确认关闭</ReachButton></footer></AutoDialog>}
  </div>
