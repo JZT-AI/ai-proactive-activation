@@ -8301,7 +8301,7 @@ function reachConditionsText(d:any,notice:string){
 
 // 人群圈选扩展小B与多渠道内容、触达：有限规则的本地演示，真实编排、渠道及推送接口待接入。
 const bInAppChannel='有客App站内信';
-const bInAppBodyLimit=120;
+const bInAppBodyLimit=200;
 // Fixed targets for this release; IDs are demo values, not a production API contract.
 const bYoukeApp={id:'DEMO-APP-YOUKE',name:'有客App'};
 const bServiceAccount={id:'DEMO-OA-365',name:'365淘房服务号'};
@@ -8343,7 +8343,7 @@ const bEmptyContent = () => ({
  },
 });
 // Demo catalog only. Real speech IDs, supported templates and API field names await integration.
-const bVoiceTemplates=[{id:'DEMO-VOICE-001',name:'通用通知',audioFile:'general-notice.mp3',prompt:'您有一条新的业务通知，请及时查看。'},{id:'DEMO-VOICE-002',name:'客户消息',audioFile:'customer-message.mp3',prompt:'您有新的客户消息，请及时回复。'},{id:'DEMO-VOICE-003',name:'待办提醒',audioFile:'follow-up.mp3',prompt:'您有新的业务待办，请及时处理。'}];
+const bVoiceTemplates=[{id:'DEMO-VOICE-001',name:'通用通知',prompt:'您有一条新的业务通知，请及时查看。'},{id:'DEMO-VOICE-002',name:'客户消息',prompt:'您有新的客户消息，请及时回复。'},{id:'DEMO-VOICE-003',name:'待办提醒',prompt:'您有新的业务待办，请及时处理。'}];
 function BVoicePreview({value}:any){const template=bVoiceTemplates.find(t=>t.id===value.voiceTemplateId);return <div className="bm-voice-note" data-testid="app-voice-preview"><div><Volume2 size={13}/><span>语音播报</span><strong>{value.voiceEnabled?'已开启 · '+(template?.name||'待选择模板'):'未开启'}</strong></div>{value.voiceEnabled&&template&&<p>{template.prompt}</p>}</div>}
 function bIsHttps(url:string){return /^https:\/\/[^\s]+$/i.test(url)&&URL.canParse(url)}
 function bIsMiniPath(path:string){return /^\/?[\w-]+(?:\/[\w-]+)*(?:\.html)?(?:\?[^\s#]*)?$/.test(path)}
@@ -8390,7 +8390,7 @@ function bContentError(pack:any){
    const name=notificationChannelName(c);
    if(v.appId!==bYoukeApp.id)return name+'：本期仅支持有客App';
    if(!v.title?.trim()||!v.body?.trim())return name+(c===bInAppChannel?'：请填写标题和说明':'：请填写标题和正文');
-   if(c==='App Push'&&v.voiceEnabled&&!bVoiceTemplates.some(t=>t.id===v.voiceTemplateId&&t.audioFile))return 'App Push：请选择已绑定预置语音文件的播报模板';
+   if(c==='App Push'&&v.voiceEnabled&&!v.voiceTemplateId)return 'App Push：请选择语音播报模板';
    const jumpError=bJumpError(v);
    if(jumpError)return name+'：'+jumpError;
    if(c===bInAppChannel){
@@ -8540,7 +8540,7 @@ function BContentDialog({flow,onClose,onSave}:any){
   </div>:<span className="bm-quiet-time">已关闭</span>}
   <button type="button" role="switch" aria-label="免打扰" aria-describedby={quietScopeId} aria-checked={!!pack.quietEnabled} className="bm-quiet-switch" onClick={()=>setPack((prev:any)=>({...prev,quietEnabled:!prev.quietEnabled}))}><span/></button>
  </div></div><div className="bm-channel-select" role="group" aria-label="选择及编辑渠道">{bTouchChannels.map(c=><div key={c} className={'bm-channel-option'+(active===c?' active':'')}><label><input type="checkbox" aria-label={notificationChannelName(c)} checked={pack.channels.includes(c)} onChange={()=>selectChannel(c)}/></label><button type="button" aria-label={'编辑'+notificationChannelName(c)+'内容'} aria-pressed={active===c} onClick={()=>setActive(c)}><NotificationChannel channel={c}/></button></div>)}</div><div className="bm-content-grid"><section><h3>{active==='服务号模板消息通知'?'模板配置':'消息内容'}</h3>{selected&&active!=='企微私聊'&&<div className="bm-fixed-target" data-testid="channel-fixed-target"><span>{active==='服务号模板消息通知'?'发送服务号':'发送应用'}</span><strong>{active==='服务号模板消息通知'?bServiceAccount.name:bYoukeApp.name}</strong></div>}{!selected?<div className="bm-empty"><p>尚未选择此渠道</p><ReachButton onClick={()=>selectChannel(active)}>配置此渠道</ReachButton></div>:<>
- {active==='App Push'&&<><ReachField label="Push标题"><input value={v.title} onChange={e=>setValue({title:e.target.value})} placeholder="填写通知标题"/></ReachField><ReachField label="Push正文"><textarea value={v.body} onChange={e=>setValue({body:e.target.value})} rows={5} placeholder="填写通知正文"/></ReachField><section className="bm-voice-config"><label className="bm-voice-toggle"><input type="checkbox" aria-label="语音播报" checked={!!v.voiceEnabled} onChange={e=>setValue({voiceEnabled:e.target.checked})}/><span>语音播报</span></label>{v.voiceEnabled&&<><ReachField label="语音播报模板" hint="选择绑定预置语音文件的模板"><select value={v.voiceTemplateId||''} onChange={e=>setValue({voiceTemplateId:e.target.value})}><option value="">请选择播报模板</option>{bVoiceTemplates.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}</select></ReachField>{bVoiceTemplates.find(t=>t.id===v.voiceTemplateId)&&<p className="bm-footnote" data-testid="voice-template-prompt">播报提示：{bVoiceTemplates.find(t=>t.id===v.voiceTemplateId)?.prompt}</p>}<p className="bm-footnote">预置播报提示为演示内容，正式模板待接入。</p></>}</section><BJumpFields value={v} onChange={setValue}/></>}
+ {active==='App Push'&&<><ReachField label="Push标题"><input value={v.title} onChange={e=>setValue({title:e.target.value})} placeholder="填写通知标题"/></ReachField><ReachField label="Push正文"><textarea value={v.body} onChange={e=>setValue({body:e.target.value})} rows={5} placeholder="填写通知正文"/></ReachField><div className="bm-footnote" role="note">小米、OPPO 端使用预审通用文案。标题：您收到一条新通知；内容：详情请打开365有客App查看&gt;&gt;。自定义标题与内容用于其他端。需要展示完整内容时，建议同时配置站内信，并设置 Push 跳转至 App 相关页面。</div><section className="bm-voice-config"><label className="bm-voice-toggle"><input type="checkbox" aria-label="语音播报" checked={!!v.voiceEnabled} onChange={e=>setValue({voiceEnabled:e.target.checked})}/><span>语音播报</span></label>{v.voiceEnabled&&<><ReachField label="语音播报模板" hint="选择有客App预置的播报模板"><select value={v.voiceTemplateId||''} onChange={e=>setValue({voiceTemplateId:e.target.value})}><option value="">请选择播报模板</option>{bVoiceTemplates.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}</select></ReachField>{bVoiceTemplates.find(t=>t.id===v.voiceTemplateId)&&<p className="bm-footnote" data-testid="voice-template-prompt">播报提示：{bVoiceTemplates.find(t=>t.id===v.voiceTemplateId)?.prompt}</p>}<p className="bm-footnote">预置播报提示为演示内容，正式模板待接入。</p></>}</section><BJumpFields value={v} onChange={setValue}/></>}
  {active===bInAppChannel&&<><ReachField label="消息分类"><select value={pack.category||''} onChange={e=>{setPack((p:any)=>({...p,category:e.target.value}));setError('')}}><option value="">请选择消息分类</option>{inAppMessageCategories.map(type=><option key={type}>{type}</option>)}</select></ReachField><ReachField label="站内信标题"><input value={v.title} onChange={e=>setValue({title:e.target.value})} placeholder="填写消息标题"/></ReachField><ReachField label="站内信正文" hint={Array.from(v.body.trim()).length+' / '+bInAppBodyLimit+' 字'}><textarea value={v.body} onChange={e=>setValue({body:e.target.value})} rows={5} placeholder="填写通知说明"/></ReachField>
   <ReachField label="站内信图片" hint="选填"><input type="file" accept="image/*" onChange={e=>readImage('image',e.target.files?.[0])}/></ReachField>
   {v.image&&<ReachButton onClick={()=>setValue({image:''})}>移除站内信图片</ReachButton>}
